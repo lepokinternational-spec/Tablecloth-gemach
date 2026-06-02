@@ -199,6 +199,18 @@
   .admin-login{max-width:440px;margin:0 auto 24px}
   .admin-login .actions{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
   .admin-login .actions .field{flex:1}
+  .photo-manager{display:grid;gap:12px;margin-top:16px}
+  .photo-editor{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+  .photo-editor h4{font-size:1rem;margin-bottom:10px}
+  .photo-list{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+  .photo-tile{width:96px;border:1px solid var(--line);border-radius:9px;background:var(--linen-2);padding:6px;cursor:grab}
+  .photo-tile.dragging{opacity:.45}
+  .photo-tile img{display:block;width:100%;height:68px;object-fit:cover;border-radius:6px;background:#efe9da}
+  .photo-tile .mainmark{display:block;text-align:center;color:var(--teal);font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-top:5px;min-height:14px}
+  .photo-tile button{width:100%;height:25px;margin-top:5px;border-radius:7px;font-size:.72rem;background:#fff;border:1px solid var(--line);color:var(--terra)}
+  .photo-add{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .photo-add input{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px;font:inherit}
+  @media(max-width:560px){.photo-add{grid-template-columns:1fr}.photo-tile{width:88px}}
 
   /* modal / email */
   .overlay{position:fixed;inset:0;background:rgba(35,33,27,.55);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
@@ -342,6 +354,12 @@
   </section>
 
   <section class="block" style="margin-top:24px">
+    <h2>Catalogue photos</h2>
+    <p class="sub">Add, remove, and reorder tablecloth photos.</p>
+    <div class="photo-manager" id="photoManager"></div>
+  </section>
+
+  <section class="block" style="margin-top:24px">
     <h2>All reservations</h2>
     <p class="sub">Full list with contact details and Hebrew dates.</p>
     <div id="bookingList" style="margin-top:16px"></div>
@@ -386,6 +404,7 @@
     }catch(e){console.error("email send failed",e);}
   }
   const ADMIN_PASSWORD="linen2026";
+  const PHOTO_KEY="gmh_photo_overrides";
 
   /* ============ State ============ */
   let bookings=[], cart={};
@@ -512,6 +531,19 @@
   /* ============ Storage ============ */
   async function loadBookings(){ try{ const raw=localStorage.getItem("gmh_bookings"); bookings=raw?JSON.parse(raw):[]; }catch(e){ bookings=[]; } }
   async function saveBookings(){ try{ localStorage.setItem("gmh_bookings",JSON.stringify(bookings)); }catch(e){ console.error(e); } }
+  function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  function photosFor(inv){return (inv.imgs&&inv.imgs.length?inv.imgs:(inv.img?[inv.img]:[])).filter(Boolean);}
+  function cleanPhotoUrl(u){u=String(u||"").trim(); if(!u||/[<>"']/.test(u)||/^javascript:/i.test(u))return ""; return u;}
+  function loadPhotoOverrides(){
+    try{
+      const raw=localStorage.getItem(PHOTO_KEY), data=raw?JSON.parse(raw):{};
+      INVENTORY.forEach(inv=>{if(Array.isArray(data[inv.id])){const pics=data[inv.id].map(cleanPhotoUrl).filter(Boolean); if(pics.length)inv.imgs=pics;}});
+    }catch(e){console.error(e);}
+  }
+  function savePhotoOverrides(){
+    const data={}; INVENTORY.forEach(inv=>{data[inv.id]=photosFor(inv);});
+    localStorage.setItem(PHOTO_KEY,JSON.stringify(data));
+  }
 
   /* ============ Availability ============ */
   // a booking holds stock across its loan window: pickup→return once the admin sets them, otherwise just the event date
@@ -794,7 +826,7 @@
       }
       if(have&&avail<=0)return;
       const card=document.createElement("div"); card.className="card";
-      var pics=inv.imgs||[inv.img];var pic='<div class="pic"><img class="mainpic" loading="lazy" src="'+pics[0]+'" alt="'+inv.name+'"></div>';if(pics.length>1){pic+='<div class="thumbs">'+pics.map(function(u,i){return '<img class="thumb'+(i===0?' on':'')+'" loading="lazy" src="'+u+'">';}).join('')+'</div>';}card.innerHTML=pic+'<div class="body"><h4>'+inv.name+'</h4><div class="size">'+inv.size+'</div>'+(inv.dim?'<div class="dim">'+inv.dim+'</div>':'')+'</div>';if(pics.length>1){var _m=card.querySelector(".mainpic");card.querySelectorAll(".thumb").forEach(function(t){t.addEventListener("click",function(){_m.src=t.src;card.querySelectorAll(".thumb").forEach(function(x){x.classList.remove("on");});t.classList.add("on");});});}
+      var pics=photosFor(inv);var pic='<div class="pic"><img class="mainpic" loading="lazy" src="'+esc(pics[0])+'" alt="'+esc(inv.name)+'"></div>';if(pics.length>1){pic+='<div class="thumbs">'+pics.map(function(u,i){return '<img class="thumb'+(i===0?' on':'')+'" loading="lazy" src="'+esc(u)+'">';}).join('')+'</div>';}card.innerHTML=pic+'<div class="body"><h4>'+esc(inv.name)+'</h4><div class="size">'+esc(inv.size)+'</div>'+(inv.dim?'<div class="dim">'+esc(inv.dim)+'</div>':'')+'</div>';if(pics.length>1){var _m=card.querySelector(".mainpic");card.querySelectorAll(".thumb").forEach(function(t){t.addEventListener("click",function(){_m.src=t.src;card.querySelectorAll(".thumb").forEach(function(x){x.classList.remove("on");});t.classList.add("on");});});}
       if(have&&avail>0){
         const body=card.querySelector(".body"); const row=document.createElement("div"); row.className="qtyrow";
         const btn=document.createElement("button"); btn.type="button"; btn.className="btn sm setpick"+(inCart?" selected":"");
@@ -981,7 +1013,57 @@
     };
     openModal();
   }
-  function renderAdmin(){ renderStats(); renderBookingList(); renderAdminCalendar(); }
+  let photoDrag=null;
+  function photosChanged(msg){
+    savePhotoOverrides(); renderPhotoManager(); renderCatalog(); renderCart();
+    toast(msg||"Photos updated");
+  }
+  function renderPhotoManager(){
+    const wrap=document.getElementById("photoManager"); if(!wrap)return;
+    wrap.innerHTML=INVENTORY.map(inv=>{
+      const pics=photosFor(inv);
+      return '<div class="photo-editor" data-photo-id="'+esc(inv.id)+'"><h4>'+esc(inv.name)+'</h4>'
+        +'<div class="photo-list">'+pics.map((u,i)=>
+          '<div class="photo-tile" draggable="true" data-photo-id="'+esc(inv.id)+'" data-index="'+i+'">'
+          +'<img loading="lazy" src="'+esc(u)+'" alt="'+esc(inv.name)+' photo '+(i+1)+'">'
+          +'<span class="mainmark">'+(i===0?'Main':'')+'</span>'
+          +'<button type="button" data-remove-photo="'+esc(inv.id)+'" data-index="'+i+'">Remove</button></div>'
+        ).join('')+'</div>'
+        +'<div class="photo-add"><input type="text" data-photo-input="'+esc(inv.id)+'" placeholder="images/example.jpg or https://...">'
+        +'<button class="btn sm" type="button" data-add-photo="'+esc(inv.id)+'">Add photo</button></div></div>';
+    }).join('');
+    wrap.querySelectorAll(".photo-tile").forEach(tile=>{
+      tile.addEventListener("dragstart",e=>{photoDrag={id:tile.dataset.photoId,index:Number(tile.dataset.index)};tile.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
+      tile.addEventListener("dragend",()=>{tile.classList.remove("dragging");photoDrag=null;});
+      tile.addEventListener("dragover",e=>e.preventDefault());
+      tile.addEventListener("drop",e=>{
+        e.preventDefault();
+        if(!photoDrag||photoDrag.id!==tile.dataset.photoId)return;
+        const inv=INVENTORY.find(i=>i.id===photoDrag.id), to=Number(tile.dataset.index), from=photoDrag.index;
+        if(!inv||from===to||from<0||to<0)return;
+        const pics=photosFor(inv).slice();
+        const moved=pics.splice(from,1)[0]; pics.splice(to,0,moved); inv.imgs=pics;
+        photosChanged("Photo order updated");
+      });
+    });
+    wrap.querySelectorAll("[data-remove-photo]").forEach(btn=>btn.onclick=()=>{
+      const inv=INVENTORY.find(i=>i.id===btn.dataset.removePhoto); if(!inv)return;
+      const pics=photosFor(inv).slice(), idx=Number(btn.dataset.index);
+      if(pics.length<=1){toast("Each tablecloth needs at least one photo");return;}
+      pics.splice(idx,1); inv.imgs=pics; photosChanged("Photo removed");
+    });
+    wrap.querySelectorAll("[data-add-photo]").forEach(btn=>btn.onclick=()=>{
+      const inv=INVENTORY.find(i=>i.id===btn.dataset.addPhoto), input=wrap.querySelector('[data-photo-input="'+btn.dataset.addPhoto+'"]');
+      const url=cleanPhotoUrl(input&&input.value);
+      if(!inv||!url){toast("Add a valid image path or URL");return;}
+      const pics=photosFor(inv).slice(); pics.push(url); inv.imgs=pics; if(input)input.value="";
+      photosChanged("Photo added");
+    });
+    wrap.querySelectorAll("[data-photo-input]").forEach(input=>input.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){e.preventDefault();wrap.querySelector('[data-add-photo="'+input.dataset.photoInput+'"]').click();}
+    }));
+  }
+  function renderAdmin(){ renderStats(); renderBookingList(); renderAdminCalendar(); renderPhotoManager(); }
   function adminUnlocked(){ return sessionStorage.getItem("linen_admin_unlocked")==="1"; }
   function updateAdminGate(){
     const unlocked=adminUnlocked();
@@ -1036,7 +1118,7 @@
 
   (function defaults(){ pickDate=iso(addDays(today(),14)); retDate=iso(addDays(today(),15)); calMonth=som(parseISO(pickDate)); })();
 
-  (async function init(){ await loadBookings(); updateDateField(); renderCalendar(); renderCatalog(); renderCart(); renderAdmin(); })();
+  (async function init(){ loadPhotoOverrides(); await loadBookings(); updateDateField(); renderCalendar(); renderCatalog(); renderCart(); renderAdmin(); })();
 })();
 
   (function(){var lb=document.createElement("div");lb.className="lightbox";var im=document.createElement("img");lb.appendChild(im);document.body.appendChild(lb);document.addEventListener("click",function(e){var t=e.target;if(t&&t.classList&&t.classList.contains("mainpic")){im.src=t.src;lb.classList.add("open");}else if(t===lb||t===im){lb.classList.remove("open");}});document.addEventListener("keydown",function(e){if(e.key==="Escape")lb.classList.remove("open");});})();
