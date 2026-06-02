@@ -235,6 +235,72 @@
   .fade-in{animation:rise .5s both} @keyframes rise{from{opacity:0;transform:translateY(12px)}}
   .stagger>*{animation:rise .5s both}
   .stagger>*:nth-child(2){animation-delay:.05s}.stagger>*:nth-child(3){animation-delay:.1s}.stagger>*:nth-child(4){animation-delay:.15s}
+
+  @media(max-width:640px){
+    .wrap{padding:0 14px}
+    .bar-in{height:auto;min-height:64px;padding:8px 14px;gap:8px;align-items:center}
+    .brand{gap:8px;min-width:0}
+    .brand .mark{width:34px;height:34px;border-radius:9px;font-size:1.05rem}
+    .brand b{font-size:1rem;line-height:1.05}
+    .brand span{font-size:.55rem;letter-spacing:.18em}
+    .bar-in{flex-wrap:wrap}
+    .toggle{flex:none}
+    .toggle button{padding:8px 10px;font-size:.78rem}
+    .hero{padding:28px 0 10px}
+    .hero h1{font-size:2rem;max-width:12ch;margin:10px 0 8px}
+    .hero p.lead{font-size:.96rem}
+    .search{margin-top:18px;padding:13px;border-radius:14px}
+    .searchrow .btn{width:100%;justify-content:center}
+    .searchnote{font-size:.78rem;gap:8px}
+    .chips{gap:6px}
+    .chip{font-size:.78rem;padding:6px 10px}
+    .cols{gap:18px;padding:18px 0 48px}
+    section.block{padding:16px;border-radius:12px}
+    .block h2{font-size:1.28rem}
+    .grid{grid-template-columns:1fr;gap:14px}
+    .card:hover{transform:none}
+    .pic{height:230px}
+    .pic img.mainpic{inset:10px;width:calc(100% - 20px);height:calc(100% - 20px)}
+    .thumbs{left:12px;right:12px;bottom:12px;max-width:none;overflow-x:auto;flex-wrap:nowrap}
+    .thumbs .thumb{width:44px;height:34px;flex:0 0 auto}
+    .card .body{padding:14px}
+    .setpick,.btn{display:inline-flex;align-items:center;white-space:normal;text-align:center;justify-content:center}
+    .cart{position:static}
+    .stats{grid-template-columns:1fr;gap:10px}
+    .admin-login .actions{display:grid;grid-template-columns:1fr;gap:10px}
+    .adminlegend{gap:10px;font-size:.76rem}
+    .cal-grid.big{gap:4px}
+    .cal-grid.big .dow{font-size:.58rem;letter-spacing:.03em}
+    .cal-grid.big .day{min-height:54px;padding:4px 3px;border-radius:8px}
+    .cal-grid.big .day .g{font-size:.82rem}
+    .cal-grid.big .day .h,.bkbadge,.bkmore,.caholi{display:none}
+    .bk .acts,.daycard .acts,.email .cta{display:grid;grid-template-columns:1fr;gap:8px}
+    .photo-head{align-items:center}
+    .photo-edit-tab{margin-left:auto}
+    .photo-list{gap:7px}
+    .photo-tile{width:calc(33.333% - 5px);min-width:82px}
+    .photo-add{grid-template-columns:1fr}
+    .overlay{padding:10px;align-items:flex-start}
+    .modal{max-height:94vh;border-radius:14px;margin-top:8px}
+    .email .head{padding:16px 18px;border-radius:14px 14px 0 0}
+    .email .head h3{font-size:1.08rem;line-height:1.18;padding-right:34px}
+    .email .meta,.email .bd{padding:14px 18px}
+    .bk .meta,.email .meta,.approve-link{overflow-wrap:anywhere}
+    .recap .ln{display:grid;gap:3px}
+    .close{top:12px;right:12px}
+    .toast{width:calc(100vw - 28px);text-align:center}
+  }
+
+  @media(max-width:380px){
+    .bar-in{justify-content:center}
+    .brand{width:100%;justify-content:center}
+    .brand span{display:none}
+    .toggle{margin:0 auto}
+    .toggle button{padding:7px 8px;font-size:.74rem}
+    .hero h1{font-size:1.78rem}
+    .pic{height:210px}
+    .photo-tile{width:calc(50% - 4px)}
+  }
 </style>
 
 <header class="bar"><div class="wrap bar-in">
