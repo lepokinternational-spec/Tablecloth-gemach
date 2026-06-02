@@ -2,13 +2,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Linen Collection</title>
-<meta name="description" content="A free community tablecloth & linen lending library — browse, check availability and reserve in minutes.">
-<meta property="og:title" content="The Linen Collection">
-<meta property="og:description" content="A free community tablecloth & linen lending library. Browse and reserve in minutes.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://tcgemach.co.uk">
-<meta property="og:image" content="https://tcgemach.co.uk/images/bronze-1.jpg">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9C%A6</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,400..500&family=Hanken+Grotesk:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;700&display=swap" rel="stylesheet">
@@ -92,7 +85,6 @@
   .popcal-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.76rem;color:var(--ink-soft);margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
   .popcal-foot span{flex:1}
   .popcal-foot #popHint.err{color:var(--bad);font-weight:700}
-  .cal-parsha{font-size:.78rem;color:var(--teal);font-weight:800;margin-top:3px}
   .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
 
   .cols{display:grid;grid-template-columns:1fr 350px;gap:26px;align-items:start;padding:26px 0 70px;position:relative;z-index:1}
@@ -243,72 +235,6 @@
   .fade-in{animation:rise .5s both} @keyframes rise{from{opacity:0;transform:translateY(12px)}}
   .stagger>*{animation:rise .5s both}
   .stagger>*:nth-child(2){animation-delay:.05s}.stagger>*:nth-child(3){animation-delay:.1s}.stagger>*:nth-child(4){animation-delay:.15s}
-
-  @media(max-width:640px){
-    .wrap{padding:0 14px}
-    .bar-in{height:auto;min-height:64px;padding:8px 14px;gap:8px;align-items:center}
-    .brand{gap:8px;min-width:0}
-    .brand .mark{width:34px;height:34px;border-radius:9px;font-size:1.05rem}
-    .brand b{font-size:1rem;line-height:1.05}
-    .brand span{font-size:.55rem;letter-spacing:.18em}
-    .bar-in{flex-wrap:wrap}
-    .toggle{flex:none}
-    .toggle button{padding:8px 10px;font-size:.78rem}
-    .hero{padding:28px 0 10px}
-    .hero h1{font-size:2rem;max-width:12ch;margin:10px 0 8px}
-    .hero p.lead{font-size:.96rem}
-    .search{margin-top:18px;padding:13px;border-radius:14px}
-    .searchrow .btn{width:100%;justify-content:center}
-    .searchnote{font-size:.78rem;gap:8px}
-    .chips{gap:6px}
-    .chip{font-size:.78rem;padding:6px 10px}
-    .cols{gap:18px;padding:18px 0 48px}
-    section.block{padding:16px;border-radius:12px}
-    .block h2{font-size:1.28rem}
-    .grid{grid-template-columns:1fr;gap:14px}
-    .card:hover{transform:none}
-    .pic{height:230px}
-    .pic img.mainpic{inset:10px;width:calc(100% - 20px);height:calc(100% - 20px)}
-    .thumbs{left:12px;right:12px;bottom:12px;max-width:none;overflow-x:auto;flex-wrap:nowrap}
-    .thumbs .thumb{width:44px;height:34px;flex:0 0 auto}
-    .card .body{padding:14px}
-    .setpick,.btn{display:inline-flex;align-items:center;white-space:normal;text-align:center;justify-content:center}
-    .cart{position:static}
-    .stats{grid-template-columns:1fr;gap:10px}
-    .admin-login .actions{display:grid;grid-template-columns:1fr;gap:10px}
-    .adminlegend{gap:10px;font-size:.76rem}
-    .cal-grid.big{gap:4px}
-    .cal-grid.big .dow{font-size:.58rem;letter-spacing:.03em}
-    .cal-grid.big .day{min-height:54px;padding:4px 3px;border-radius:8px}
-    .cal-grid.big .day .g{font-size:.82rem}
-    .cal-grid.big .day .h,.bkbadge,.bkmore,.caholi{display:none}
-    .bk .acts,.daycard .acts,.email .cta{display:grid;grid-template-columns:1fr;gap:8px}
-    .photo-head{align-items:center}
-    .photo-edit-tab{margin-left:auto}
-    .photo-list{gap:7px}
-    .photo-tile{width:calc(33.333% - 5px);min-width:82px}
-    .photo-add{grid-template-columns:1fr}
-    .overlay{padding:10px;align-items:flex-start}
-    .modal{max-height:94vh;border-radius:14px;margin-top:8px}
-    .email .head{padding:16px 18px;border-radius:14px 14px 0 0}
-    .email .head h3{font-size:1.08rem;line-height:1.18;padding-right:34px}
-    .email .meta,.email .bd{padding:14px 18px}
-    .bk .meta,.email .meta,.approve-link{overflow-wrap:anywhere}
-    .recap .ln{display:grid;gap:3px}
-    .close{top:12px;right:12px}
-    .toast{width:calc(100vw - 28px);text-align:center}
-  }
-
-  @media(max-width:380px){
-    .bar-in{justify-content:center}
-    .brand{width:100%;justify-content:center}
-    .brand span{display:none}
-    .toggle{margin:0 auto}
-    .toggle button{padding:7px 8px;font-size:.74rem}
-    .hero h1{font-size:1.78rem}
-    .pic{height:210px}
-    .photo-tile{width:calc(50% - 4px)}
-  }
 </style>
 
 <header class="bar"><div class="wrap bar-in">
@@ -335,23 +261,23 @@
           <div class="popcal" id="popCal" hidden>
             <div class="cal-head">
               <button type="button" id="calPrev">‹</button>
-              <div class="lbls"><h3 id="calLabel"></h3><div class="he" id="calLabelHe" dir="rtl"></div><div class="cal-parsha hidden" id="calParshaNote"></div></div>
+              <div class="lbls"><h3 id="calLabel"></h3><div class="he" id="calLabelHe" dir="rtl"></div></div>
               <button type="button" id="calNext">›</button>
             </div>
             <div class="cal-grid" id="calGrid"></div>
             <div class="popcal-foot">
               <span id="popHint">Tap a pickup date, then a return date · max 5 days</span>
-              <button type="button" class="btn sm" id="calDone">Check availability</button>
+              <button type="button" class="btn sm" id="calDone">Done</button>
             </div>
           </div>
         </div>
-        <button class="btn" id="searchBtn">Check availability</button>
+        <button class="btn" id="searchBtn">See availability</button>
       </div>
     </div>
     <div class="searchnote">
       <span>Choose pickup and return dates — up to 5 days. Need them longer? Add a note in your reservation and we'll try to help.</span>
-      </div>
-      <div class="dateadvice hidden" id="dateAdvice">⚠️ The most we can lend is 5 days. If you need them longer, please add a note in your reservation below and we'll try to accommodate.</div>
+    </div>
+    <div class="dateadvice hidden" id="dateAdvice">⚠️ The most we can lend is 5 days. If you need them longer, please add a note in your reservation below and we'll try to accommodate.</div>
   </div>
 
   <div class="cols">
@@ -384,7 +310,6 @@
           <div class="field"><label>Home address</label><input id="fAddr" placeholder="14 High Street, London"></div>
           <div class="err hidden" id="eAddr">Please enter your full address.</div>
           <div class="field"><label>Note (optional — tell us here if you need them longer than 5 days)</label><input id="fNote" placeholder="e.g. could we keep them for 7 days?"></div>
-          <input id="fWebsite" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
           <button class="btn" id="placeBtn" style="width:100%;margin-top:4px">Send reservation request</button>
           <p class="sub" style="text-align:center">Completely free. We approve by email before it's confirmed.</p>
         </div>
@@ -488,7 +413,7 @@
   async function sendAdminRequestEmail(b){
     if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return false;
     try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,approveUrl:adminApproveUrl(b.id),name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
       return true;
     }catch(e){console.error("admin email send failed",e);return false;}
   }
@@ -497,10 +422,23 @@
 
   /* ============ State ============ */
   let bookings=[], cart={};
+  let ADMIN_TOKEN_VALUE="";
+  const API="https://linen-email.linencollection29.workers.dev";
+  async function api(action,payload,admin){
+    const headers={"Content-Type":"application/json"};
+    if(admin) headers["X-Admin-Token"]=ADMIN_TOKEN_VALUE;
+    const res=await fetch(API+"?action="+action,{method:"POST",headers,body:JSON.stringify(payload||{})});
+    if(!res.ok) throw new Error("api "+action+" "+res.status);
+    return res.json();
+  }
+  async function apiList(){
+    const r=await fetch(API+"?action=list",{headers:{"X-Admin-Token":ADMIN_TOKEN_VALUE}});
+    if(!r.ok) throw new Error("unauthorized");
+    return r.json();
+  }
   let pickDate=null, retDate=null;
   const MAX_DAYS=5;
   let calMonth=som(new Date()), pCalMonth=som(new Date());
-  const parshaCache={};
 
   /* ============ Date helpers ============ */
   function som(d){return new Date(d.getFullYear(),d.getMonth(),1);}
@@ -511,12 +449,6 @@
   function daysInc(a,b){return Math.round((parseISO(b)-parseISO(a))/864e5)+1;}
   function fmt(s){return parseISO(s).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});}
   function fmtShort(s){return parseISO(s).toLocaleDateString("en-GB",{day:"numeric",month:"short"});}
-  function shabbatInRange(s,e){
-    if(!s)return null;
-    let d=parseISO(s), end=parseISO(e||s);
-    while(d<=end){ if(d.getDay()===6)return iso(d); d=addDays(d,1); }
-    return null;
-  }
 
   /* ============ Hebrew calendar ============ */
   let HFMT=null;
@@ -625,8 +557,8 @@
   }
 
   /* ============ Storage ============ */
-  async function loadBookings(){ try{ const raw=localStorage.getItem("gmh_bookings"); bookings=raw?JSON.parse(raw):[]; }catch(e){ bookings=[]; } }
-  async function saveBookings(){ try{ localStorage.setItem("gmh_bookings",JSON.stringify(bookings)); }catch(e){ console.error(e); } }
+  async function loadBookings(){ try{ const r=await fetch(API+"?action=availability"); const d=await r.json(); bookings=d.bookings||[]; }catch(e){ bookings=[]; } }
+  async function saveBookings(){ /* writes now go through api() per action */ }
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   function photosFor(inv){return (inv.imgs&&inv.imgs.length?inv.imgs:(inv.img?[inv.img]:[])).filter(Boolean);}
   function cleanPhotoUrl(u){u=String(u||"").trim(); if(!u||/[<>"']/.test(u)||/^javascript:/i.test(u))return ""; return u;}
@@ -818,7 +750,7 @@
     openModal();
   }
   async function decideDay(id,status,dISO){
-    const b=bookings.find(x=>x.id===id); if(!b)return; b.status=status; await saveBookings();
+    const b=bookings.find(x=>x.id===id); if(!b)return; b.status=status; await api("update",{booking:b},true);
     renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
     toast(status==="approved"?"Reservation "+id+" approved":"Reservation "+id+" "+status);
     showDayModal(dISO);
@@ -843,8 +775,7 @@
     document.getElementById("apConfirm").onclick=async()=>{
       const p=document.getElementById("apPickup").value, r=document.getElementById("apReturn").value;
       if(!p||!r||parseISO(r)<parseISO(p)){ document.getElementById("apErr").classList.remove("hidden"); return; }
-      b.pickup=p; b.ret=r; b.status="approved"; await saveBookings();
-      sendApprovalEmail(b);
+      b.pickup=p; b.ret=r; b.status="approved"; await api("update",{booking:b,sendApproval:true},true);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
       toast("Approved "+b.id+" — confirmation sent to customer");
       showCustomerEmail(b);
@@ -868,19 +799,6 @@
   }
 
   function showAdvice(on){ document.getElementById("dateAdvice").classList.toggle("hidden",!on); }
-  function updateParshaNote(){
-    const note=document.getElementById("calParshaNote"), shab=shabbatInRange(pickDate,retDate||pickDate);
-    if(!note)return;
-    if(!shab){note.classList.add("hidden");note.textContent="";return;}
-    if(parshaCache[shab]){note.textContent="Parsha: "+parshaCache[shab];note.classList.remove("hidden");return;}
-    note.textContent="Loading parsha…";note.classList.remove("hidden");
-    const d=parseISO(shab), url="https://www.hebcal.com/hebcal?v=1&cfg=json&ss=on&maj=off&min=off&mod=off&nx=off&mf=off&c=off&year="+d.getFullYear()+"&month="+(d.getMonth()+1);
-    fetch(url).then(r=>r.json()).then(data=>{
-      const item=(data.items||[]).find(it=>it.date===shab&&(it.category==="parashat"||/^Parashat /.test(it.title||"")));
-      parshaCache[shab]=item?(item.title||"").replace(/^Parashat /,""):"this Shabbos";
-      if(shabbatInRange(pickDate,retDate||pickDate)===shab){note.textContent="Parsha: "+parshaCache[shab];note.classList.remove("hidden");}
-    }).catch(()=>{ if(shabbatInRange(pickDate,retDate||pickDate)===shab){note.textContent="Includes Shabbos";note.classList.remove("hidden");} });
-  }
   function updateDateField(){
     const f=document.getElementById("dateField"), tx=document.getElementById("dateFieldText");
     if(pickDate&&retDate){ f.classList.remove("empty");
@@ -891,7 +809,7 @@
   }
   function openPopCal(){ calMonth=som(parseISO(pickDate||iso(today()))); renderCalendar(); document.getElementById("popCal").hidden=false; }
   function closePopCal(){ document.getElementById("popCal").hidden=true; }
-  function applyRange(){ updateDateField(); updateParshaNote(); renderCalendar(); renderCatalog(); renderCart(); }
+  function applyRange(){ updateDateField(); renderCalendar(); renderCatalog(); renderCart(); }
 
   function pickDay(dISO){
     if(parseISO(dISO)<today()) return;
@@ -907,16 +825,15 @@
       showAdvice(true); setHint(true); toast("Reservations cannot be more than 5 days");
       return;                                         // no selection made; needs a closer return date
     }
-    // valid return → set it and keep the calendar open until Check availability
+    // valid return → set it and close the calendar (two clicks done)
     retDate=dISO; showAdvice(false); setHint();
-    applyRange();
+    applyRange(); closePopCal();
+    document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function setHint(error){ const h=document.getElementById("popHint"); if(!h) return;
     h.classList.toggle("err",!!error);
     if(error){ h.textContent="✕ Reservations can be a maximum of 5 days — choose an earlier return date."; return; }
-    const shab=shabbatInRange(pickDate,retDate||pickDate);
-    h.textContent = shab ? "Selected dates include Shabbos — parsha shown above"
-      : (pickDate&&!retDate) ? "Now tap a return date (within 5 days)"
+    h.textContent = (pickDate&&!retDate) ? "Now tap a return date (within 5 days)"
       : (pickDate&&retDate) ? "Tap a new date to start over"
       : "Tap a pickup date, then a return date · max 5 days"; }
 
@@ -976,7 +893,6 @@
   function toggleErr(id,show){document.getElementById(id).classList.toggle("hidden",!show);}
 
   document.getElementById("placeBtn").onclick=async()=>{
-    if(document.getElementById("fWebsite") && document.getElementById("fWebsite").value){ return; }
     const name=val("fName"),phone=val("fPhone"),email=val("fEmail"),addr=val("fAddr"),note=val("fNote");
     let ok=true; toggleErr("eName",!name); if(!name)ok=false;
     const bad=!validPhone(phone)||!validEmail(email); toggleErr("eContact",bad); if(bad)ok=false;
@@ -988,22 +904,13 @@
       amount:"",
       items:cartArr(), start:pickDate, pickup:pickDate, ret:ret, status:"pending",
       token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
-    bookings.push(b); await saveBookings(); cart={};
+    try{ await api("create",{booking:b}); }catch(e){ toast("Could not submit — please try again"); return; } bookings.push(b); cart={};
     ["fName","fPhone","fEmail","fAddr","fNote"].forEach(i=>document.getElementById(i).value="");
     document.getElementById("checkout").classList.add("hidden");
     renderCatalog(); renderCart(); renderCalendar(); renderAdmin();
-    const sent=await sendAdminRequestEmail(b);
-    toast(sent?"Request sent for approval":"Request submitted");
+    toast("Request submitted — we'll confirm by email");
   };
   function val(id){return document.getElementById(id).value.trim();}
-  function adminApproveUrl(id){
-    const u=new URL(location.href);
-    u.search="";
-    u.hash="";
-    u.searchParams.set("admin","1");
-    if(id)u.searchParams.set("booking",id);
-    return u.toString();
-  }
 
   /* ============ Email / approval ============ */
   function showEmailModal(b){
@@ -1029,7 +936,7 @@
   function closeModal(){document.getElementById("overlay").classList.remove("show");}
   document.getElementById("modalClose").onclick=closeModal;
   document.getElementById("overlay").onclick=e=>{if(e.target.id==="overlay")closeModal();};
-  async function decide(id,status){ const b=bookings.find(x=>x.id===id); if(!b)return; b.status=status; await saveBookings();
+  async function decide(id,status){ const b=bookings.find(x=>x.id===id); if(!b)return; b.status=status; await api("update",{booking:b},true);
     renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
     toast(status==="approved"?"Reservation "+id+" approved — calendar updated":"Reservation "+id+" declined"); }
 
@@ -1077,7 +984,7 @@
   function mkbtn(t,c,fn){const b=document.createElement("button");b.className=c;b.textContent=t;b.onclick=fn;return b;}
   async function cancelBooking(id){
     const b=bookings.find(x=>x.id===id); if(!b)return;
-    b.status="cancelled"; await saveBookings();
+    b.status="cancelled"; await api("cancel",{id:b.id},true);
     renderAdmin(); renderCalendar(); renderCatalog(); renderCart(); closeModal();
     toast("Reservation "+id+" cancelled");
   }
@@ -1127,7 +1034,7 @@
         address:document.getElementById("nbAddr").value.trim()||"—", note:"Booked by admin", amount:"",
         items, start:p, pickup:p, ret:r, status:"approved",
         token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
-      bookings.push(b); await saveBookings();
+      try{ await api("create",{booking:b}); }catch(e){ document.getElementById("nbErr").classList.remove("hidden"); return; } bookings.push(b);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart(); closeModal();
       toast("Booking created for "+name);
     };
@@ -1198,59 +1105,60 @@
     document.getElementById("adminLoginErr").classList.add("hidden");
     if(unlocked)renderAdmin();
   }
-  function unlockAdmin(){
+  async function unlockAdmin(){
     const input=document.getElementById("adminPassword");
-    if(input.value===ADMIN_PASSWORD){
+    ADMIN_TOKEN_VALUE=input.value;
+    try{
+      const d=await apiList();
+      bookings=d.bookings||[];
+      sessionStorage.setItem("linen_admin_token",ADMIN_TOKEN_VALUE);
       sessionStorage.setItem("linen_admin_unlocked","1");
       input.value="";
       updateAdminGate();
+      renderAdmin(); renderCalendar(); renderCatalog();
       toast("Admin unlocked");
-      return;
+    }catch(e){
+      ADMIN_TOKEN_VALUE="";
+      document.getElementById("adminLoginErr").classList.remove("hidden");
+      input.focus();
     }
-    document.getElementById("adminLoginErr").classList.remove("hidden");
-    input.focus();
   }
 
   /* ============ Nav / events ============ */
-  function showView(v,scroll){
-    document.querySelectorAll("#viewToggle button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));
+  document.getElementById("viewToggle").addEventListener("click",e=>{
+    const btn=e.target.closest("button"); if(!btn)return;
+    document.querySelectorAll("#viewToggle button").forEach(b=>b.classList.remove("on")); btn.classList.add("on");
+    const v=btn.dataset.view;
     document.getElementById("shopView").classList.toggle("hidden",v!=="shop");
     document.getElementById("adminView").classList.toggle("hidden",v!=="admin");
     if(v==="admin")updateAdminGate();
-    if(scroll!==false)window.scrollTo({top:0,behavior:"smooth"});
-  }
-  document.getElementById("viewToggle").addEventListener("click",e=>{
-    const btn=e.target.closest("button"); if(!btn)return;
-    showView(btn.dataset.view,true);
+    window.scrollTo({top:0,behavior:"smooth"});
   });
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
   document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
   document.getElementById("adminLockBtn").onclick=()=>{sessionStorage.removeItem("linen_admin_unlocked");updateAdminGate();toast("Admin locked");};
   document.getElementById("photoEditToggle").onclick=togglePhotoEditor;
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
-    const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } };
-  function checkAvailability(){
+    const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } else closePopCal(); };
+  document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation(); closePopCal();
+    if(pickDate) document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"}); };
+  document.addEventListener("click",(e)=>{ const pc=document.getElementById("popCal");
+    if(!pc||pc.hidden) return; if(!pc.contains(e.target) && e.target.id!=="dateField" && !e.target.closest("#dateField")) closePopCal(); });
+  document.getElementById("searchBtn").onclick=()=>{
     if(!pickDate){ openPopCal(); toast("Pick your dates"); return; }
-    closePopCal();
     document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
-  }
-  document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation(); checkAvailability(); };
-  document.getElementById("searchBtn").onclick=checkAvailability;
+  };
   document.getElementById("calPrev").onclick=(e)=>{e.stopPropagation();calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);renderCalendar();};
   document.getElementById("calNext").onclick=(e)=>{e.stopPropagation();calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderCalendar();};
   document.getElementById("pCalPrev").onclick=()=>{pCalMonth=new Date(pCalMonth.getFullYear(),pCalMonth.getMonth()-1,1);renderAdminCalendar();};
   document.getElementById("pCalNext").onclick=()=>{pCalMonth=new Date(pCalMonth.getFullYear(),pCalMonth.getMonth()+1,1);renderAdminCalendar();};
-  document.getElementById("resetBtn").onclick=async()=>{bookings=[];await saveBookings();renderAdmin();renderCalendar();renderCatalog();toast("All demo reservations cleared");};
+  document.getElementById("resetBtn").onclick=async()=>{bookings=[];await api("wipeall",{},true);renderAdmin();renderCalendar();renderCatalog();toast("All demo reservations cleared");};
   document.getElementById("newBookingBtn").onclick=()=>showNewBookingModal();
   document.getElementById("adminEmail").textContent=ADMIN_EMAIL;
 
   (function defaults(){ pickDate=iso(addDays(today(),14)); retDate=iso(addDays(today(),15)); calMonth=som(parseISO(pickDate)); })();
 
-  (async function init(){
-    loadPhotoOverrides(); await loadBookings(); updateDateField(); renderCalendar(); renderCatalog(); renderCart(); renderAdmin();
-    const qs=new URLSearchParams(location.search);
-    if(qs.get("admin")==="1"||location.hash==="#admin")showView("admin",false);
-  })();
+  (async function init(){ loadPhotoOverrides(); ADMIN_TOKEN_VALUE=sessionStorage.getItem("linen_admin_token")||""; await loadBookings(); if(ADMIN_TOKEN_VALUE){ try{ const d=await apiList(); bookings=d.bookings||[]; }catch(e){ ADMIN_TOKEN_VALUE=""; } } updateDateField(); renderCalendar(); renderCatalog(); renderCart(); renderAdmin(); })();
 })();
 
   (function(){var lb=document.createElement("div");lb.className="lightbox";var im=document.createElement("img");lb.appendChild(im);document.body.appendChild(lb);document.addEventListener("click",function(e){var t=e.target;if(t&&t.classList&&t.classList.contains("mainpic")){im.src=t.src;lb.classList.add("open");}else if(t===lb||t===im){lb.classList.remove("open");}});document.addEventListener("keydown",function(e){if(e.key==="Escape")lb.classList.remove("open");});})();
