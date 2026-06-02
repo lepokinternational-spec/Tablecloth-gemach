@@ -150,7 +150,7 @@
   .cal-grid.big .day.hasbk:hover{transform:scale(1.02);box-shadow:var(--shadow)}
   .cal-grid.big .day .topline{display:flex;justify-content:space-between;align-items:flex-start;width:100%}
   .cal-grid.big .day .bkbadges{margin-top:auto;display:flex;flex-direction:column;gap:3px;width:100%}
-  .bkbadge{font-size:.72rem;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bkbadge{font-size:.72rem;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
   .bkbadge.p{background:var(--orange)} .bkbadge.a{background:var(--ok)}
   .bkmore{font-size:.7rem;color:var(--ink-soft);font-weight:700}
   .caholi{font-size:.66rem;font-weight:700;color:var(--gold);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
@@ -753,6 +753,16 @@
 
   function bookingsOnDay(dISO){ const dd=parseISO(dISO);
     return bookings.filter(b=>{ if(b.status==="declined"||b.status==="cancelled")return false; const w=loanWindow(b); return parseISO(w[0])<=dd && parseISO(w[1])>=dd; }); }
+  function bookingItemNames(b){ return (b.items||[]).map(i=>i.name).filter(Boolean); }
+  function bookingBadgeText(b){
+    const names=bookingItemNames(b);
+    if(!names.length)return b.name||"Booking";
+    return (b.name?b.name+" · ":"")+names[0]+(names.length>1?" +"+(names.length-1):"");
+  }
+  function bookingBadgeTitle(b){
+    const items=(b.items||[]).map(i=>i.qty+"× "+i.name).join(", ");
+    return [b.name,items].filter(Boolean).join(" - ");
+  }
 
   function renderAdminCalendar(){
     const month=pCalMonth;
@@ -778,7 +788,7 @@
       if(bks.length){
         cell.classList.add("hasbk");
         const wrap=document.createElement("div"); wrap.className="bkbadges";
-        bks.slice(0,2).forEach(b=>{ const bd=document.createElement("div"); bd.className="bkbadge "+(b.status==="approved"?"a":"p"); bd.textContent=b.name; wrap.appendChild(bd); });
+        bks.slice(0,2).forEach(b=>{ const bd=document.createElement("div"); bd.className="bkbadge "+(b.status==="approved"?"a":"p"); bd.textContent=bookingBadgeText(b); bd.title=bookingBadgeTitle(b); wrap.appendChild(bd); });
         if(bks.length>2){ const m=document.createElement("div"); m.className="bkmore"; m.textContent="+"+(bks.length-2)+" more"; wrap.appendChild(m); }
         cell.appendChild(wrap);
         cell.addEventListener("click",()=>showDayModal(dISO));
