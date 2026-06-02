@@ -403,7 +403,7 @@
     {id:"black", name:"Black", size:"Plain weave", dim:"", stock:10, imgs:["images/black-1.jpg","images/black-2.jpg","images/black-3.jpg"]},
   ];
   const ADMIN_EMAIL="linencollection29@gmail.com";
-  const EMAIL_ENDPOINT="PASTE_YOUR_WORKER_URL_HERE";
+  const EMAIL_ENDPOINT="https://linen-email.linencollection29.workers.dev/";
   async function sendApprovalEmail(b){
     if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return;
     try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
