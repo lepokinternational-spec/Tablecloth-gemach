@@ -413,7 +413,7 @@
   async function sendAdminRequestEmail(b){
     if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return false;
     try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,approveUrl:adminApproveUrl(b.id),name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
       return true;
     }catch(e){console.error("admin email send failed",e);return false;}
   }
@@ -899,6 +899,14 @@
     toast(sent?"Request sent for approval":"Request submitted");
   };
   function val(id){return document.getElementById(id).value.trim();}
+  function adminApproveUrl(id){
+    const u=new URL(location.href);
+    u.search="";
+    u.hash="";
+    u.searchParams.set("admin","1");
+    if(id)u.searchParams.set("booking",id);
+    return u.toString();
+  }
 
   /* ============ Email / approval ============ */
   function showEmailModal(b){
@@ -1107,14 +1115,16 @@
   }
 
   /* ============ Nav / events ============ */
-  document.getElementById("viewToggle").addEventListener("click",e=>{
-    const btn=e.target.closest("button"); if(!btn)return;
-    document.querySelectorAll("#viewToggle button").forEach(b=>b.classList.remove("on")); btn.classList.add("on");
-    const v=btn.dataset.view;
+  function showView(v,scroll){
+    document.querySelectorAll("#viewToggle button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));
     document.getElementById("shopView").classList.toggle("hidden",v!=="shop");
     document.getElementById("adminView").classList.toggle("hidden",v!=="admin");
     if(v==="admin")updateAdminGate();
-    window.scrollTo({top:0,behavior:"smooth"});
+    if(scroll!==false)window.scrollTo({top:0,behavior:"smooth"});
+  }
+  document.getElementById("viewToggle").addEventListener("click",e=>{
+    const btn=e.target.closest("button"); if(!btn)return;
+    showView(btn.dataset.view,true);
   });
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
   document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
@@ -1140,7 +1150,11 @@
 
   (function defaults(){ pickDate=iso(addDays(today(),14)); retDate=iso(addDays(today(),15)); calMonth=som(parseISO(pickDate)); })();
 
-  (async function init(){ loadPhotoOverrides(); await loadBookings(); updateDateField(); renderCalendar(); renderCatalog(); renderCart(); renderAdmin(); })();
+  (async function init(){
+    loadPhotoOverrides(); await loadBookings(); updateDateField(); renderCalendar(); renderCatalog(); renderCart(); renderAdmin();
+    const qs=new URLSearchParams(location.search);
+    if(qs.get("admin")==="1"||location.hash==="#admin")showView("admin",false);
+  })();
 })();
 
   (function(){var lb=document.createElement("div");lb.className="lightbox";var im=document.createElement("img");lb.appendChild(im);document.body.appendChild(lb);document.addEventListener("click",function(e){var t=e.target;if(t&&t.classList&&t.classList.contains("mainpic")){im.src=t.src;lb.classList.add("open");}else if(t===lb||t===im){lb.classList.remove("open");}});document.addEventListener("keydown",function(e){if(e.key==="Escape")lb.classList.remove("open");});})();
