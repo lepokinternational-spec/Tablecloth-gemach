@@ -383,6 +383,7 @@
           <div class="field"><label>Home address</label><input id="fAddr" placeholder="14 High Street, London"></div>
           <div class="err hidden" id="eAddr">Please enter your full address.</div>
           <div class="field"><label>Note (optional — tell us here if you need them longer than 5 days)</label><input id="fNote" placeholder="e.g. could we keep them for 7 days?"></div>
+          <input id="fWebsite" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
           <button class="btn" id="placeBtn" style="width:100%;margin-top:4px">Send reservation request</button>
           <p class="sub" style="text-align:center">Completely free. We approve by email before it's confirmed.</p>
         </div>
@@ -953,6 +954,7 @@
   function toggleErr(id,show){document.getElementById(id).classList.toggle("hidden",!show);}
 
   document.getElementById("placeBtn").onclick=async()=>{
+    if(document.getElementById("fWebsite") && document.getElementById("fWebsite").value){ return; }
     const name=val("fName"),phone=val("fPhone"),email=val("fEmail"),addr=val("fAddr"),note=val("fNote");
     let ok=true; toggleErr("eName",!name); if(!name)ok=false;
     const bad=!validPhone(phone)||!validEmail(email); toggleErr("eContact",bad); if(bad)ok=false;
