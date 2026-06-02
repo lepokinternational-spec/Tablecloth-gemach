@@ -1,0 +1,1227 @@
+<!-- Gemach HaShulchan — Community Linen Loan (free / charity) -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Linen Collection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,400..500&family=Hanken+Grotesk:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --linen:#F2EDE0; --linen-2:#EAE2D0; --paper:#FBF8F0;
+    --ink:#23211B; --ink-soft:#5A554A;
+    --teal:#1F4A45; --teal-2:#2C605A;
+    --terra:#B65B3C; --terra-soft:#C9805F;
+    --gold:#B08A33; --gold-soft:#D9B968;
+    --royal:#284071;
+    --line:#D7CEBB;
+    --ok:#3E7A52; --warn:#C08A2D; --bad:#B0432F; --orange:#E07B2E;
+    --yt:#B08A33; --fest:#B65B3C; --cm:#CDB05A; --minor:#6E8C6A; --fast:#6B7689;
+    --shadow:0 1px 2px rgba(35,33,27,.05),0 12px 30px -14px rgba(35,33,27,.20);
+    --shadow-lg:0 30px 70px -30px rgba(35,33,27,.5);
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:"Hanken Grotesk",system-ui,sans-serif;color:var(--ink);background:var(--linen);
+    background-image:radial-gradient(circle at 10% 6%,rgba(176,138,51,.07),transparent 40%),
+      radial-gradient(circle at 90% 0%,rgba(31,74,69,.08),transparent 42%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 22px}
+  h1,h2,h3,h4{font-family:"Fraunces",serif;font-weight:500;letter-spacing:-.01em;margin:0}
+  .heb{font-family:"Frank Ruhl Libre","Frank Ruhl",serif;direction:rtl;unicode-bidi:isolate}
+  a{color:inherit} button{font-family:inherit;cursor:pointer;border:none}
+  .hidden{display:none!important}
+
+  header.bar{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(242,237,224,.85);border-bottom:1px solid var(--line)}
+  .bar-in{display:flex;align-items:center;justify-content:space-between;height:70px;gap:12px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .mark{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--teal-2));
+    box-shadow:inset 0 0 0 3px rgba(217,185,104,.5);display:grid;place-items:center;color:var(--gold-soft);font-family:"Frank Ruhl Libre",serif;font-size:1.3rem}
+  .brand b{font-family:"Fraunces",serif;font-size:1.3rem;font-weight:600}
+  .brand span{display:block;font-size:.64rem;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-soft);margin-top:-2px}
+  .toggle{display:flex;background:var(--linen-2);border:1px solid var(--line);border-radius:999px;padding:4px;gap:2px}
+  .toggle button{background:none;padding:9px 16px;border-radius:999px;font-size:.85rem;font-weight:600;color:var(--ink-soft);transition:.2s}
+  .toggle button.on{background:var(--teal);color:#fff;box-shadow:var(--shadow)}
+  .freebadge{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);background:#E2EDE9;border:1px solid #C5DAD3;padding:6px 11px;border-radius:999px}
+  @media(max-width:760px){.freebadge{display:none}}
+
+  .hero{padding:50px 0 14px;position:relative;z-index:30}
+  .hero .eyebrow{font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--terra);font-weight:700}
+  .hero h1{font-size:clamp(2.3rem,5vw,3.7rem);line-height:1.03;margin:14px 0 10px;max-width:15ch}
+  .hero h1 em{font-style:italic;color:var(--teal)}
+  .hero p.lead{font-size:1.08rem;color:var(--ink-soft);max-width:52ch}
+
+  /* search */
+  .search{margin-top:26px;background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;padding-left:2px}
+  .field input,.field select{font-family:inherit;font-size:1rem;color:var(--ink);border:1px solid var(--line);background:#fff;border-radius:10px;padding:12px;width:100%}
+  .field input:focus,.field select:focus{outline:2px solid var(--teal-2);outline-offset:1px}
+  .btn{background:var(--teal);color:#fff;border-radius:11px;padding:13px 22px;font-weight:700;font-size:.95rem;transition:transform .12s,background .2s;white-space:nowrap}
+  .btn:hover{background:var(--teal-2);transform:translateY(-1px)} .btn:active{transform:translateY(0)}
+  .btn.ghost{background:transparent;color:var(--teal);border:1px solid var(--teal)}
+  .btn.terra{background:var(--terra)} .btn.terra:hover{background:var(--terra-soft)}
+  .btn.gold{background:var(--gold)} .btn.gold:hover{background:#9c781f}
+  .btn.sm{padding:9px 14px;font-size:.84rem;border-radius:9px}
+  .btn[disabled]{opacity:.4;cursor:not-allowed;transform:none}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center}
+  .chips .lbl{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin-right:2px}
+  .chip{background:var(--linen-2);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:.84rem;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;gap:7px;transition:.15s}
+  .chip:hover{border-color:var(--gold);background:#fff}
+  .chip .he{font-family:"Frank Ruhl Libre",serif;color:var(--gold)}
+  .chip.holi{border-color:#E6D9B4;background:#FAF3DF}
+
+  .searchnote{font-size:.83rem;color:var(--ink-soft);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}
+  .searchrow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:flex-end}
+  @media(max-width:760px){.searchrow{grid-template-columns:1fr}}
+  .datepick{position:relative}
+  .datefield{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:1rem;color:var(--ink);font-weight:600;text-align:left}
+  .datefield:hover{border-color:var(--teal-2)} .datefield .cal-ic{font-size:1.1rem;opacity:.8}
+  .datefield.empty{color:var(--ink-soft);font-weight:500}
+  .popcal{position:absolute;top:calc(100% + 8px);left:0;z-index:1000;width:340px;max-width:92vw;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);padding:16px;animation:pop .18s}
+  @media(max-width:760px){.popcal{left:0;right:0;width:auto}}
+  .popcal .cal-grid{margin-top:8px}
+  .popcal-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.76rem;color:var(--ink-soft);margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  .popcal-foot span{flex:1}
+  .popcal-foot #popHint.err{color:var(--bad);font-weight:700}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+  .cols{display:grid;grid-template-columns:1fr 350px;gap:26px;align-items:start;padding:26px 0 70px;position:relative;z-index:1}
+  @media(max-width:920px){.cols{grid-template-columns:1fr}}
+  section.block{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:22px}
+  .block h2{font-size:1.5rem} .block .sub{color:var(--ink-soft);font-size:.9rem;margin:4px 0 0}
+
+  /* catalogue */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;margin-top:18px}
+  .card{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff;display:flex;flex-direction:column;transition:transform .15s,box-shadow .2s}
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+  .pic{position:relative;background:#efe9da;height:245px;border-bottom:1px solid var(--line);overflow:hidden}
+  .pic img.mainpic{position:absolute;inset:12px;display:block;width:calc(100% - 24px);height:calc(100% - 24px);object-fit:contain;background:transparent;border-radius:8px;cursor:zoom-in}
+  .thumbs{position:absolute;left:18px;bottom:18px;z-index:2;display:flex;gap:6px;padding:5px 7px;background:rgba(233,225,208,.92);border:1px solid rgba(201,190,167,.8);border-radius:9px;box-shadow:0 5px 18px rgba(38,34,24,.15);flex-wrap:wrap;max-width:calc(100% - 36px)}
+  .thumbs .thumb{width:48px;height:38px;object-fit:cover;background:#fff;border-radius:6px;cursor:pointer;border:2px solid transparent;opacity:.78;transition:.15s}
+  .thumbs .thumb.on{border-color:var(--teal);opacity:1} .thumbs .thumb:hover{opacity:1}
+  .dim{font-size:.74rem;color:var(--ink-soft);margin-top:2px;letter-spacing:.02em}
+  .lightbox{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(18,18,18,.9);display:none;align-items:center;justify-content:center;z-index:99999;padding:18px;cursor:zoom-out}
+  .lightbox.open{display:flex}
+  .lightbox img{max-width:95vw;max-height:92vh;border-radius:12px;box-shadow:0 12px 50px rgba(0,0,0,.55)}
+  .card .body{padding:16px 15px 16px}
+  .card h4{font-size:1.08rem;line-height:1.18}
+  .card .size{color:var(--ink-soft);font-size:.82rem;margin-top:1px}
+  .qtyrow{display:flex;align-items:center;gap:8px;margin-top:12px}
+  .setpick{width:100%;justify-content:center}
+  .setpick.selected{background:var(--gold);color:#fff;border-color:var(--gold)}
+  .citem small{display:block;color:var(--ink-soft);font-size:.78rem;margin-top:2px}
+  .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .stepper button{background:var(--linen-2);width:34px;height:36px;font-size:1.15rem;color:var(--ink)} .stepper button:hover{background:var(--line)}
+  .stepper input{width:44px;height:36px;text-align:center;border:none;border-left:1px solid var(--line);border-right:1px solid var(--line);font-family:inherit;font-size:.95rem}
+
+  /* calendar */
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .cal-head button{background:var(--linen-2);border:1px solid var(--line);width:34px;height:34px;border-radius:9px;font-size:1.1rem} .cal-head button:hover{background:var(--line)}
+  .cal-head .lbls{text-align:center;line-height:1.15}
+  .cal-head .lbls h3{font-size:1.18rem}
+  .cal-head .lbls .he{font-size:1rem;color:var(--gold);margin-top:1px}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:8px}
+  .cal-grid .dow{text-align:center;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;padding-bottom:2px}
+  .day{aspect-ratio:1;border:1px solid var(--line);border-radius:9px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:.12s;padding:2px}
+  .day:hover:not(.empty):not(.past){border-color:var(--teal);transform:scale(1.05)}
+  .day.empty{border:none;background:none;cursor:default} .day.past{opacity:.34;cursor:not-allowed}
+  .day .g{font-size:.92rem;font-weight:600;line-height:1}
+  .day .h{font-family:"Frank Ruhl Libre",serif;font-size:.66rem;color:var(--gold);line-height:1;margin-top:2px}
+  .day .lvl{width:15px;height:4px;border-radius:3px;margin-top:3px}
+  .day .holi{position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%}
+  .day.sel{background:var(--teal);border-color:var(--teal)} .day.sel .g,.day.sel .h{color:#fff}
+  .day.inrange{background:rgba(31,74,69,.12);border-color:var(--teal-2)}
+  .day.rangeok{box-shadow:inset 0 0 0 1px var(--teal-2)}
+  .day.toofar{opacity:.3;cursor:not-allowed}
+  .day.toofar:hover{transform:none;border-color:var(--line)}
+  .dateadvice{margin-top:12px;background:#FBEFE0;border:1px solid #E7C9A6;color:#8A5A1E;border-radius:10px;padding:11px 14px;font-size:.85rem;font-weight:600}
+  .day.today{box-shadow:inset 0 0 0 2px var(--terra)}
+  .day.yt{background:#FBF3DE} .day.yt.sel{background:var(--teal)}
+  .lvl-hi{background:var(--ok)} .lvl-mid{background:var(--warn)} .lvl-lo{background:var(--bad)} .lvl-none{background:var(--line)}
+  /* large admin calendar */
+  .cal-grid.big{gap:8px}
+  .cal-grid.big .dow{font-size:.75rem;padding-bottom:6px}
+  .cal-grid.big .day{aspect-ratio:auto;min-height:96px;justify-content:flex-start;align-items:stretch;padding:7px 8px;border-radius:11px}
+  .cal-grid.big .day .g{font-size:1.1rem}
+  .cal-grid.big .day .h{font-size:.72rem;margin-top:1px}
+  .cal-grid.big .day.hasbk{cursor:pointer;border-color:var(--teal-2)}
+  .cal-grid.big .day.hasbk:hover{transform:scale(1.02);box-shadow:var(--shadow)}
+  .cal-grid.big .day .topline{display:flex;justify-content:space-between;align-items:flex-start;width:100%}
+  .cal-grid.big .day .bkbadges{margin-top:auto;display:flex;flex-direction:column;gap:3px;width:100%}
+  .bkbadge{font-size:.72rem;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bkbadge.p{background:var(--orange)} .bkbadge.a{background:var(--ok)}
+  .bkmore{font-size:.7rem;color:var(--ink-soft);font-weight:700}
+  .caholi{font-size:.66rem;font-weight:700;color:var(--gold);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+  .daycard{border:1px solid var(--line);border-radius:11px;padding:13px;margin-bottom:12px;background:#fff}
+  .daycard .dctop{display:flex;align-items:center;gap:8px}
+  .daycard .dctop b{font-size:1.02rem}
+  .daycard .dcmeta{font-size:.85rem;color:var(--ink-soft);margin-top:7px;line-height:1.5} .daycard .dcmeta b{color:var(--ink)}
+  .daycard .items{margin-top:9px} .daycard .acts{margin-top:11px;display:flex;gap:8px;flex-wrap:wrap}
+  .day .holi.cal-big-dot{top:8px;right:8px}
+  .adminlegend{display:flex;gap:18px;flex-wrap:wrap;font-size:.83rem;font-weight:600;color:var(--ink);margin-bottom:14px;align-items:center}
+  @media(max-width:640px){.cal-grid.big .day{min-height:74px;padding:5px}.cal-grid.big .day .g{font-size:.95rem}.bkbadge{font-size:.62rem;padding:1px 4px}}
+  .holilist{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:7px;max-height:200px;overflow:auto}
+  .holirow{display:flex;align-items:center;gap:9px;font-size:.85rem}
+  .holirow .swatch{width:9px;height:9px;border-radius:50%;flex:none}
+  .holirow .d{color:var(--ink-soft);min-width:54px}
+  .holirow .he{color:var(--gold);margin-right:auto;font-size:.95rem}
+
+  /* request panel */
+  .cart{position:sticky;top:88px}
+  .cart .empty{color:var(--ink-soft);font-size:.9rem;padding:14px 0;text-align:center}
+  .citem{display:flex;justify-content:space-between;gap:8px;padding:11px 0;border-bottom:1px dashed var(--line);font-size:.9rem}
+  .citem .x{color:var(--bad);cursor:pointer;font-weight:700;background:none}
+  .daterange-pill{background:var(--linen-2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:.85rem;margin-top:12px;color:var(--ink-soft)}
+  .daterange-pill b{color:var(--ink)} .daterange-pill .he{color:var(--gold)}
+  .countrow{display:flex;justify-content:space-between;margin-top:13px;font-family:"Fraunces",serif;font-size:1.15rem}
+  .form{display:grid;gap:12px;margin-top:14px}
+  .form .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px} @media(max-width:520px){.form .row2{grid-template-columns:1fr}}
+  .err{color:var(--bad);font-size:.78rem;margin-top:-6px}
+
+  /* admin */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:24px 0} @media(max-width:740px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+  .stat .n{font-family:"Fraunces",serif;font-size:2rem;line-height:1} .stat.acc .n{color:var(--terra)}
+  .stat .l{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin-top:6px}
+  .bk{border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .bk .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .bk h4{font-size:1.12rem}
+  .pill{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+  .pill.pending{background:#FBF0DA;color:#8A6516} .pill.approved{background:#E1F0E5;color:#2A6B3E} .pill.declined{background:#F6E0DA;color:#9A3520} .pill.cancelled{background:#E9E7E2;color:#7A756B}
+  .nbitem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:.9rem}
+  .nbitem small{font-size:.76rem}
+  .bk .meta{font-size:.85rem;color:var(--ink-soft);margin-top:6px;display:grid;gap:3px} .bk .meta b{color:var(--ink);font-weight:600} .bk .meta .he{color:var(--gold)}
+  .bk .items{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .tag{background:var(--linen-2);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:.8rem}
+  .bk .acts{margin-top:13px;display:flex;gap:9px;flex-wrap:wrap}
+  .admin-login{max-width:440px;margin:0 auto 24px}
+  .admin-login .actions{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
+  .admin-login .actions .field{flex:1}
+  .photo-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .photo-edit-tab{border-radius:999px;padding:9px 18px}
+  .photo-manager{display:grid;gap:12px;margin-top:16px}
+  .photo-editor{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+  .photo-editor h4{font-size:1rem;margin-bottom:10px}
+  .photo-list{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+  .photo-tile{width:96px;border:1px solid var(--line);border-radius:9px;background:var(--linen-2);padding:6px;cursor:grab}
+  .photo-tile.dragging{opacity:.45}
+  .photo-tile img{display:block;width:100%;height:68px;object-fit:cover;border-radius:6px;background:#efe9da}
+  .photo-tile .mainmark{display:block;text-align:center;color:var(--teal);font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-top:5px;min-height:14px}
+  .photo-tile button{width:100%;height:25px;margin-top:5px;border-radius:7px;font-size:.72rem;background:#fff;border:1px solid var(--line);color:var(--terra)}
+  .photo-add{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .photo-add input{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px;font:inherit}
+  @media(max-width:560px){.photo-add{grid-template-columns:1fr}.photo-tile{width:88px}}
+
+  /* modal / email */
+  .overlay{position:fixed;inset:0;background:rgba(35,33,27,.55);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+  .overlay.show{display:flex;animation:fade .2s} @keyframes fade{from{opacity:0}}
+  .modal{background:var(--paper);border-radius:18px;max-width:540px;width:100%;box-shadow:var(--shadow-lg);max-height:90vh;overflow:auto;animation:pop .25s;position:relative}
+  @keyframes pop{from{transform:translateY(16px) scale(.97);opacity:0}}
+  .email .head{background:var(--teal);color:#fff;padding:18px 22px;border-radius:18px 18px 0 0}
+  .email .head .from{font-size:.78rem;opacity:.82}
+  .email .head h3{color:#fff;font-size:1.25rem;margin-top:4px}
+  .email .meta{padding:14px 22px;border-bottom:1px solid var(--line);font-size:.84rem;color:var(--ink-soft)} .email .meta span{color:var(--ink);font-weight:600}
+  .email .bd{padding:20px 22px} .email .bd p{margin:0 0 12px}
+  .recap{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin:14px 0}
+  .recap .ln{display:flex;justify-content:space-between;font-size:.88rem;padding:3px 0}
+  .email .cta{display:flex;gap:10px;margin-top:6px}
+  .approve-link{display:flex;align-items:center;gap:8px;background:var(--linen-2);border:1px dashed var(--line);border-radius:9px;padding:10px 12px;font-size:.76rem;color:var(--ink-soft);margin-top:14px;word-break:break-all}
+  .close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.25);color:#fff;width:30px;height:30px;border-radius:50%;font-size:1rem;z-index:2}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-size:.9rem;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:.3s;z-index:200;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .footnote{text-align:center;color:var(--ink-soft);font-size:.78rem;padding:0 0 40px;max-width:680px;margin:0 auto}
+  .fade-in{animation:rise .5s both} @keyframes rise{from{opacity:0;transform:translateY(12px)}}
+  .stagger>*{animation:rise .5s both}
+  .stagger>*:nth-child(2){animation-delay:.05s}.stagger>*:nth-child(3){animation-delay:.1s}.stagger>*:nth-child(4){animation-delay:.15s}
+
+  @media(max-width:640px){
+    .wrap{padding:0 14px}
+    .bar-in{height:auto;min-height:64px;padding:8px 14px;gap:8px;align-items:center}
+    .brand{gap:8px;min-width:0}
+    .brand .mark{width:34px;height:34px;border-radius:9px;font-size:1.05rem}
+    .brand b{font-size:1rem;line-height:1.05}
+    .brand span{font-size:.55rem;letter-spacing:.18em}
+    .bar-in{flex-wrap:wrap}
+    .toggle{flex:none}
+    .toggle button{padding:8px 10px;font-size:.78rem}
+    .hero{padding:28px 0 10px}
+    .hero h1{font-size:2rem;max-width:12ch;margin:10px 0 8px}
+    .hero p.lead{font-size:.96rem}
+    .search{margin-top:18px;padding:13px;border-radius:14px}
+    .searchrow .btn{width:100%;justify-content:center}
+    .searchnote{font-size:.78rem;gap:8px}
+    .chips{gap:6px}
+    .chip{font-size:.78rem;padding:6px 10px}
+    .cols{gap:18px;padding:18px 0 48px}
+    section.block{padding:16px;border-radius:12px}
+    .block h2{font-size:1.28rem}
+    .grid{grid-template-columns:1fr;gap:14px}
+    .card:hover{transform:none}
+    .pic{height:230px}
+    .pic img.mainpic{inset:10px;width:calc(100% - 20px);height:calc(100% - 20px)}
+    .thumbs{left:12px;right:12px;bottom:12px;max-width:none;overflow-x:auto;flex-wrap:nowrap}
+    .thumbs .thumb{width:44px;height:34px;flex:0 0 auto}
+    .card .body{padding:14px}
+    .setpick,.btn{display:inline-flex;align-items:center;white-space:normal;text-align:center;justify-content:center}
+    .cart{position:static}
+    .stats{grid-template-columns:1fr;gap:10px}
+    .admin-login .actions{display:grid;grid-template-columns:1fr;gap:10px}
+    .adminlegend{gap:10px;font-size:.76rem}
+    .cal-grid.big{gap:4px}
+    .cal-grid.big .dow{font-size:.58rem;letter-spacing:.03em}
+    .cal-grid.big .day{min-height:54px;padding:4px 3px;border-radius:8px}
+    .cal-grid.big .day .g{font-size:.82rem}
+    .cal-grid.big .day .h,.bkbadge,.bkmore,.caholi{display:none}
+    .bk .acts,.daycard .acts,.email .cta{display:grid;grid-template-columns:1fr;gap:8px}
+    .photo-head{align-items:center}
+    .photo-edit-tab{margin-left:auto}
+    .photo-list{gap:7px}
+    .photo-tile{width:calc(33.333% - 5px);min-width:82px}
+    .photo-add{grid-template-columns:1fr}
+    .overlay{padding:10px;align-items:flex-start}
+    .modal{max-height:94vh;border-radius:14px;margin-top:8px}
+    .email .head{padding:16px 18px;border-radius:14px 14px 0 0}
+    .email .head h3{font-size:1.08rem;line-height:1.18;padding-right:34px}
+    .email .meta,.email .bd{padding:14px 18px}
+    .bk .meta,.email .meta,.approve-link{overflow-wrap:anywhere}
+    .recap .ln{display:grid;gap:3px}
+    .close{top:12px;right:12px}
+    .toast{width:calc(100vw - 28px);text-align:center}
+  }
+
+  @media(max-width:380px){
+    .bar-in{justify-content:center}
+    .brand{width:100%;justify-content:center}
+    .brand span{display:none}
+    .toggle{margin:0 auto}
+    .toggle button{padding:7px 8px;font-size:.74rem}
+    .hero h1{font-size:1.78rem}
+    .pic{height:210px}
+    .photo-tile{width:calc(50% - 4px)}
+  }
+</style>
+
+<header class="bar"><div class="wrap bar-in">
+  <div class="brand"><div class="mark">✦</div><div><b>The Linen Collection</b><span dir="rtl" style="letter-spacing:normal;text-transform:none;font-size:.78rem">לעילוי נשמת שמחה בת משה</span></div></div>
+  <span class="freebadge">Free to borrow</span>
+  <div class="toggle" id="viewToggle">
+    <button data-view="shop" class="on">Browse &amp; Reserve</button>
+    <button data-view="admin">Admin</button>
+  </div>
+</div></header>
+
+<!-- ================= CUSTOMER ================= -->
+<main id="shopView"><div class="wrap">
+  <div class="hero fade-in">
+    <div class="eyebrow">Reserve by the date · free to borrow</div>
+    <h1>Beautiful table linens for your <em>event</em>, free to borrow.</h1>
+    <p class="lead">A free community lending library. Choose your dates, see exactly what's available, and reserve in minutes — we confirm every request personally.</p>
+
+    <div class="search">
+      <div class="searchrow">
+        <div class="field datepick">
+          <label>Pickup &amp; return</label>
+          <button type="button" class="datefield empty" id="dateField"><span id="dateFieldText">Tap to choose dates…</span><span class="cal-ic">📅</span></button>
+          <div class="popcal" id="popCal" hidden>
+            <div class="cal-head">
+              <button type="button" id="calPrev">‹</button>
+              <div class="lbls"><h3 id="calLabel"></h3><div class="he" id="calLabelHe" dir="rtl"></div></div>
+              <button type="button" id="calNext">›</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div class="popcal-foot">
+              <span id="popHint">Tap a pickup date, then a return date · max 5 days</span>
+              <button type="button" class="btn sm" id="calDone">Done</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn" id="searchBtn">See availability</button>
+      </div>
+    </div>
+    <div class="searchnote">
+      <span>Choose pickup and return dates — up to 5 days. Need them longer? Add a note in your reservation and we'll try to help.</span>
+    </div>
+    <div class="dateadvice hidden" id="dateAdvice">⚠️ The most we can lend is 5 days. If you need them longer, please add a note in your reservation below and we'll try to accommodate.</div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <section class="block">
+        <h2>The collection</h2>
+        <p class="sub" id="catalogSub">Choose an event date above to see live availability.</p>
+        <div class="grid stagger" id="catalog"></div>
+      </section>
+    </div>
+    <aside><section class="block cart">
+      <h2 style="font-size:1.3rem">Your reservation</h2>
+      <div class="daterange-pill" id="cartDates">No event date selected yet</div>
+      <div id="cartItems"><div class="empty">Add linens to begin your request.</div></div>
+      <div id="cartCount" class="hidden"><div class="countrow"><span>Total included</span><span id="cartPieces">0</span></div>
+        <p class="sub" style="margin-top:10px">We'll confirm pickup &amp; return times by email once approved.</p></div>
+      <button class="btn terra" id="toCheckout" style="width:100%;margin-top:16px" disabled>Continue to details</button>
+      <div id="checkout" class="hidden">
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+        <h3 style="font-size:1.15rem">Your details</h3>
+        <p class="sub">So we can confirm and arrange the linens.</p>
+        <div class="form">
+          <div class="field"><label>Full name</label><input id="fName" placeholder="Alex Morgan"></div>
+          <div class="err hidden" id="eName">Please enter your name.</div>
+          <div class="row2">
+            <div class="field"><label>Phone number</label><input id="fPhone" placeholder="07700 900123"></div>
+            <div class="field"><label>Email</label><input id="fEmail" placeholder="you@email.com"></div>
+          </div>
+          <div class="err hidden" id="eContact">Enter a valid phone and email.</div>
+          <div class="field"><label>Home address</label><input id="fAddr" placeholder="14 High Street, London"></div>
+          <div class="err hidden" id="eAddr">Please enter your full address.</div>
+          <div class="field"><label>Note (optional — tell us here if you need them longer than 5 days)</label><input id="fNote" placeholder="e.g. could we keep them for 7 days?"></div>
+          <button class="btn" id="placeBtn" style="width:100%;margin-top:4px">Send reservation request</button>
+          <p class="sub" style="text-align:center">Completely free. We approve by email before it's confirmed.</p>
+        </div>
+      </div>
+    </section></aside>
+  </div>
+</div></main>
+
+<!-- ================= ADMIN ================= -->
+<main id="adminView" class="hidden"><div class="wrap">
+  <div class="hero fade-in" style="padding-bottom:8px">
+    <div class="eyebrow">Admin</div>
+    <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Bookings calendar</h1>
+    <p class="lead">Every request triggers an approval email. Click any day to see who's booked and when, and approve or decline — availability updates everywhere instantly.</p>
+  </div>
+  <section class="block admin-login" id="adminLogin">
+    <h2 style="font-size:1.3rem">Admin password</h2>
+    <div class="actions">
+      <div class="field"><label>Password</label><input type="password" id="adminPassword" autocomplete="current-password" placeholder="Enter password"></div>
+      <button class="btn" id="adminLoginBtn" type="button">Unlock</button>
+    </div>
+    <div class="err hidden" id="adminLoginErr" style="margin-top:10px">Incorrect password.</div>
+  </section>
+  <div id="adminContent" class="hidden">
+  <div class="stats stagger" id="stats"></div>
+
+  <section class="block">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+      <h2 style="font-size:1.4rem">Bookings calendar</h2>
+      <button class="btn sm" id="newBookingBtn">+ New booking</button>
+    </div>
+    <div class="cal-head" style="margin-bottom:14px">
+      <button id="pCalPrev">‹</button>
+      <div class="lbls"><h3 id="pCalLabel" style="font-size:1.6rem"></h3><div class="he" id="pCalLabelHe" dir="rtl" style="font-size:1.1rem"></div></div>
+      <button id="pCalNext">›</button>
+    </div>
+    <div class="adminlegend">
+      <span><span class="dot" style="background:var(--orange)"></span>Pending</span>
+      <span><span class="dot" style="background:var(--ok)"></span>Approved</span>
+      <span><span class="dot" style="background:var(--gold)"></span>Holiday</span>
+      <span style="margin-left:auto;color:var(--ink-soft)">Tap a day for details</span>
+    </div>
+    <div class="cal-grid big" id="pCalGrid"></div>
+  </section>
+
+  <section class="block" style="margin-top:24px">
+    <div class="photo-head">
+      <h2>Catalogue photos</h2>
+      <button class="btn gold sm photo-edit-tab" id="photoEditToggle" type="button">Edit</button>
+    </div>
+    <div id="photoEditorDetails" class="hidden">
+      <p class="sub" style="margin-top:8px">Add, remove, and reorder tablecloth photos.</p>
+      <div class="photo-manager" id="photoManager"></div>
+    </div>
+  </section>
+
+  <section class="block" style="margin-top:24px">
+    <h2>All reservations</h2>
+    <p class="sub">Full list with contact details and Hebrew dates.</p>
+    <div id="bookingList" style="margin-top:16px"></div>
+    <div style="margin-top:6px;font-size:.8rem;color:var(--ink-soft)">Approval emails are sent to <b id="adminEmail">linencollection29@gmail.com</b></div>
+    <button class="btn ghost sm" id="adminLockBtn" style="margin-top:14px">Lock admin</button>
+    <button class="btn ghost sm" id="resetBtn" style="margin-top:14px">Reset all demo data</button>
+  </section>
+  </div>
+</div></main>
+
+<div class="footnote wrap">Prototype · reservations are saved on this device and persist between visits. Hebrew dates &amp; holidays are computed from your browser's Hebrew calendar. A live deployment needs a small backend to send real approval emails.</div>
+
+<div class="overlay" id="overlay"><div class="modal"><button class="close" id="modalClose">✕</button><div id="modalBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ Catalogue (no prices — charity) ============ */
+  const INVENTORY=[
+    {id:"bronze", name:"Black & Gold", size:"Shimmer overlay", dim:"250 × 150 cm", stock:10, imgs:["images/bronze-1.jpg"]},
+    {id:"green", name:"Emerald Green", size:"Satin", dim:"270 × 150 cm", stock:10, imgs:["images/green-1.jpg","images/green-2.jpg","images/green-3.jpg"]},
+    {id:"greenrosette", name:"Green Rosette", size:"3D rosette", dim:"", stock:3, imgs:["images/greenrosette-1.jpg"]},
+    {id:"terracotta", name:"Terracotta", size:"Ribbed faille", dim:"250 × 150 cm", stock:10, imgs:["images/terracotta-1.jpg","images/terracotta-2.jpg"]},
+    {id:"blackscroll", name:"Black Scroll on Silver", size:"Beaded scroll", dim:"250 × 150 cm", stock:10, imgs:["images/blackscroll-1.jpg","images/blackscroll-2.jpg","images/blackscroll-3.jpg"]},
+    {id:"ivoryswirl", name:"Ivory Swirl Organza", size:"Sheer overlay", dim:"250 × 150 cm", stock:10, imgs:["images/ivoryswirl-1.jpg"]},
+    {id:"tealpintuck", name:"Teal Pintuck", size:"Textured taffeta", dim:"250 × 150 cm", stock:10, imgs:["images/tealpintuck-1.jpg","images/tealpintuck-2.jpg"]},
+    {id:"lilac", name:"Lilac", size:"Satin sheen", dim:"270 × 150 cm", stock:10, imgs:["images/lilac-1.jpg"]},
+    {id:"linen", name:"Hessian", size:"Woven", dim:"270 × 150 cm", stock:10, imgs:["images/linen-1.jpg","images/linen-2.jpg","images/linen-3.jpg"]},
+    {id:"rose", name:"Dusty Rose Print", size:"Patterned", dim:"250 × 150 cm", stock:10, imgs:["images/rose-1.jpg"]},
+    {id:"floral", name:"Floral Bloom", size:"Large floral print", dim:"240 × 140 cm", stock:2, imgs:["images/floral-1.jpg"]},
+    {id:"stripe", name:"Monochrome Stripe", size:"Runner", dim:"", stock:10, imgs:["images/stripe-1.jpg","images/stripe-2.jpg"]},
+    {id:"black", name:"Black", size:"Plain weave", dim:"", stock:10, imgs:["images/black-1.jpg","images/black-2.jpg","images/black-3.jpg"]},
+  ];
+  const ADMIN_EMAIL="linencollection29@gmail.com";
+  const EMAIL_ENDPOINT="https://linen-email.linencollection29.workers.dev/";
+  async function sendApprovalEmail(b){
+    if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return;
+    try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+    }catch(e){console.error("email send failed",e);}
+  }
+  async function sendAdminRequestEmail(b){
+    if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return false;
+    try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,approveUrl:adminApproveUrl(b.id),name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+      return true;
+    }catch(e){console.error("admin email send failed",e);return false;}
+  }
+  const ADMIN_PASSWORD="linen2026";
+  const PHOTO_KEY="gmh_photo_overrides";
+
+  /* ============ State ============ */
+  let bookings=[], cart={};
+  let pickDate=null, retDate=null;
+  const MAX_DAYS=5;
+  let calMonth=som(new Date()), pCalMonth=som(new Date());
+
+  /* ============ Date helpers ============ */
+  function som(d){return new Date(d.getFullYear(),d.getMonth(),1);}
+  function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+  function parseISO(s){const[y,m,dd]=s.split("-").map(Number);return new Date(y,m-1,dd);}
+  function today(){const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate());}
+  function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+  function daysInc(a,b){return Math.round((parseISO(b)-parseISO(a))/864e5)+1;}
+  function fmt(s){return parseISO(s).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});}
+  function fmtShort(s){return parseISO(s).toLocaleDateString("en-GB",{day:"numeric",month:"short"});}
+
+  /* ============ Hebrew calendar ============ */
+  let HFMT=null;
+  try{ HFMT=new Intl.DateTimeFormat("en-u-ca-hebrew",{day:"numeric",month:"long",year:"numeric"}); }catch(e){ HFMT=null; }
+  const MONTH_HE={Tishri:"תשרי",Heshvan:"חשון",Marheshvan:"חשון",Kislev:"כסלו",Tevet:"טבת",Shevat:"שבט",
+    Adar:"אדר","Adar I":"אדר א׳","Adar II":"אדר ב׳",Nisan:"ניסן",Iyar:"אייר",Sivan:"סיון",
+    Tamuz:"תמוז",Tammuz:"תמוז",Av:"אב",Elul:"אלול"};
+  function hParts(date){
+    if(!HFMT) return null;
+    try{
+      const ps=HFMT.formatToParts(date); let day,month,year;
+      for(const p of ps){ if(p.type==="day")day=parseInt(p.value,10); if(p.type==="month")month=p.value; if(p.type==="year")year=parseInt(p.value,10);}
+      return {dayNum:day,monthEn:month,yearNum:year};
+    }catch(e){ return null; }
+  }
+  function gematria(num){
+    const ones=["","א","ב","ג","ד","ה","ו","ז","ח","ט"], tens=["","י","כ","ל","מ","נ","ס","ע","פ","צ"],
+      huns=["","ק","ר","ש","ת","תק","תר","תש","תת","תתק"];
+    let n=num%1000, h=Math.floor(n/100), t=Math.floor((n%100)/10), o=n%10;
+    let s=huns[h]+tens[t]+ones[o];
+    s=s.replace("יה","טו").replace("יו","טז");
+    return s;
+  }
+  function hebPunct(s){ if(!s) return s; if(s.length===1) return s+"׳"; return s.slice(0,-1)+"״"+s.slice(-1); }
+  function hebDay(date){ const p=hParts(date); return p?hebPunct(gematria(p.dayNum)):""; }
+  function hebYear(date){ const p=hParts(date); return p?hebPunct(gematria(p.yearNum)):""; }
+  function hebMonth(en){ return MONTH_HE[en]||en; }
+  function hebFull(date){ const p=hParts(date); if(!p) return ""; return hebPunct(gematria(p.dayNum))+" "+hebMonth(p.monthEn)+" "+hebPunct(gematria(p.yearNum)); }
+
+  function isChanukah(date){
+    const p=hParts(date); if(!p) return false;
+    if(!(p.monthEn==="Kislev"||p.monthEn==="Tevet")) return false;
+    let d=new Date(date),steps=0;
+    while(steps<=8){ const q=hParts(d); if(q&&q.monthEn==="Kislev"&&q.dayNum===25) return steps<=7; d=addDays(d,-1); steps++; }
+    return false;
+  }
+  // returns array of {n:name, he:hebrewName, t:type}
+  function holidaysFor(date){
+    const p=hParts(date); if(!p) return [];
+    const m=p.monthEn,d=p.dayNum,out=[];
+    if(d===1 && m!=="Tishri") out.push({n:"Rosh Chodesh "+m,he:"ראש חודש "+hebMonth(m),t:"minor"});
+    if(d===30) out.push({n:"Rosh Chodesh",he:"ראש חודש",t:"minor"});
+    switch(m){
+      case "Tishri":
+        if(d===1)out.push({n:"Rosh Hashanah",he:"ראש השנה",t:"yt"});
+        if(d===2)out.push({n:"Rosh Hashanah II",he:"ראש השנה ב׳",t:"yt"});
+        if(d===10)out.push({n:"Yom Kippur",he:"יום כיפור",t:"yt"});
+        if(d===15)out.push({n:"Sukkot",he:"סוכות",t:"yt"});
+        if(d===16)out.push({n:"Sukkot II",he:"סוכות ב׳",t:"yt"});
+        if(d>=17&&d<=20)out.push({n:"Chol HaMoed Sukkot",he:"חול המועד סוכות",t:"cm"});
+        if(d===21)out.push({n:"Hoshana Rabbah",he:"הושענא רבה",t:"cm"});
+        if(d===22)out.push({n:"Shemini Atzeret",he:"שמיני עצרת",t:"yt"});
+        if(d===23)out.push({n:"Simchat Torah",he:"שמחת תורה",t:"yt"}); break;
+      case "Kislev": case "Tevet": if(isChanukah(date))out.push({n:"Chanukah",he:"חנוכה",t:"fest"}); break;
+      case "Shevat": if(d===15)out.push({n:"Tu BiShvat",he:"ט״ו בשבט",t:"minor"}); break;
+      case "Adar I": if(d===14)out.push({n:"Purim Katan",he:"פורים קטן",t:"minor"}); break;
+      case "Adar": case "Adar II":
+        if(d===14)out.push({n:"Purim",he:"פורים",t:"fest"});
+        if(d===15)out.push({n:"Shushan Purim",he:"שושן פורים",t:"fest"}); break;
+      case "Nisan":
+        if(d===15)out.push({n:"Passover",he:"פסח",t:"yt"});
+        if(d===16)out.push({n:"Passover II",he:"פסח ב׳",t:"yt"});
+        if(d>=17&&d<=20)out.push({n:"Chol HaMoed Passover",he:"חול המועד פסח",t:"cm"});
+        if(d===21)out.push({n:"Passover (7th day)",he:"שביעי של פסח",t:"yt"});
+        if(d===22)out.push({n:"Passover (8th day)",he:"אחרון של פסח",t:"yt"}); break;
+      case "Iyar": if(d===18)out.push({n:"Lag BaOmer",he:"ל״ג בעומר",t:"minor"}); break;
+      case "Sivan":
+        if(d===6)out.push({n:"Shavuot",he:"שבועות",t:"yt"});
+        if(d===7)out.push({n:"Shavuot II",he:"שבועות ב׳",t:"yt"}); break;
+      case "Av":
+        if(d===9)out.push({n:"Tisha B'Av",he:"תשעה באב",t:"fast"});
+        if(d===15)out.push({n:"Tu B'Av",he:"ט״ו באב",t:"minor"}); break;
+    }
+    return out;
+  }
+  const TYPE_COLOR={yt:"var(--yt)",fest:"var(--fest)",cm:"var(--cm)",minor:"var(--minor)",fast:"var(--fast)"};
+
+  // upcoming festival windows for search chips
+  function upcomingHolidays(maxDays){
+    if(!HFMT) return [];
+    function group(date){
+      for(const h of holidaysFor(date)){
+        if(h.n.indexOf("Sukkot")>-1||h.n.indexOf("Hoshana")>-1) return {k:"Sukkot",he:"סוכות"};
+        if(h.n.indexOf("Passover")>-1) return {k:"Passover",he:"פסח"};
+        if(h.n.indexOf("Rosh Hashanah")>-1) return {k:"Rosh Hashanah",he:"ראש השנה"};
+        if(h.n.indexOf("Shemini")>-1||h.n.indexOf("Simchat")>-1) return {k:"Shemini Atzeret",he:"שמ״ע"};
+        if(h.n==="Yom Kippur") return {k:"Yom Kippur",he:"יום כיפור"};
+        if(h.n.indexOf("Shavuot")>-1) return {k:"Shavuot",he:"שבועות"};
+        if(h.n==="Chanukah") return {k:"Chanukah",he:"חנוכה"};
+        if(h.n==="Purim"||h.n==="Shushan Purim") return {k:"Purim",he:"פורים"};
+      }
+      return null;
+    }
+    const res=[]; let cur=null,start=null,prev=null;
+    for(let i=0;i<maxDays;i++){
+      const d=addDays(today(),i), g=group(d);
+      const key=g?g.k:null;
+      if(key!==(cur?cur.k:null)){
+        if(cur){ res.push({k:cur.k,he:cur.he,start:iso(start),end:iso(prev)}); }
+        cur=g; start=g?d:null;
+      }
+      prev=d;
+    }
+    if(cur) res.push({k:cur.k,he:cur.he,start:iso(start),end:iso(prev)});
+    return res.slice(0,6);
+  }
+
+  /* ============ Storage ============ */
+  async function loadBookings(){ try{ const raw=localStorage.getItem("gmh_bookings"); bookings=raw?JSON.parse(raw):[]; }catch(e){ bookings=[]; } }
+  async function saveBookings(){ try{ localStorage.setItem("gmh_bookings",JSON.stringify(bookings)); }catch(e){ console.error(e); } }
+  function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  function photosFor(inv){return (inv.imgs&&inv.imgs.length?inv.imgs:(inv.img?[inv.img]:[])).filter(Boolean);}
+  function cleanPhotoUrl(u){u=String(u||"").trim(); if(!u||/[<>"']/.test(u)||/^javascript:/i.test(u))return ""; return u;}
+  function loadPhotoOverrides(){
+    try{
+      const raw=localStorage.getItem(PHOTO_KEY), data=raw?JSON.parse(raw):{};
+      INVENTORY.forEach(inv=>{if(Array.isArray(data[inv.id])){const pics=data[inv.id].map(cleanPhotoUrl).filter(Boolean); if(pics.length)inv.imgs=pics;}});
+    }catch(e){console.error(e);}
+  }
+  function savePhotoOverrides(){
+    const data={}; INVENTORY.forEach(inv=>{data[inv.id]=photosFor(inv);});
+    localStorage.setItem(PHOTO_KEY,JSON.stringify(data));
+  }
+
+  /* ============ Availability ============ */
+  // a booking holds stock across its loan window: pickup→return once the admin sets them, otherwise just the event date
+  function loanWindow(b){ return [b.pickup||b.start, b.ret||b.start]; }
+  function reservedOn(itemId,dayISO){
+    let n=0; const dd=parseISO(dayISO);
+    for(const b of bookings){ if(b.status==="declined"||b.status==="cancelled")continue; const it=b.items.find(x=>x.id===itemId); if(!it)continue;
+      const w=loanWindow(b); if(parseISO(w[0])<=dd && parseISO(w[1])>=dd) n+=it.qty; }
+    return n;
+  }
+  function availForDate(itemId,dateISO){ return INVENTORY.find(i=>i.id===itemId).stock - reservedOn(itemId,dateISO); }
+  function availForWindow(itemId,s,e){ let max=0,d=parseISO(s),end=parseISO(e); while(d<=end){ max=Math.max(max,reservedOn(itemId,iso(d))); d=addDays(d,1);} return INVENTORY.find(i=>i.id===itemId).stock - max; }
+  function dayLevel(dayISO){
+    let total=0,used=0; for(const inv of INVENTORY){ total+=inv.stock; used+=reservedOn(inv.id,dayISO);} 
+    if(used===0)return "lvl-hi"; const r=(total-used)/total;
+    if(r>0.5)return "lvl-hi"; if(r>0.2)return "lvl-mid"; if(r>0)return "lvl-lo"; return "lvl-none";
+  }
+
+  /* ============ Cloth illustrations (SVG "pics") ============ */
+  const DRAPE="M44,84 A116,30 0 0 1 276,84 L284,178 Q160,202 36,178 Z";
+  function flower(x,y,c){ let pet=""; [0,72,144,216,288].forEach(a=>{pet+='<ellipse cx="0" cy="-5" rx="2.3" ry="4.4" transform="rotate('+a+')"/>';});
+    return '<g transform="translate('+x+','+y+')" fill="'+c+'" opacity=".34">'+pet+'<circle r="1.8" opacity=".6"/></g>'; }
+  function damaskMotif(x,y,c){ return '<g transform="translate('+x+','+y+')" fill="none" stroke="'+c+'" stroke-opacity=".3" stroke-width="1.4"><path d="M0,-11 C9,-6 9,5 0,9 C-9,5 -9,-6 0,-11 Z"/><path d="M0,9 C5,15 -5,15 0,9"/><circle cx="0" cy="-1" r="2" stroke-opacity=".2"/></g>'; }
+  function patternDef(inv){
+    const id=inv.id,c=inv.edge;
+    switch(inv.pattern){
+      case "stripe": return '<pattern id="p-'+id+'" width="16" height="16" patternUnits="userSpaceOnUse"><rect x="6" width="4" height="16" fill="'+c+'" opacity=".24"/></pattern>';
+      case "check": return '<pattern id="p-'+id+'" width="26" height="26" patternUnits="userSpaceOnUse"><rect width="26" height="9" fill="'+c+'" opacity=".18"/><rect width="9" height="26" fill="'+c+'" opacity=".18"/></pattern>';
+      case "lace": return '<pattern id="p-'+id+'" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="2.3" fill="'+c+'" opacity=".32"/><circle cx="17" cy="15" r="1.5" fill="'+c+'" opacity=".26"/><path d="M2,15 q5,-6 10,0 q5,6 10,0" stroke="'+c+'" stroke-opacity=".24" fill="none" stroke-width="1"/></pattern>';
+      case "floral": return '<pattern id="p-'+id+'" width="34" height="34" patternUnits="userSpaceOnUse">'+flower(9,9,c)+flower(26,25,c)+'</pattern>';
+      case "damask": return '<pattern id="p-'+id+'" width="46" height="58" patternUnits="userSpaceOnUse">'+damaskMotif(23,16,c)+damaskMotif(0,45,c)+damaskMotif(46,45,c)+'</pattern>';
+      case "weave": return '<pattern id="p-'+id+'" width="7" height="7" patternUnits="userSpaceOnUse"><path d="M0,0 L7,0 M0,0 L0,7" stroke="'+c+'" stroke-opacity=".13" stroke-width="1"/></pattern>';
+      default: return "";
+    }
+  }
+  function clothSVG(inv){
+    const id=inv.id, pat=patternDef(inv);
+    return '<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+inv.name+'">'
+      +'<defs>'
+      +'<linearGradient id="sh-'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".14"/></linearGradient>'
+      +'<radialGradient id="fl-'+id+'" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#000" stop-opacity=".16"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>'
+      + pat
+      +'<clipPath id="cl-'+id+'"><path d="'+DRAPE+'"/></clipPath></defs>'
+      +'<ellipse cx="160" cy="190" rx="120" ry="11" fill="url(#fl-'+id+')"/>'
+      +'<path d="'+DRAPE+'" fill="'+inv.color+'"/>'
+      +'<g clip-path="url(#cl-'+id+')">'
+      + (pat?'<rect width="320" height="200" fill="url(#p-'+id+')"/>':'')
+      +'<rect width="320" height="200" fill="url(#sh-'+id+')"/>'
+      +'<g stroke="'+inv.edge+'" stroke-opacity=".22" stroke-width="2" fill="none"><path d="M104,84 C101,120 99,150 96,180"/><path d="M160,90 L160,188"/><path d="M216,84 C219,120 221,150 224,180"/></g>'
+      +'</g>'
+      +'<path d="M44,84 A116,30 0 0 0 276,84" fill="none" stroke="'+inv.edge+'" stroke-opacity=".5" stroke-width="1.5"/>'
+      +'<path d="M36,178 Q160,202 284,178" fill="none" stroke="'+inv.edge+'" stroke-opacity=".4" stroke-width="2.5"/>'
+      +'</svg>';
+  }
+
+  /* ============ Toast ============ */
+  let toastT; function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600); }
+
+  /* ============ Calendar render ============ */
+  const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  function monthHebrewLabel(monthDate){
+    if(!HFMT) return "";
+    const first=new Date(monthDate.getFullYear(),monthDate.getMonth(),1);
+    const last=new Date(monthDate.getFullYear(),monthDate.getMonth()+1,0);
+    const a=hParts(first),b=hParts(last);
+    if(!a||!b) return "";
+    const ma=hebMonth(a.monthEn), mb=hebMonth(b.monthEn);
+    const yr=hebPunct(gematria(b.yearNum));
+    return (ma===mb?ma:ma+"–"+mb)+" "+yr;
+  }
+  function buildCal(grid,label,labelHe,month){
+    document.getElementById(label).textContent=month.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+    const he=document.getElementById(labelHe); if(he) he.textContent=monthHebrewLabel(month);
+    const g=document.getElementById(grid); g.innerHTML="";
+    DOW.forEach(d=>{const e=document.createElement("div");e.className="dow";e.textContent=d;g.appendChild(e);});
+    const firstDow=new Date(month.getFullYear(),month.getMonth(),1).getDay();
+    for(let i=0;i<firstDow;i++){const e=document.createElement("div");e.className="day empty";g.appendChild(e);}
+    const last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate(), t=today();
+    for(let dn=1;dn<=last;dn++){
+      const date=new Date(month.getFullYear(),month.getMonth(),dn), dISO=iso(date);
+      const cell=document.createElement("div"); cell.className="day";
+      const isPast=date<t;
+      const hols=holidaysFor(date);
+      const ytHol=hols.find(h=>h.t==="yt");
+      if(ytHol) cell.classList.add("yt");
+      if(isPast) cell.classList.add("past");
+      if(dISO===iso(t)) cell.classList.add("today");
+      const gnum=document.createElement("div"); gnum.className="g"; gnum.textContent=dn; cell.appendChild(gnum);
+      const hd=hebDay(date); if(hd){ const hh=document.createElement("div"); hh.className="h"; hh.textContent=hd; cell.appendChild(hh); }
+      if(hols.length){ const hm=document.createElement("span"); hm.className="holi"; hm.style.background=TYPE_COLOR[hols[0].t]; cell.appendChild(hm);
+        cell.title=hols.map(h=>h.n).join(" · ")+(HFMT?" — "+hebFull(date):""); }
+      else { cell.title=HFMT?hebFull(date):""; }
+
+      if(pickDate&&dISO===pickDate)cell.classList.add("sel");
+      if(retDate&&dISO===retDate)cell.classList.add("sel");
+      if(pickDate&&retDate&&parseISO(dISO)>parseISO(pickDate)&&parseISO(dISO)<parseISO(retDate))cell.classList.add("inrange");
+      if(pickDate&&!retDate&&!isPast){
+        const diff=Math.round((parseISO(dISO)-parseISO(pickDate))/864e5);
+        if(diff>0&&diff<MAX_DAYS)cell.classList.add("rangeok");
+        if(diff>=MAX_DAYS)cell.classList.add("toofar");
+      }
+      if(!isPast){ const lv=dayLevel(dISO); const bar=document.createElement("span"); bar.className="lvl "+lv; cell.appendChild(bar);
+        cell.addEventListener("click",(e)=>{ e.stopPropagation(); pickDay(dISO); }); }
+      g.appendChild(cell);
+    }
+  }
+  function renderCalendar(){ buildCal("calGrid","calLabel","calLabelHe",calMonth); }
+
+  function bookingsOnDay(dISO){ const dd=parseISO(dISO);
+    return bookings.filter(b=>{ if(b.status==="declined"||b.status==="cancelled")return false; const w=loanWindow(b); return parseISO(w[0])<=dd && parseISO(w[1])>=dd; }); }
+
+  function renderAdminCalendar(){
+    const month=pCalMonth;
+    document.getElementById("pCalLabel").textContent=month.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+    const he=document.getElementById("pCalLabelHe"); if(he) he.textContent=monthHebrewLabel(month);
+    const g=document.getElementById("pCalGrid"); g.innerHTML="";
+    DOW.forEach(d=>{const e=document.createElement("div");e.className="dow";e.textContent=d;g.appendChild(e);});
+    const firstDow=new Date(month.getFullYear(),month.getMonth(),1).getDay();
+    for(let i=0;i<firstDow;i++){const e=document.createElement("div");e.className="day empty";g.appendChild(e);}
+    const last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate(), t=today();
+    for(let dn=1;dn<=last;dn++){
+      const date=new Date(month.getFullYear(),month.getMonth(),dn), dISO=iso(date);
+      const cell=document.createElement("div"); cell.className="day";
+      const hols=holidaysFor(date);
+      if(hols.find(h=>h.t==="yt")) cell.classList.add("yt");
+      if(dISO===iso(t)) cell.classList.add("today");
+      const top=document.createElement("div"); top.className="topline";
+      const gnum=document.createElement("div"); gnum.className="g"; gnum.textContent=dn;
+      const hspan=document.createElement("div"); hspan.className="h"; hspan.textContent=hebDay(date);
+      top.appendChild(gnum); top.appendChild(hspan); cell.appendChild(top);
+      if(hols.length){ const cl=document.createElement("div"); cl.className="caholi"; cl.textContent=hols[0].n; cell.appendChild(cl); }
+      const bks=bookingsOnDay(dISO);
+      if(bks.length){
+        cell.classList.add("hasbk");
+        const wrap=document.createElement("div"); wrap.className="bkbadges";
+        bks.slice(0,2).forEach(b=>{ const bd=document.createElement("div"); bd.className="bkbadge "+(b.status==="approved"?"a":"p"); bd.textContent=b.name; wrap.appendChild(bd); });
+        if(bks.length>2){ const m=document.createElement("div"); m.className="bkmore"; m.textContent="+"+(bks.length-2)+" more"; wrap.appendChild(m); }
+        cell.appendChild(wrap);
+        cell.addEventListener("click",()=>showDayModal(dISO));
+      }
+      g.appendChild(cell);
+    }
+  }
+
+  function showDayModal(dISO){
+    const date=parseISO(dISO), bks=bookingsOnDay(dISO);
+    const heb=HFMT?hebFull(date):"", hols=holidaysFor(date).map(h=>h.n).join(" · ");
+    let body='<div class="email"><div class="head"><div class="from">Bookings on this day</div>'
+      +'<h3>'+date.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+'</h3>'
+      +(heb?'<div style="font-size:.85rem;opacity:.85" dir="rtl">'+heb+'</div>':'')+'</div>';
+    if(hols) body+='<div class="meta">Holiday: <span>'+hols+'</span></div>';
+    body+='<div class="bd">';
+    if(!bks.length) body+='<p style="color:var(--ink-soft)">No active bookings on this day.</p>';
+    else bks.forEach(b=>{
+      body+='<div class="daycard"><div class="dctop"><b>'+b.name+'</b> <span style="color:var(--ink-soft);font-size:.8rem">'+b.id+'</span><span class="pill '+b.status+'" style="margin-left:auto">'+b.status+'</span></div>'
+        +'<div class="dcmeta">📦 Loan: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'
+        +'<br>📞 '+b.phone+' · ✉️ '+b.email+'<br>📍 '+b.address+(b.amount?'<br>🔢 Quantity: '+b.amount:'')+(b.note?'<br>📝 '+b.note:'')+'</div>'
+        +'<div class="items">'+b.items.map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join('')+'</div>'
+        +'<div class="acts" data-id="'+b.id+'"></div></div>';
+    });
+    body+='</div></div>';
+    document.getElementById("modalBody").innerHTML=body;
+    bks.forEach(b=>{
+      const acts=document.querySelector('.acts[data-id="'+b.id+'"]'); if(!acts)return;
+      if(b.status==="pending"){
+        acts.append(mkbtn("✓ Approve & set dates","btn sm",()=>showApproveModal(b,dISO)));
+        acts.append(mkbtn("View request email","btn ghost sm",()=>showEmailModal(b)));
+        acts.append(mkbtn("Cancel","btn ghost sm",()=>cancelBooking(b.id)));
+      } else if(b.status==="approved") {
+        acts.append(mkbtn("Edit pickup / return","btn ghost sm",()=>showApproveModal(b,dISO)));
+        acts.append(mkbtn("Cancel reservation","btn ghost sm",()=>cancelBooking(b.id)));
+      } else {
+        acts.append(mkbtn("Re-approve","btn ghost sm",()=>showApproveModal(b,dISO)));
+      }
+    });
+    openModal();
+  }
+  async function decideDay(id,status,dISO){
+    const b=bookings.find(x=>x.id===id); if(!b)return; b.status=status; await saveBookings();
+    renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
+    toast(status==="approved"?"Reservation "+id+" approved":"Reservation "+id+" "+status);
+    showDayModal(dISO);
+  }
+
+  // admin sets pickup & return, then a confirmation email goes to the customer
+  function showApproveModal(b,dISO){
+    const defPickup=b.pickup||iso(addDays(parseISO(b.start),-1));
+    const defRet=b.ret||iso(addDays(parseISO(b.start),1));
+    const lines=b.items.map(it=>'<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>').join('');
+    document.getElementById("modalBody").innerHTML=
+      '<div class="email"><div class="head"><div class="from">Arrange &amp; approve · '+b.id+'</div><h3>Set pickup &amp; return</h3></div>'
+      +'<div class="meta">For <span>'+b.name+'</span> · Requested: <span>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</span>'+(HFMT?' · <span class="he" dir="rtl">'+hebFull(parseISO(b.pickup||b.start))+'</span>':'')+'</div>'
+      +'<div class="bd"><div class="recap">'+lines+'</div>'
+      +'<div class="form"><div class="row2">'
+      +'<div class="field"><label>Pickup date</label><input type="date" id="apPickup" value="'+defPickup+'"></div>'
+      +'<div class="field"><label>Return by</label><input type="date" id="apReturn" value="'+defRet+'"></div></div>'
+      +'<div class="err hidden" id="apErr">Return must be on or after pickup.</div>'
+      +'<button class="btn" id="apConfirm" style="width:100%">✓ Approve &amp; email customer</button>'
+      +'<p class="sub" style="text-align:center">An email with these pickup &amp; return dates is sent to the customer.</p>'
+      +'</div></div></div>';
+    document.getElementById("apConfirm").onclick=async()=>{
+      const p=document.getElementById("apPickup").value, r=document.getElementById("apReturn").value;
+      if(!p||!r||parseISO(r)<parseISO(p)){ document.getElementById("apErr").classList.remove("hidden"); return; }
+      b.pickup=p; b.ret=r; b.status="approved"; await saveBookings();
+      sendApprovalEmail(b);
+      renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
+      toast("Approved "+b.id+" — confirmation sent to customer");
+      showCustomerEmail(b);
+    };
+    openModal();
+  }
+  function showCustomerEmail(b){
+    const lines=b.items.map(it=>'<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>').join('');
+    document.getElementById("modalBody").innerHTML=
+      '<div class="email"><div class="head"><div class="from">Auto-sent to '+b.email+'</div><h3>Your linens are confirmed ✓</h3></div>'
+      +'<div class="meta">Hi <span>'+b.name+'</span> — your reservation is approved.</div>'
+      +'<div class="bd"><p>Here are your collection &amp; return details:</p>'
+      +'<div class="recap"><div class="ln"><span>📦 Pickup</span><span><b>'+fmt(b.pickup)+'</b></span></div>'
+      +'<div class="ln"><span>↩︎ Return by</span><span><b>'+fmt(b.ret)+'</b></span></div>'
+      +'<div class="ln"><span>📋 Reservation</span><span>'+b.id+'</span></div></div>'
+      +'<div class="recap">'+lines+'</div>'
+      +'<p style="font-size:.84rem;color:var(--ink-soft)">In a live deployment this confirmation is emailed to the customer automatically.</p>'
+      +'<button class="btn" id="ceClose" style="width:100%">Done</button></div></div>';
+    document.getElementById("ceClose").onclick=closeModal;
+    openModal();
+  }
+
+  function showAdvice(on){ document.getElementById("dateAdvice").classList.toggle("hidden",!on); }
+  function updateDateField(){
+    const f=document.getElementById("dateField"), tx=document.getElementById("dateFieldText");
+    if(pickDate&&retDate){ f.classList.remove("empty");
+      const days=daysInc(pickDate,retDate);
+      tx.textContent=fmt(pickDate)+" → "+fmt(retDate)+"  ("+days+(days===1?" day":" days")+")"; }
+    else if(pickDate){ f.classList.remove("empty"); tx.textContent=fmt(pickDate)+" → choose return date"; }
+    else { f.classList.add("empty"); tx.textContent="Tap to choose dates…"; }
+  }
+  function openPopCal(){ calMonth=som(parseISO(pickDate||iso(today()))); renderCalendar(); document.getElementById("popCal").hidden=false; }
+  function closePopCal(){ document.getElementById("popCal").hidden=true; }
+  function applyRange(){ updateDateField(); renderCalendar(); renderCatalog(); renderCart(); }
+
+  function pickDay(dISO){
+    if(parseISO(dISO)<today()) return;
+    if(!pickDate || (pickDate&&retDate)){           // first click → pickup; calendar stays open
+      pickDate=dISO; retDate=null; showAdvice(false);
+      setHint(); applyRange(); return;
+    }
+    // pickup already chosen — this is the second click (the return)
+    if(parseISO(dISO)<parseISO(pickDate)){           // clicked earlier → treat as a fresh pickup, stay open
+      pickDate=dISO; retDate=null; showAdvice(false); setHint(); applyRange(); return;
+    }
+    if(daysInc(pickDate,dISO)>MAX_DAYS){             // longer than 5 days → refuse and explain, stay open
+      showAdvice(true); setHint(true); toast("Reservations cannot be more than 5 days");
+      return;                                         // no selection made; needs a closer return date
+    }
+    // valid return → set it and close the calendar (two clicks done)
+    retDate=dISO; showAdvice(false); setHint();
+    applyRange(); closePopCal();
+    document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function setHint(error){ const h=document.getElementById("popHint"); if(!h) return;
+    h.classList.toggle("err",!!error);
+    if(error){ h.textContent="✕ Reservations can be a maximum of 5 days — choose an earlier return date."; return; }
+    h.textContent = (pickDate&&!retDate) ? "Now tap a return date (within 5 days)"
+      : (pickDate&&retDate) ? "Tap a new date to start over"
+      : "Tap a pickup date, then a return date · max 5 days"; }
+
+  /* ============ Catalogue ============ */
+  function renderCatalog(){
+    const wrap=document.getElementById("catalog"); wrap.innerHTML="";
+    const have=!!pickDate, e=retDate||pickDate;
+    document.getElementById("catalogSub").textContent=have
+      ? "Live availability for "+fmt(pickDate)+(e!==pickDate?" → "+fmt(e):"")+"."
+      : "Choose your dates above to see live availability.";
+    INVENTORY.forEach(inv=>{
+      const avail=have?availForWindow(inv.id,pickDate,e):inv.stock;
+      let inCart=cart[inv.id]||0;
+      if(have&&inCart>0){
+        if(avail<=0){delete cart[inv.id]; inCart=0;}
+        else if(inCart!==avail){cart[inv.id]=avail; inCart=avail;}
+      }
+      if(have&&avail<=0)return;
+      const card=document.createElement("div"); card.className="card";
+      var pics=photosFor(inv);var pic='<div class="pic"><img class="mainpic" loading="lazy" src="'+esc(pics[0])+'" alt="'+esc(inv.name)+'">';if(pics.length>1){pic+='<div class="thumbs">'+pics.map(function(u,i){return '<img class="thumb'+(i===0?' on':'')+'" loading="lazy" src="'+esc(u)+'">';}).join('')+'</div>';}pic+='</div>';card.innerHTML=pic+'<div class="body"><h4>'+esc(inv.name)+'</h4><div class="size">'+esc(inv.size)+'</div>'+(inv.dim?'<div class="dim">'+esc(inv.dim)+'</div>':'')+'</div>';if(pics.length>1){var _m=card.querySelector(".mainpic");card.querySelectorAll(".thumb").forEach(function(t){t.addEventListener("click",function(){_m.src=t.src;card.querySelectorAll(".thumb").forEach(function(x){x.classList.remove("on");});t.classList.add("on");});});}
+      if(have&&avail>0){
+        const body=card.querySelector(".body"); const row=document.createElement("div"); row.className="qtyrow";
+        const btn=document.createElement("button"); btn.type="button"; btn.className="btn sm setpick"+(inCart?" selected":"");
+        btn.textContent=(inCart?"Selected":"Select set")+" · "+avail+" included";
+        btn.onclick=()=>toggleSet(inv.id,avail);
+        row.appendChild(btn); body.appendChild(row);
+      }
+      wrap.appendChild(card);
+    });
+    if(have&&!wrap.children.length)wrap.innerHTML='<div class="empty">No tablecloths are available for these dates.</div>';
+  }
+  function toggleSet(id,count){ if(cart[id])delete cart[id]; else cart[id]=count; renderCatalog(); renderCart(); }
+
+  /* ============ Request panel ============ */
+  function cartArr(){ return Object.keys(cart).map(id=>{const inv=INVENTORY.find(i=>i.id===id);return{id,name:inv.name,qty:cart[id]};}); }
+  function renderCart(){
+    const items=cartArr(), wrap=document.getElementById("cartItems"), dpill=document.getElementById("cartDates"), have=!!pickDate;
+    const e=retDate||pickDate, days=have?daysInc(pickDate,e):0;
+    dpill.innerHTML=have
+      ? ('📦 <b>'+fmt(pickDate)+'</b> → <b>'+fmt(e)+'</b> · '+days+(days===1?' day':' days')+(HFMT?'<br><span class="he" dir="rtl">'+hebFull(parseISO(pickDate))+' – '+hebFull(parseISO(e))+'</span>':''))
+      : "No dates selected yet";
+    if(items.length===0){ wrap.innerHTML='<div class="empty">Add linens to begin your request.</div>';
+      document.getElementById("cartCount").classList.add("hidden"); document.getElementById("toCheckout").disabled=true;
+      document.getElementById("checkout").classList.add("hidden"); return; }
+    let pieces=0; wrap.innerHTML="";
+    items.forEach(it=>{ pieces+=it.qty; const row=document.createElement("div"); row.className="citem";
+      row.innerHTML='<span><b>'+it.name+'</b><small>'+it.qty+' included</small></span><button class="x" data-id="'+it.id+'">remove</button>'; wrap.appendChild(row); });
+    wrap.querySelectorAll(".x").forEach(b=>b.onclick=()=>{delete cart[b.dataset.id];renderCatalog();renderCart();});
+    document.getElementById("cartPieces").textContent=pieces; document.getElementById("cartCount").classList.remove("hidden");
+    document.getElementById("toCheckout").disabled=!have;
+  }
+  document.getElementById("toCheckout").onclick=()=>{ if(!pickDate){toast("Pick your dates first");return;}
+    document.getElementById("checkout").classList.remove("hidden"); document.getElementById("checkout").scrollIntoView({behavior:"smooth",block:"nearest"}); };
+
+  function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);}
+  function validPhone(v){return v.replace(/[^\d]/g,"").length>=7;}
+  function toggleErr(id,show){document.getElementById(id).classList.toggle("hidden",!show);}
+
+  document.getElementById("placeBtn").onclick=async()=>{
+    const name=val("fName"),phone=val("fPhone"),email=val("fEmail"),addr=val("fAddr"),note=val("fNote");
+    let ok=true; toggleErr("eName",!name); if(!name)ok=false;
+    const bad=!validPhone(phone)||!validEmail(email); toggleErr("eContact",bad); if(bad)ok=false;
+    toggleErr("eAddr",addr.length<6); if(addr.length<6)ok=false;
+    if(!ok)return;
+    const ret=retDate||pickDate;
+    for(const it of cartArr()){ if(availForWindow(it.id,pickDate,ret)<it.qty){ toast(it.name+" is no longer available"); renderCatalog(); return; } }
+    const b={ id:"BK"+Date.now().toString(36).toUpperCase(), name,phone,email,address:addr,note,
+      amount:"",
+      items:cartArr(), start:pickDate, pickup:pickDate, ret:ret, status:"pending",
+      token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
+    bookings.push(b); await saveBookings(); cart={};
+    ["fName","fPhone","fEmail","fAddr","fNote"].forEach(i=>document.getElementById(i).value="");
+    document.getElementById("checkout").classList.add("hidden");
+    renderCatalog(); renderCart(); renderCalendar(); renderAdmin();
+    const sent=await sendAdminRequestEmail(b);
+    toast(sent?"Request sent for approval":"Request submitted");
+  };
+  function val(id){return document.getElementById(id).value.trim();}
+  function adminApproveUrl(id){
+    const u=new URL(location.href);
+    u.search="";
+    u.hash="";
+    u.searchParams.set("admin","1");
+    if(id)u.searchParams.set("booking",id);
+    return u.toString();
+  }
+
+  /* ============ Email / approval ============ */
+  function showEmailModal(b){
+    let lines="";
+    b.items.forEach(it=>{ lines+='<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>'; });
+    const link="https://linenlibrary.org/approve/"+b.id+"?t="+b.token;
+    const days=daysInc(b.pickup||b.start, b.ret||b.start);
+    const heD=HFMT?('<br><span class="he" dir="rtl" style="color:var(--gold)">'+hebFull(parseISO(b.pickup||b.start))+' – '+hebFull(parseISO(b.ret||b.start))+'</span>'):"";
+    document.getElementById("modalBody").innerHTML=
+      '<div class="email"><div class="head"><div class="from">New reservation request</div><h3>Approve reservation '+b.id+'</h3></div>'
+      +'<div class="meta">From: <span>'+b.name+'</span> · '+b.phone+' · '+b.email+'<br>Deliver to: <span>'+b.address+'</span>'
+      +(b.amount?'<br>Quantity: <span>'+b.amount+'</span>':'')+(b.note?'<br>Note: <span>'+b.note+'</span>':'')+'</div>'
+      +'<div class="bd"><p>A new request needs approval. Requested: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+days+' '+(days===1?"day":"days")+').'+heD+'</p>'
+      +'<div class="recap">'+lines+'</div>'
+      +'<p style="font-size:.84rem;color:var(--ink-soft)">Approving lets you confirm/adjust pickup &amp; return dates, which are then emailed to the customer. In a live deployment this email lands in the admin\'s inbox; the buttons below are the approvable link.</p>'
+      +'<div class="cta"><button class="btn" style="flex:1" id="apN">✓ Approve &amp; confirm dates</button><button class="btn ghost" id="dcN">Decline</button></div>'
+      +'<div class="approve-link">🔗 '+link+'</div></div></div>';
+    document.getElementById("apN").onclick=()=>showApproveModal(b,iso(parseISO(b.start)));
+    document.getElementById("dcN").onclick=()=>{decide(b.id,"declined");closeModal();};
+    openModal();
+  }
+  function openModal(){document.getElementById("overlay").classList.add("show");}
+  function closeModal(){document.getElementById("overlay").classList.remove("show");}
+  document.getElementById("modalClose").onclick=closeModal;
+  document.getElementById("overlay").onclick=e=>{if(e.target.id==="overlay")closeModal();};
+  async function decide(id,status){ const b=bookings.find(x=>x.id===id); if(!b)return; b.status=status; await saveBookings();
+    renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
+    toast(status==="approved"?"Reservation "+id+" approved — calendar updated":"Reservation "+id+" declined"); }
+
+  /* ============ Admin ============ */
+  function renderStats(){
+    const pend=bookings.filter(b=>b.status==="pending").length, appr=bookings.filter(b=>b.status==="approved").length;
+    let pieces=0; bookings.filter(b=>b.status==="approved").forEach(b=>b.items.forEach(i=>pieces+=i.qty));
+    let fam=new Set(bookings.filter(b=>b.status==="approved").map(b=>b.name)).size;
+    document.getElementById("stats").innerHTML=
+      '<div class="stat acc"><div class="n">'+pend+'</div><div class="l">Awaiting approval</div></div>'
+      +'<div class="stat"><div class="n">'+appr+'</div><div class="l">Confirmed</div></div>'
+      +'<div class="stat"><div class="n">'+pieces+'</div><div class="l">Linens out (confirmed)</div></div>'
+      +'<div class="stat"><div class="n">'+fam+'</div><div class="l">Families served</div></div>';
+  }
+  function renderBookingList(){
+    const wrap=document.getElementById("bookingList");
+    const list=[...bookings].sort((a,b)=>new Date(b.created)-new Date(a.created));
+    if(!list.length){ wrap.innerHTML='<div class="sub" style="padding:20px 0">No reservations yet. Create one from the Browse &amp; Reserve tab.</div>'; return; }
+    wrap.innerHTML="";
+    list.forEach(b=>{
+      const heR=HFMT?(' · <span class="he" dir="rtl">'+hebFull(parseISO(b.pickup||b.start))+'</span>'):"";
+      const win='';
+      const el=document.createElement("div"); el.className="bk";
+      el.innerHTML='<div class="top"><div><h4>'+b.name+' <span style="font-family:\'Hanken Grotesk\';font-size:.8rem;color:var(--ink-soft);font-weight:600">· '+b.id+'</span></h4>'
+        +'<div class="meta"><div>📦 Loan <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'+heR+'</div>'+win
+        +'<div>📞 <b>'+b.phone+'</b> · ✉️ <b>'+b.email+'</b></div><div>📍 <b>'+b.address+'</b></div>'
+        +(b.amount?'<div>🔢 Quantity: '+b.amount+'</div>':'')
+        +(b.note?'<div>📝 '+b.note+'</div>':'')+'</div></div><span class="pill '+b.status+'">'+b.status+'</span></div>'
+        +'<div class="items">'+b.items.map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
+      const acts=el.querySelector(".acts");
+      if(b.status==="pending"){
+        acts.append(mkbtn("✓ Approve & set dates","btn sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
+        acts.append(mkbtn("View request email","btn ghost sm",()=>showEmailModal(b)));
+        acts.append(mkbtn("Cancel reservation","btn ghost sm",()=>cancelBooking(b.id)));
+      } else if(b.status==="approved"){
+        acts.append(mkbtn("Edit pickup / return","btn ghost sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
+        acts.append(mkbtn("Resend customer email","btn ghost sm",()=>showCustomerEmail(b)));
+        acts.append(mkbtn("Cancel reservation","btn ghost sm",()=>cancelBooking(b.id)));
+      } else {
+        acts.append(mkbtn("Re-approve","btn ghost sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
+      }
+      wrap.appendChild(el);
+    });
+  }
+  function mkbtn(t,c,fn){const b=document.createElement("button");b.className=c;b.textContent=t;b.onclick=fn;return b;}
+  async function cancelBooking(id){
+    const b=bookings.find(x=>x.id===id); if(!b)return;
+    b.status="cancelled"; await saveBookings();
+    renderAdmin(); renderCalendar(); renderCatalog(); renderCart(); closeModal();
+    toast("Reservation "+id+" cancelled");
+  }
+
+  // admin creates a booking for any tablecloth, any dates (not limited to 5 days)
+  function showNewBookingModal(){
+    let qty={};
+    const body=
+      '<div class="email"><div class="head"><div class="from">Admin</div><h3>New booking</h3></div>'
+      +'<div class="bd"><div class="form">'
+      +'<div class="field"><label>Name</label><input id="nbName" placeholder="Name or organisation"></div>'
+      +'<div class="row2"><div class="field"><label>Phone (optional)</label><input id="nbPhone"></div>'
+      +'<div class="field"><label>Email (optional)</label><input id="nbEmail"></div></div>'
+      +'<div class="field"><label>Home address (optional)</label><input id="nbAddr"></div>'
+      +'<div class="row2"><div class="field"><label>Pickup date</label><input type="date" id="nbPickup" value="'+iso(addDays(today(),7))+'"></div>'
+      +'<div class="field"><label>Return by</label><input type="date" id="nbReturn" value="'+iso(addDays(today(),8))+'"></div></div>'
+      +'<div class="err hidden" id="nbErr">Add a name, valid dates (return on/after pickup) and at least one item.</div>'
+      +'<div style="font-weight:700;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-top:4px">Tablecloths</div>'
+      +'<div id="nbItems"></div>'
+      +'<button class="btn" id="nbCreate" style="width:100%;margin-top:6px">Create booking</button>'
+      +'</div></div></div>';
+    document.getElementById("modalBody").innerHTML=body;
+    function rows(){
+      const p=document.getElementById("nbPickup").value, r=document.getElementById("nbReturn").value;
+      const ok=p&&r&&parseISO(r)>=parseISO(p);
+      document.getElementById("nbItems").innerHTML=INVENTORY.map(inv=>{
+        const av=ok?availForWindow(inv.id,p,r):inv.stock, q=qty[inv.id]||0;
+        return '<div class="nbitem"><span>'+inv.name+'<br><small style="color:var(--ink-soft)">'+(ok?av+' available':inv.stock+' total')+'</small></span>'
+          +'<div class="stepper"><button type="button" data-dec="'+inv.id+'">−</button><input readonly value="'+q+'"><button type="button" data-inc="'+inv.id+'">+</button></div></div>';
+      }).join('');
+      document.querySelectorAll('#nbItems [data-dec]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.dec;qty[id]=Math.max(0,(qty[id]||0)-1);rows();});
+      document.querySelectorAll('#nbItems [data-inc]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.inc;
+        const p=document.getElementById("nbPickup").value,r=document.getElementById("nbReturn").value;
+        const av=(p&&r&&parseISO(r)>=parseISO(p))?availForWindow(id,p,r):INVENTORY.find(i=>i.id===id).stock;
+        const n=(qty[id]||0)+1; if(n>av){toast("Only "+av+" available for these dates");return;} qty[id]=n;rows();});
+    }
+    rows();
+    document.getElementById("nbPickup").onchange=rows;
+    document.getElementById("nbReturn").onchange=rows;
+    document.getElementById("nbCreate").onclick=async()=>{
+      const name=document.getElementById("nbName").value.trim();
+      const p=document.getElementById("nbPickup").value, r=document.getElementById("nbReturn").value;
+      const items=INVENTORY.filter(i=>qty[i.id]>0).map(i=>({id:i.id,name:i.name,qty:qty[i.id]}));
+      if(!name||!p||!r||parseISO(r)<parseISO(p)||!items.length){ document.getElementById("nbErr").classList.remove("hidden"); return; }
+      const b={ id:"BK"+Date.now().toString(36).toUpperCase(), name,
+        phone:document.getElementById("nbPhone").value.trim(), email:document.getElementById("nbEmail").value.trim(),
+        address:document.getElementById("nbAddr").value.trim()||"—", note:"Booked by admin", amount:"",
+        items, start:p, pickup:p, ret:r, status:"approved",
+        token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
+      bookings.push(b); await saveBookings();
+      renderAdmin(); renderCalendar(); renderCatalog(); renderCart(); closeModal();
+      toast("Booking created for "+name);
+    };
+    openModal();
+  }
+  let photoDrag=null;
+  function photosChanged(msg){
+    savePhotoOverrides(); renderPhotoManager(); renderCatalog(); renderCart();
+    toast(msg||"Photos updated");
+  }
+  function renderPhotoManager(){
+    const wrap=document.getElementById("photoManager"); if(!wrap)return;
+    wrap.innerHTML=INVENTORY.map(inv=>{
+      const pics=photosFor(inv);
+      return '<div class="photo-editor" data-photo-id="'+esc(inv.id)+'"><h4>'+esc(inv.name)+'</h4>'
+        +'<div class="photo-list">'+pics.map((u,i)=>
+          '<div class="photo-tile" draggable="true" data-photo-id="'+esc(inv.id)+'" data-index="'+i+'">'
+          +'<img loading="lazy" src="'+esc(u)+'" alt="'+esc(inv.name)+' photo '+(i+1)+'">'
+          +'<span class="mainmark">'+(i===0?'Main':'')+'</span>'
+          +'<button type="button" data-remove-photo="'+esc(inv.id)+'" data-index="'+i+'">Remove</button></div>'
+        ).join('')+'</div>'
+        +'<div class="photo-add"><input type="text" data-photo-input="'+esc(inv.id)+'" placeholder="images/example.jpg or https://...">'
+        +'<button class="btn sm" type="button" data-add-photo="'+esc(inv.id)+'">Add photo</button></div></div>';
+    }).join('');
+    wrap.querySelectorAll(".photo-tile").forEach(tile=>{
+      tile.addEventListener("dragstart",e=>{photoDrag={id:tile.dataset.photoId,index:Number(tile.dataset.index)};tile.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
+      tile.addEventListener("dragend",()=>{tile.classList.remove("dragging");photoDrag=null;});
+      tile.addEventListener("dragover",e=>e.preventDefault());
+      tile.addEventListener("drop",e=>{
+        e.preventDefault();
+        if(!photoDrag||photoDrag.id!==tile.dataset.photoId)return;
+        const inv=INVENTORY.find(i=>i.id===photoDrag.id), to=Number(tile.dataset.index), from=photoDrag.index;
+        if(!inv||from===to||from<0||to<0)return;
+        const pics=photosFor(inv).slice();
+        const moved=pics.splice(from,1)[0]; pics.splice(to,0,moved); inv.imgs=pics;
+        photosChanged("Photo order updated");
+      });
+    });
+    wrap.querySelectorAll("[data-remove-photo]").forEach(btn=>btn.onclick=()=>{
+      const inv=INVENTORY.find(i=>i.id===btn.dataset.removePhoto); if(!inv)return;
+      const pics=photosFor(inv).slice(), idx=Number(btn.dataset.index);
+      if(pics.length<=1){toast("Each tablecloth needs at least one photo");return;}
+      pics.splice(idx,1); inv.imgs=pics; photosChanged("Photo removed");
+    });
+    wrap.querySelectorAll("[data-add-photo]").forEach(btn=>btn.onclick=()=>{
+      const inv=INVENTORY.find(i=>i.id===btn.dataset.addPhoto), input=wrap.querySelector('[data-photo-input="'+btn.dataset.addPhoto+'"]');
+      const url=cleanPhotoUrl(input&&input.value);
+      if(!inv||!url){toast("Add a valid image path or URL");return;}
+      const pics=photosFor(inv).slice(); pics.push(url); inv.imgs=pics; if(input)input.value="";
+      photosChanged("Photo added");
+    });
+    wrap.querySelectorAll("[data-photo-input]").forEach(input=>input.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){e.preventDefault();wrap.querySelector('[data-add-photo="'+input.dataset.photoInput+'"]').click();}
+    }));
+  }
+  function togglePhotoEditor(){
+    const details=document.getElementById("photoEditorDetails"), btn=document.getElementById("photoEditToggle");
+    const open=details.classList.toggle("hidden");
+    btn.textContent=open?"Edit":"Close";
+    if(!open)renderPhotoManager();
+  }
+  function renderAdmin(){ renderStats(); renderBookingList(); renderAdminCalendar(); renderPhotoManager(); }
+  function adminUnlocked(){ return sessionStorage.getItem("linen_admin_unlocked")==="1"; }
+  function updateAdminGate(){
+    const unlocked=adminUnlocked();
+    document.getElementById("adminLogin").classList.toggle("hidden",unlocked);
+    document.getElementById("adminContent").classList.toggle("hidden",!unlocked);
+    document.getElementById("adminLoginErr").classList.add("hidden");
+    if(unlocked)renderAdmin();
+  }
+  function unlockAdmin(){
+    const input=document.getElementById("adminPassword");
+    if(input.value===ADMIN_PASSWORD){
+      sessionStorage.setItem("linen_admin_unlocked","1");
+      input.value="";
+      updateAdminGate();
+      toast("Admin unlocked");
+      return;
+    }
+    document.getElementById("adminLoginErr").classList.remove("hidden");
+    input.focus();
+  }
+
+  /* ============ Nav / events ============ */
+  function showView(v,scroll){
+    document.querySelectorAll("#viewToggle button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));
+    document.getElementById("shopView").classList.toggle("hidden",v!=="shop");
+    document.getElementById("adminView").classList.toggle("hidden",v!=="admin");
+    if(v==="admin")updateAdminGate();
+    if(scroll!==false)window.scrollTo({top:0,behavior:"smooth"});
+  }
+  document.getElementById("viewToggle").addEventListener("click",e=>{
+    const btn=e.target.closest("button"); if(!btn)return;
+    showView(btn.dataset.view,true);
+  });
+  document.getElementById("adminLoginBtn").onclick=unlockAdmin;
+  document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
+  document.getElementById("adminLockBtn").onclick=()=>{sessionStorage.removeItem("linen_admin_unlocked");updateAdminGate();toast("Admin locked");};
+  document.getElementById("photoEditToggle").onclick=togglePhotoEditor;
+  document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
+    const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } else closePopCal(); };
+  document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation(); closePopCal();
+    if(pickDate) document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"}); };
+  document.addEventListener("click",(e)=>{ const pc=document.getElementById("popCal");
+    if(!pc||pc.hidden) return; if(!pc.contains(e.target) && e.target.id!=="dateField" && !e.target.closest("#dateField")) closePopCal(); });
+  document.getElementById("searchBtn").onclick=()=>{
+    if(!pickDate){ openPopCal(); toast("Pick your dates"); return; }
+    document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
+  };
+  document.getElementById("calPrev").onclick=(e)=>{e.stopPropagation();calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);renderCalendar();};
+  document.getElementById("calNext").onclick=(e)=>{e.stopPropagation();calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderCalendar();};
+  document.getElementById("pCalPrev").onclick=()=>{pCalMonth=new Date(pCalMonth.getFullYear(),pCalMonth.getMonth()-1,1);renderAdminCalendar();};
+  document.getElementById("pCalNext").onclick=()=>{pCalMonth=new Date(pCalMonth.getFullYear(),pCalMonth.getMonth()+1,1);renderAdminCalendar();};
+  document.getElementById("resetBtn").onclick=async()=>{bookings=[];await saveBookings();renderAdmin();renderCalendar();renderCatalog();toast("All demo reservations cleared");};
+  document.getElementById("newBookingBtn").onclick=()=>showNewBookingModal();
+  document.getElementById("adminEmail").textContent=ADMIN_EMAIL;
+
+  (function defaults(){ pickDate=iso(addDays(today(),14)); retDate=iso(addDays(today(),15)); calMonth=som(parseISO(pickDate)); })();
+
+  (async function init(){
+    loadPhotoOverrides(); await loadBookings(); updateDateField(); renderCalendar(); renderCatalog(); renderCart(); renderAdmin();
+    const qs=new URLSearchParams(location.search);
+    if(qs.get("admin")==="1"||location.hash==="#admin")showView("admin",false);
+  })();
+})();
+
+  (function(){var lb=document.createElement("div");lb.className="lightbox";var im=document.createElement("img");lb.appendChild(im);document.body.appendChild(lb);document.addEventListener("click",function(e){var t=e.target;if(t&&t.classList&&t.classList.contains("mainpic")){im.src=t.src;lb.classList.add("open");}else if(t===lb||t===im){lb.classList.remove("open");}});document.addEventListener("keydown",function(e){if(e.key==="Escape")lb.classList.remove("open");});})();
+</script>
