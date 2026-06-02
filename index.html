@@ -1124,6 +1124,11 @@
   }
   function renderAdmin(){ renderStats(); renderBookingList(); renderAdminCalendar(); renderPhotoManager(); }
   function adminUnlocked(){ return sessionStorage.getItem("linen_admin_unlocked")==="1"; }
+  function clearAdminSession(){
+    ADMIN_TOKEN_VALUE="";
+    sessionStorage.removeItem("linen_admin_token");
+    sessionStorage.removeItem("linen_admin_unlocked");
+  }
   function updateAdminGate(){
     const unlocked=adminUnlocked();
     document.getElementById("adminLogin").classList.toggle("hidden",unlocked);
@@ -1157,12 +1162,12 @@
     const v=btn.dataset.view;
     document.getElementById("shopView").classList.toggle("hidden",v!=="shop");
     document.getElementById("adminView").classList.toggle("hidden",v!=="admin");
-    if(v==="admin")updateAdminGate();
+    if(v==="admin"){clearAdminSession();updateAdminGate();}
     window.scrollTo({top:0,behavior:"smooth"});
   });
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
   document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
-  document.getElementById("adminLockBtn").onclick=()=>{sessionStorage.removeItem("linen_admin_unlocked");updateAdminGate();toast("Admin locked");};
+  document.getElementById("adminLockBtn").onclick=()=>{clearAdminSession();updateAdminGate();toast("Admin locked");};
   document.getElementById("resetPasswordBtn").onclick=showResetPasswordModal;
   document.getElementById("photoEditToggle").onclick=togglePhotoEditor;
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
@@ -1185,7 +1190,7 @@
 
   (function defaults(){ pickDate=iso(addDays(today(),14)); retDate=iso(addDays(today(),15)); calMonth=som(parseISO(pickDate)); })();
 
-  (async function init(){ loadPhotoOverrides(); ADMIN_TOKEN_VALUE=sessionStorage.getItem("linen_admin_token")||""; await loadBookings(); if(ADMIN_TOKEN_VALUE){ try{ const d=await apiList(); bookings=d.bookings||[]; }catch(e){ ADMIN_TOKEN_VALUE=""; } } updateDateField(); renderCalendar(); renderCatalog(); renderCart(); renderAdmin(); })();
+  (async function init(){ loadPhotoOverrides(); clearAdminSession(); await loadBookings(); updateDateField(); renderCalendar(); renderCatalog(); renderCart(); updateAdminGate(); })();
 })();
 
   (function(){var lb=document.createElement("div");lb.className="lightbox";var im=document.createElement("img");lb.appendChild(im);document.body.appendChild(lb);document.addEventListener("click",function(e){var t=e.target;if(t&&t.classList&&t.classList.contains("mainpic")){im.src=t.src;lb.classList.add("open");}else if(t===lb||t===im){lb.classList.remove("open");}});document.addEventListener("keydown",function(e){if(e.key==="Escape")lb.classList.remove("open");});})();
