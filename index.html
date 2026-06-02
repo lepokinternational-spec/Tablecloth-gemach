@@ -414,9 +414,9 @@
   }
   async function sendAdminRequestEmail(b){
     if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return false;
-    try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
-      return true;
+    try{ const res=await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,approveUrl:adminApproveUrl(b.id),name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+      return res.ok;
     }catch(e){console.error("admin email send failed",e);return false;}
   }
   const ADMIN_PASSWORD="linen2026";
@@ -906,13 +906,24 @@
       amount:"",
       items:cartArr(), start:pickDate, pickup:pickDate, ret:ret, status:"pending",
       token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
-    try{ await api("create",{booking:b}); }catch(e){ toast("Could not submit — please try again"); return; } bookings.push(b); cart={};
+    try{ await api("create",{booking:b}); }catch(e){ toast("Could not submit — please try again"); return; }
+    bookings.push(b);
+    const sent=await sendAdminRequestEmail(b);
+    cart={};
     ["fName","fPhone","fEmail","fAddr","fNote"].forEach(i=>document.getElementById(i).value="");
     document.getElementById("checkout").classList.add("hidden");
     renderCatalog(); renderCart(); renderCalendar(); renderAdmin();
-    toast("Request submitted — we'll confirm by email");
+    toast(sent?"Request submitted — we'll confirm by email":"Request submitted, but email did not send");
   };
   function val(id){return document.getElementById(id).value.trim();}
+  function adminApproveUrl(id){
+    const u=new URL(location.href);
+    u.search="";
+    u.hash="";
+    u.searchParams.set("admin","1");
+    if(id)u.searchParams.set("booking",id);
+    return u.toString();
+  }
 
   /* ============ Email / approval ============ */
   function showEmailModal(b){
