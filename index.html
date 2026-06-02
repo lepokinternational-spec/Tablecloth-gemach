@@ -327,6 +327,7 @@
   </div>
   <section class="block admin-login" id="adminLogin">
     <h2 style="font-size:1.3rem">Admin password</h2>
+    <p class="sub hidden" id="adminDeepLinkHint">Enter the admin password to review and approve this request.</p>
     <div class="actions">
       <div class="field"><label>Password</label><input type="password" id="adminPassword" autocomplete="current-password" placeholder="Enter password"></div>
       <button class="btn" id="adminLoginBtn" type="button">Unlock</button>
@@ -415,7 +416,7 @@
   async function sendAdminRequestEmail(b){
     if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return false;
     try{ const res=await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,approveUrl:adminApproveUrl(b.id),name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,approveText:"Approve",approveUrl:adminApproveUrl(b.id),name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
       return res.ok;
     }catch(e){console.error("admin email send failed",e);return false;}
   }
@@ -424,6 +425,7 @@
 
   /* ============ State ============ */
   let bookings=[], cart={};
+  let pendingApproveId=null;
   let ADMIN_TOKEN_VALUE="";
   const API="https://linen-email.linencollection29.workers.dev";
   async function api(action,payload,admin){
@@ -924,12 +926,33 @@
     if(id)u.searchParams.set("booking",id);
     return u.toString();
   }
+  function requestedApprovalId(){
+    const q=new URLSearchParams(location.search);
+    return q.get("admin")==="1" ? (q.get("booking")||"") : "";
+  }
+  function setView(v,opts){
+    opts=opts||{};
+    document.querySelectorAll("#viewToggle button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));
+    document.getElementById("shopView").classList.toggle("hidden",v!=="shop");
+    document.getElementById("adminView").classList.toggle("hidden",v!=="admin");
+    if(v==="admin"){
+      if(opts.clear!==false)clearAdminSession();
+      updateAdminGate();
+    }
+  }
+  function promptApprovalFromLink(){
+    if(!pendingApproveId)return false;
+    const b=bookings.find(x=>x.id===pendingApproveId);
+    if(!b){ toast("Could not find booking "+pendingApproveId); return false; }
+    showApproveModal(b,iso(parseISO(b.start)));
+    return true;
+  }
 
   /* ============ Email / approval ============ */
   function showEmailModal(b){
     let lines="";
     b.items.forEach(it=>{ lines+='<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>'; });
-    const link="https://linenlibrary.org/approve/"+b.id+"?t="+b.token;
+    const link=adminApproveUrl(b.id);
     const days=daysInc(b.pickup||b.start, b.ret||b.start);
     const heD=HFMT?('<br><span class="he" dir="rtl" style="color:var(--gold)">'+hebFull(parseISO(b.pickup||b.start))+' – '+hebFull(parseISO(b.ret||b.start))+'</span>'):"";
     document.getElementById("modalBody").innerHTML=
@@ -938,7 +961,7 @@
       +(b.amount?'<br>Quantity: <span>'+b.amount+'</span>':'')+(b.note?'<br>Note: <span>'+b.note+'</span>':'')+'</div>'
       +'<div class="bd"><p>A new request needs approval. Requested: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+days+' '+(days===1?"day":"days")+').'+heD+'</p>'
       +'<div class="recap">'+lines+'</div>'
-      +'<p style="font-size:.84rem;color:var(--ink-soft)">Approving lets you confirm/adjust pickup &amp; return dates, which are then emailed to the customer. In a live deployment this email lands in the admin\'s inbox; the buttons below are the approvable link.</p>'
+      +'<p style="font-size:.84rem;color:var(--ink-soft)">The email includes an Approve link that opens this booking in the admin area after password login.</p>'
       +'<div class="cta"><button class="btn" style="flex:1" id="apN">✓ Approve &amp; confirm dates</button><button class="btn ghost" id="dcN">Decline</button></div>'
       +'<div class="approve-link">🔗 '+link+'</div></div></div>';
     document.getElementById("apN").onclick=()=>showApproveModal(b,iso(parseISO(b.start)));
@@ -1149,6 +1172,7 @@
     document.getElementById("adminLogin").classList.toggle("hidden",unlocked);
     document.getElementById("adminContent").classList.toggle("hidden",!unlocked);
     document.getElementById("adminLoginErr").classList.add("hidden");
+    document.getElementById("adminDeepLinkHint").classList.toggle("hidden",!pendingApproveId||unlocked);
     if(unlocked)renderAdmin();
   }
   async function unlockAdmin(){
@@ -1162,7 +1186,7 @@
       input.value="";
       updateAdminGate();
       renderAdmin(); renderCalendar(); renderCatalog();
-      toast("Admin unlocked");
+      if(!promptApprovalFromLink())toast("Admin unlocked");
     }catch(e){
       ADMIN_TOKEN_VALUE="";
       document.getElementById("adminLoginErr").classList.remove("hidden");
@@ -1173,11 +1197,8 @@
   /* ============ Nav / events ============ */
   document.getElementById("viewToggle").addEventListener("click",e=>{
     const btn=e.target.closest("button"); if(!btn)return;
-    document.querySelectorAll("#viewToggle button").forEach(b=>b.classList.remove("on")); btn.classList.add("on");
-    const v=btn.dataset.view;
-    document.getElementById("shopView").classList.toggle("hidden",v!=="shop");
-    document.getElementById("adminView").classList.toggle("hidden",v!=="admin");
-    if(v==="admin"){clearAdminSession();updateAdminGate();}
+    pendingApproveId=null;
+    setView(btn.dataset.view);
     window.scrollTo({top:0,behavior:"smooth"});
   });
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
@@ -1206,7 +1227,14 @@
 
   (function defaults(){ pickDate=iso(addDays(today(),14)); retDate=iso(addDays(today(),15)); calMonth=som(parseISO(pickDate)); })();
 
-  (async function init(){ loadPhotoOverrides(); clearAdminSession(); await loadBookings(); updateDateField(); renderCalendar(); renderCatalog(); renderCart(); updateAdminGate(); })();
+  (async function init(){
+    loadPhotoOverrides();
+    clearAdminSession();
+    pendingApproveId=requestedApprovalId();
+    await loadBookings();
+    updateDateField(); renderCalendar(); renderCatalog(); renderCart();
+    if(pendingApproveId)setView("admin",{clear:false}); else updateAdminGate();
+  })();
 })();
 
   (function(){var lb=document.createElement("div");lb.className="lightbox";var im=document.createElement("img");lb.appendChild(im);document.body.appendChild(lb);document.addEventListener("click",function(e){var t=e.target;if(t&&t.classList&&t.classList.contains("mainpic")){im.src=t.src;lb.classList.add("open");}else if(t===lb||t===im){lb.classList.remove("open");}});document.addEventListener("keydown",function(e){if(e.key==="Escape")lb.classList.remove("open");});})();
