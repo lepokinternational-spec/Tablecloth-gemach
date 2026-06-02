@@ -196,6 +196,13 @@
   .bk .items{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
   .tag{background:var(--linen-2);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:.8rem}
   .bk .acts{margin-top:13px;display:flex;gap:9px;flex-wrap:wrap}
+  .admin-date-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .admin-date-row .datefield{min-height:62px;align-items:flex-start;flex-direction:column}
+  .admin-date-row .datefield.on{border-color:var(--teal);box-shadow:inset 0 0 0 1px var(--teal)}
+  .admin-date-row .he{font-family:"Frank Ruhl Libre",serif;color:var(--gold);font-size:.86rem;line-height:1.1}
+  .admin-mini-cal{background:var(--linen);border:1px solid var(--line);border-radius:13px;padding:14px;margin-bottom:12px}
+  .admin-mini-cal .cal-grid{margin-top:10px}
+  @media(max-width:640px){.admin-date-row{grid-template-columns:1fr}.admin-mini-cal{padding:10px}.admin-mini-cal .day .g{font-size:.86rem}.admin-mini-cal .day .h{font-size:.6rem}}
   .admin-login{max-width:440px;margin:0 auto 24px}
   .admin-login .actions{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
   .admin-login .actions .field{flex:1}
@@ -764,20 +771,70 @@
   function showApproveModal(b,dISO){
     const defPickup=b.pickup||iso(addDays(parseISO(b.start),-1));
     const defRet=b.ret||iso(addDays(parseISO(b.start),1));
+    let apPickup=defPickup, apReturn=defRet, apTarget="pickup", apMonth=som(parseISO(defPickup));
     const lines=b.items.map(it=>'<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>').join('');
     document.getElementById("modalBody").innerHTML=
       '<div class="email"><div class="head"><div class="from">Arrange &amp; approve · '+b.id+'</div><h3>Set pickup &amp; return</h3></div>'
       +'<div class="meta">For <span>'+b.name+'</span> · Requested: <span>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</span>'+(HFMT?' · <span class="he" dir="rtl">'+hebFull(parseISO(b.pickup||b.start))+'</span>':'')+'</div>'
       +'<div class="bd"><div class="recap">'+lines+'</div>'
-      +'<div class="form"><div class="row2">'
-      +'<div class="field"><label>Pickup date</label><input type="date" id="apPickup" value="'+defPickup+'"></div>'
-      +'<div class="field"><label>Return by</label><input type="date" id="apReturn" value="'+defRet+'"></div></div>'
+      +'<div class="form"><div class="admin-date-row">'
+      +'<div class="field"><label>Pickup date</label><button type="button" class="datefield ap-date on" id="apPickupBtn"><span id="apPickupText"></span><span class="he" id="apPickupHe" dir="rtl"></span></button></div>'
+      +'<div class="field"><label>Return by</label><button type="button" class="datefield ap-date" id="apReturnBtn"><span id="apReturnText"></span><span class="he" id="apReturnHe" dir="rtl"></span></button></div></div>'
+      +'<div class="admin-mini-cal"><div class="cal-head"><button type="button" id="apCalPrev">‹</button><div class="lbls"><h3 id="apCalLabel"></h3><div class="he" id="apCalLabelHe" dir="rtl"></div></div><button type="button" id="apCalNext">›</button></div><div class="cal-grid" id="apCalGrid"></div></div>'
       +'<div class="err hidden" id="apErr">Return must be on or after pickup.</div>'
       +'<button class="btn" id="apConfirm" style="width:100%">✓ Approve &amp; email customer</button>'
       +'<p class="sub" style="text-align:center">An email with these pickup &amp; return dates is sent to the customer.</p>'
       +'</div></div></div>';
+    function drawApproveFields(){
+      document.getElementById("apPickupText").textContent=fmt(apPickup);
+      document.getElementById("apReturnText").textContent=fmt(apReturn);
+      document.getElementById("apPickupHe").textContent=HFMT?hebFull(parseISO(apPickup)):"";
+      document.getElementById("apReturnHe").textContent=HFMT?hebFull(parseISO(apReturn)):"";
+      document.getElementById("apPickupBtn").classList.toggle("on",apTarget==="pickup");
+      document.getElementById("apReturnBtn").classList.toggle("on",apTarget==="return");
+    }
+    function drawApproveCalendar(){
+      document.getElementById("apCalLabel").textContent=apMonth.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+      const he=document.getElementById("apCalLabelHe"); if(he) he.textContent=monthHebrewLabel(apMonth);
+      const g=document.getElementById("apCalGrid"); g.innerHTML="";
+      DOW.forEach(d=>{const e=document.createElement("div");e.className="dow";e.textContent=d;g.appendChild(e);});
+      const firstDow=new Date(apMonth.getFullYear(),apMonth.getMonth(),1).getDay();
+      for(let i=0;i<firstDow;i++){const e=document.createElement("div");e.className="day empty";g.appendChild(e);}
+      const last=new Date(apMonth.getFullYear(),apMonth.getMonth()+1,0).getDate(), t=today();
+      for(let dn=1;dn<=last;dn++){
+        const date=new Date(apMonth.getFullYear(),apMonth.getMonth(),dn), pick=parseISO(apPickup), ret=parseISO(apReturn), dISO=iso(date);
+        const cell=document.createElement("div"); cell.className="day";
+        const hols=holidaysFor(date);
+        if(hols.find(h=>h.t==="yt")) cell.classList.add("yt");
+        if(dISO===iso(t)) cell.classList.add("today");
+        if(dISO===apPickup||dISO===apReturn)cell.classList.add("sel");
+        if(date>pick&&date<ret)cell.classList.add("inrange");
+        const gnum=document.createElement("div"); gnum.className="g"; gnum.textContent=dn; cell.appendChild(gnum);
+        const hd=hebDay(date); if(hd){ const hh=document.createElement("div"); hh.className="h"; hh.textContent=hd; cell.appendChild(hh); }
+        if(hols.length){ const hm=document.createElement("span"); hm.className="holi"; hm.style.background=TYPE_COLOR[hols[0].t]; cell.appendChild(hm); cell.title=hols.map(h=>h.n).join(" · ")+(HFMT?" — "+hebFull(date):""); }
+        else cell.title=HFMT?hebFull(date):"";
+        cell.addEventListener("click",()=>{
+          if(apTarget==="pickup"){
+            apPickup=dISO;
+            if(parseISO(apReturn)<parseISO(apPickup))apReturn=dISO;
+            apTarget="return";
+          }else{
+            if(parseISO(dISO)<parseISO(apPickup)){apPickup=dISO; apTarget="return";}
+            else apReturn=dISO;
+          }
+          document.getElementById("apErr").classList.add("hidden");
+          drawApproveFields(); drawApproveCalendar();
+        });
+        g.appendChild(cell);
+      }
+    }
+    document.getElementById("apPickupBtn").onclick=()=>{apTarget="pickup";apMonth=som(parseISO(apPickup));drawApproveFields();drawApproveCalendar();};
+    document.getElementById("apReturnBtn").onclick=()=>{apTarget="return";apMonth=som(parseISO(apReturn));drawApproveFields();drawApproveCalendar();};
+    document.getElementById("apCalPrev").onclick=()=>{apMonth=new Date(apMonth.getFullYear(),apMonth.getMonth()-1,1);drawApproveCalendar();};
+    document.getElementById("apCalNext").onclick=()=>{apMonth=new Date(apMonth.getFullYear(),apMonth.getMonth()+1,1);drawApproveCalendar();};
+    drawApproveFields(); drawApproveCalendar();
     document.getElementById("apConfirm").onclick=async()=>{
-      const p=document.getElementById("apPickup").value, r=document.getElementById("apReturn").value;
+      const p=apPickup, r=apReturn;
       if(!p||!r||parseISO(r)<parseISO(p)){ document.getElementById("apErr").classList.remove("hidden"); return; }
       b.pickup=p; b.ret=r; b.status="approved"; await api("update",{booking:b,sendApproval:true},true);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
@@ -1028,6 +1085,7 @@
   // admin creates a booking for any tablecloth, any dates (not limited to 5 days)
   function showNewBookingModal(){
     let qty={};
+    let nbPickup=iso(addDays(today(),7)), nbReturn=iso(addDays(today(),8)), nbTarget="pickup", nbMonth=som(parseISO(nbPickup));
     const body=
       '<div class="email"><div class="head"><div class="from">Admin</div><h3>New booking</h3></div>'
       +'<div class="bd"><div class="form">'
@@ -1035,16 +1093,60 @@
       +'<div class="row2"><div class="field"><label>Phone (optional)</label><input id="nbPhone"></div>'
       +'<div class="field"><label>Email (optional)</label><input id="nbEmail"></div></div>'
       +'<div class="field"><label>Home address (optional)</label><input id="nbAddr"></div>'
-      +'<div class="row2"><div class="field"><label>Pickup date</label><input type="date" id="nbPickup" value="'+iso(addDays(today(),7))+'"></div>'
-      +'<div class="field"><label>Return by</label><input type="date" id="nbReturn" value="'+iso(addDays(today(),8))+'"></div></div>'
+      +'<div class="admin-date-row"><div class="field"><label>Pickup date</label><button type="button" class="datefield on" id="nbPickupBtn"><span id="nbPickupText"></span><span class="he" id="nbPickupHe" dir="rtl"></span></button></div>'
+      +'<div class="field"><label>Return by</label><button type="button" class="datefield" id="nbReturnBtn"><span id="nbReturnText"></span><span class="he" id="nbReturnHe" dir="rtl"></span></button></div></div>'
+      +'<div class="admin-mini-cal"><div class="cal-head"><button type="button" id="nbCalPrev">‹</button><div class="lbls"><h3 id="nbCalLabel"></h3><div class="he" id="nbCalLabelHe" dir="rtl"></div></div><button type="button" id="nbCalNext">›</button></div><div class="cal-grid" id="nbCalGrid"></div></div>'
       +'<div class="err hidden" id="nbErr">Add a name, valid dates (return on/after pickup) and at least one item.</div>'
       +'<div style="font-weight:700;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-top:4px">Tablecloths</div>'
       +'<div id="nbItems"></div>'
       +'<button class="btn" id="nbCreate" style="width:100%;margin-top:6px">Create booking</button>'
       +'</div></div></div>';
     document.getElementById("modalBody").innerHTML=body;
+    function drawNewBookingFields(){
+      document.getElementById("nbPickupText").textContent=fmt(nbPickup);
+      document.getElementById("nbReturnText").textContent=fmt(nbReturn);
+      document.getElementById("nbPickupHe").textContent=HFMT?hebFull(parseISO(nbPickup)):"";
+      document.getElementById("nbReturnHe").textContent=HFMT?hebFull(parseISO(nbReturn)):"";
+      document.getElementById("nbPickupBtn").classList.toggle("on",nbTarget==="pickup");
+      document.getElementById("nbReturnBtn").classList.toggle("on",nbTarget==="return");
+    }
+    function drawNewBookingCalendar(){
+      document.getElementById("nbCalLabel").textContent=nbMonth.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+      const he=document.getElementById("nbCalLabelHe"); if(he) he.textContent=monthHebrewLabel(nbMonth);
+      const g=document.getElementById("nbCalGrid"); g.innerHTML="";
+      DOW.forEach(d=>{const e=document.createElement("div");e.className="dow";e.textContent=d;g.appendChild(e);});
+      const firstDow=new Date(nbMonth.getFullYear(),nbMonth.getMonth(),1).getDay();
+      for(let i=0;i<firstDow;i++){const e=document.createElement("div");e.className="day empty";g.appendChild(e);}
+      const last=new Date(nbMonth.getFullYear(),nbMonth.getMonth()+1,0).getDate(), t=today();
+      for(let dn=1;dn<=last;dn++){
+        const date=new Date(nbMonth.getFullYear(),nbMonth.getMonth(),dn), pick=parseISO(nbPickup), ret=parseISO(nbReturn), dISO=iso(date);
+        const cell=document.createElement("div"); cell.className="day";
+        const hols=holidaysFor(date);
+        if(hols.find(h=>h.t==="yt")) cell.classList.add("yt");
+        if(dISO===iso(t)) cell.classList.add("today");
+        if(dISO===nbPickup||dISO===nbReturn)cell.classList.add("sel");
+        if(date>pick&&date<ret)cell.classList.add("inrange");
+        const gnum=document.createElement("div"); gnum.className="g"; gnum.textContent=dn; cell.appendChild(gnum);
+        const hd=hebDay(date); if(hd){ const hh=document.createElement("div"); hh.className="h"; hh.textContent=hd; cell.appendChild(hh); }
+        if(hols.length){ const hm=document.createElement("span"); hm.className="holi"; hm.style.background=TYPE_COLOR[hols[0].t]; cell.appendChild(hm); cell.title=hols.map(h=>h.n).join(" · ")+(HFMT?" — "+hebFull(date):""); }
+        else cell.title=HFMT?hebFull(date):"";
+        cell.addEventListener("click",()=>{
+          if(nbTarget==="pickup"){
+            nbPickup=dISO;
+            if(parseISO(nbReturn)<parseISO(nbPickup))nbReturn=dISO;
+            nbTarget="return";
+          }else{
+            if(parseISO(dISO)<parseISO(nbPickup)){nbPickup=dISO; nbTarget="return";}
+            else nbReturn=dISO;
+          }
+          document.getElementById("nbErr").classList.add("hidden");
+          drawNewBookingFields(); drawNewBookingCalendar(); rows();
+        });
+        g.appendChild(cell);
+      }
+    }
     function rows(){
-      const p=document.getElementById("nbPickup").value, r=document.getElementById("nbReturn").value;
+      const p=nbPickup, r=nbReturn;
       const ok=p&&r&&parseISO(r)>=parseISO(p);
       document.getElementById("nbItems").innerHTML=INVENTORY.map(inv=>{
         const av=ok?availForWindow(inv.id,p,r):inv.stock, q=qty[inv.id]||0;
@@ -1053,16 +1155,19 @@
       }).join('');
       document.querySelectorAll('#nbItems [data-dec]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.dec;qty[id]=Math.max(0,(qty[id]||0)-1);rows();});
       document.querySelectorAll('#nbItems [data-inc]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.inc;
-        const p=document.getElementById("nbPickup").value,r=document.getElementById("nbReturn").value;
+        const p=nbPickup,r=nbReturn;
         const av=(p&&r&&parseISO(r)>=parseISO(p))?availForWindow(id,p,r):INVENTORY.find(i=>i.id===id).stock;
         const n=(qty[id]||0)+1; if(n>av){toast("Only "+av+" available for these dates");return;} qty[id]=n;rows();});
     }
+    document.getElementById("nbPickupBtn").onclick=()=>{nbTarget="pickup";nbMonth=som(parseISO(nbPickup));drawNewBookingFields();drawNewBookingCalendar();};
+    document.getElementById("nbReturnBtn").onclick=()=>{nbTarget="return";nbMonth=som(parseISO(nbReturn));drawNewBookingFields();drawNewBookingCalendar();};
+    document.getElementById("nbCalPrev").onclick=()=>{nbMonth=new Date(nbMonth.getFullYear(),nbMonth.getMonth()-1,1);drawNewBookingCalendar();};
+    document.getElementById("nbCalNext").onclick=()=>{nbMonth=new Date(nbMonth.getFullYear(),nbMonth.getMonth()+1,1);drawNewBookingCalendar();};
+    drawNewBookingFields(); drawNewBookingCalendar();
     rows();
-    document.getElementById("nbPickup").onchange=rows;
-    document.getElementById("nbReturn").onchange=rows;
     document.getElementById("nbCreate").onclick=async()=>{
       const name=document.getElementById("nbName").value.trim();
-      const p=document.getElementById("nbPickup").value, r=document.getElementById("nbReturn").value;
+      const p=nbPickup, r=nbReturn;
       const items=INVENTORY.filter(i=>qty[i.id]>0).map(i=>({id:i.id,name:i.name,qty:qty[i.id]}));
       if(!name||!p||!r||parseISO(r)<parseISO(p)||!items.length){ document.getElementById("nbErr").classList.remove("hidden"); return; }
       const b={ id:"BK"+Date.now().toString(36).toUpperCase(), name,
