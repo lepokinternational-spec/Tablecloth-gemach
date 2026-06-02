@@ -345,7 +345,7 @@
     <h2>All reservations</h2>
     <p class="sub">Full list with contact details and Hebrew dates.</p>
     <div id="bookingList" style="margin-top:16px"></div>
-    <div style="margin-top:6px;font-size:.8rem;color:var(--ink-soft)">Approval emails are sent to <b id="adminEmail">bookings@linenlibrary.org</b></div>
+    <div style="margin-top:6px;font-size:.8rem;color:var(--ink-soft)">Approval emails are sent to <b id="adminEmail">linencollection29@gmail.com</b></div>
     <button class="btn ghost sm" id="adminLockBtn" style="margin-top:14px">Lock admin</button>
     <button class="btn ghost sm" id="resetBtn" style="margin-top:14px">Reset all demo data</button>
   </section>
@@ -377,7 +377,14 @@
     {id:"stripe", name:"Monochrome Stripe", size:"Runner", dim:"", stock:10, imgs:["images/stripe-1.jpg","images/stripe-2.jpg"]},
     {id:"black", name:"Black", size:"Plain weave", dim:"", stock:10, imgs:["images/black-1.jpg","images/black-2.jpg","images/black-3.jpg"]},
   ];
-  const ADMIN_EMAIL="bookings@linenlibrary.org";
+  const ADMIN_EMAIL="linencollection29@gmail.com";
+  const EMAIL_ENDPOINT="PASTE_YOUR_WORKER_URL_HERE";
+  async function sendApprovalEmail(b){
+    if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return;
+    try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+    }catch(e){console.error("email send failed",e);}
+  }
   const ADMIN_PASSWORD="linen2026";
 
   /* ============ State ============ */
@@ -709,6 +716,7 @@
       const p=document.getElementById("apPickup").value, r=document.getElementById("apReturn").value;
       if(!p||!r||parseISO(r)<parseISO(p)){ document.getElementById("apErr").classList.remove("hidden"); return; }
       b.pickup=p; b.ret=r; b.status="approved"; await saveBookings();
+      sendApprovalEmail(b);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
       toast("Approved "+b.id+" — confirmation sent to customer");
       showCustomerEmail(b);
