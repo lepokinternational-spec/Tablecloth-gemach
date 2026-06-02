@@ -410,6 +410,13 @@
       body:JSON.stringify({id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
     }catch(e){console.error("email send failed",e);}
   }
+  async function sendAdminRequestEmail(b){
+    if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return false;
+    try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({type:"new_reservation",to:ADMIN_EMAIL,id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+      return true;
+    }catch(e){console.error("admin email send failed",e);return false;}
+  }
   const ADMIN_PASSWORD="linen2026";
   const PHOTO_KEY="gmh_photo_overrides";
 
@@ -888,7 +895,8 @@
     ["fName","fPhone","fEmail","fAddr","fNote"].forEach(i=>document.getElementById(i).value="");
     document.getElementById("checkout").classList.add("hidden");
     renderCatalog(); renderCart(); renderCalendar(); renderAdmin();
-    showEmailModal(b);
+    const sent=await sendAdminRequestEmail(b);
+    toast(sent?"Request sent for approval":"Request submitted");
   };
   function val(id){return document.getElementById(id).value.trim();}
 
@@ -900,7 +908,7 @@
     const days=daysInc(b.pickup||b.start, b.ret||b.start);
     const heD=HFMT?('<br><span class="he" dir="rtl" style="color:var(--gold)">'+hebFull(parseISO(b.pickup||b.start))+' – '+hebFull(parseISO(b.ret||b.start))+'</span>'):"";
     document.getElementById("modalBody").innerHTML=
-      '<div class="email"><div class="head"><div class="from">New reservation · auto-sent to '+ADMIN_EMAIL+'</div><h3>Approve reservation '+b.id+'</h3></div>'
+      '<div class="email"><div class="head"><div class="from">New reservation request</div><h3>Approve reservation '+b.id+'</h3></div>'
       +'<div class="meta">From: <span>'+b.name+'</span> · '+b.phone+' · '+b.email+'<br>Deliver to: <span>'+b.address+'</span>'
       +(b.amount?'<br>Quantity: <span>'+b.amount+'</span>':'')+(b.note?'<br>Note: <span>'+b.note+'</span>':'')+'</div>'
       +'<div class="bd"><p>A new request needs approval. Requested: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+days+' '+(days===1?"day":"days")+').'+heD+'</p>'
