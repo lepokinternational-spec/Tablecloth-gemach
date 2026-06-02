@@ -96,17 +96,17 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;margin-top:18px}
   .card{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff;display:flex;flex-direction:column;transition:transform .15s,box-shadow .2s}
   .card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
-  .pic{position:relative;background:#efe9da}
-  .pic img.mainpic{display:block;width:100%;height:240px;object-fit:contain;background:#efe9da;cursor:zoom-in}
-  .thumbs{display:flex;gap:5px;padding:6px;background:#efe9da;flex-wrap:wrap}
-  .thumbs .thumb{width:48px;height:38px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent;opacity:.78;transition:.15s}
+  .pic{position:relative;background:#efe9da;padding:12px;display:grid;place-items:center;border-bottom:1px solid var(--line)}
+  .pic img.mainpic{display:block;width:100%;height:220px;object-fit:contain;background:transparent;border-radius:8px;cursor:zoom-in}
+  .thumbs{display:flex;gap:6px;padding:8px 10px;background:#e9e1d0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .thumbs .thumb{width:48px;height:38px;object-fit:cover;background:#fff;border-radius:6px;cursor:pointer;border:2px solid transparent;opacity:.78;transition:.15s}
   .thumbs .thumb.on{border-color:var(--teal);opacity:1} .thumbs .thumb:hover{opacity:1}
   .dim{font-size:.74rem;color:var(--ink-soft);margin-top:2px;letter-spacing:.02em}
   .lightbox{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(18,18,18,.9);display:none;align-items:center;justify-content:center;z-index:99999;padding:18px;cursor:zoom-out}
   .lightbox.open{display:flex}
   .lightbox img{max-width:95vw;max-height:92vh;border-radius:12px;box-shadow:0 12px 50px rgba(0,0,0,.55)}
-  .card .body{padding:13px 15px 16px}
-  .card h4{font-size:1.08rem}
+  .card .body{padding:16px 15px 16px}
+  .card h4{font-size:1.08rem;line-height:1.18}
   .card .size{color:var(--ink-soft);font-size:.82rem;margin-top:1px}
   .qtyrow{display:flex;align-items:center;gap:8px;margin-top:12px}
   .setpick{width:100%;justify-content:center}
