@@ -331,6 +331,7 @@
       <div class="field"><label>Password</label><input type="password" id="adminPassword" autocomplete="current-password" placeholder="Enter password"></div>
       <button class="btn" id="adminLoginBtn" type="button">Unlock</button>
     </div>
+    <button class="btn ghost sm" id="loginResetPasswordBtn" type="button" style="margin-top:12px">Reset password</button>
     <div class="err hidden" id="adminLoginErr" style="margin-top:10px">Incorrect password.</div>
   </section>
   <div id="adminContent" class="hidden">
@@ -1042,9 +1043,11 @@
     openModal();
   }
   function showResetPasswordModal(){
+    const needsCurrent=!ADMIN_TOKEN_VALUE;
     document.getElementById("modalBody").innerHTML=
       '<div class="email"><div class="head"><div class="from">Admin</div><h3>Reset password</h3></div>'
       +'<div class="bd"><div class="form">'
+      +(needsCurrent?'<div class="field"><label>Current password</label><input type="password" id="currentAdminPassword" autocomplete="current-password" placeholder="Enter current password"></div>':'')
       +'<div class="field"><label>New password</label><input type="password" id="newAdminPassword" autocomplete="new-password" placeholder="Enter new password"></div>'
       +'<div class="field"><label>Confirm password</label><input type="password" id="confirmAdminPassword" autocomplete="new-password" placeholder="Confirm new password"></div>'
       +'<div class="err hidden" id="pwErr">Passwords must match and be at least 8 characters.</div>'
@@ -1054,6 +1057,7 @@
       const p=document.getElementById("newAdminPassword").value.trim(), c=document.getElementById("confirmAdminPassword").value.trim();
       if(p.length<8||p!==c){document.getElementById("pwErr").classList.remove("hidden");return;}
       try{
+        if(needsCurrent)ADMIN_TOKEN_VALUE=document.getElementById("currentAdminPassword").value.trim();
         await api("resetPassword",{password:p},true);
         ADMIN_TOKEN_VALUE=p;
         sessionStorage.setItem("linen_admin_token",ADMIN_TOKEN_VALUE);
@@ -1168,6 +1172,7 @@
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
   document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
   document.getElementById("adminLockBtn").onclick=()=>{clearAdminSession();updateAdminGate();toast("Admin locked");};
+  document.getElementById("loginResetPasswordBtn").onclick=showResetPasswordModal;
   document.getElementById("resetPasswordBtn").onclick=showResetPasswordModal;
   document.getElementById("photoEditToggle").onclick=togglePhotoEditor;
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
