@@ -199,6 +199,8 @@
   .admin-login{max-width:440px;margin:0 auto 24px}
   .admin-login .actions{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
   .admin-login .actions .field{flex:1}
+  .photo-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .photo-edit-tab{border-radius:999px;padding:9px 18px}
   .photo-manager{display:grid;gap:12px;margin-top:16px}
   .photo-editor{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
   .photo-editor h4{font-size:1rem;margin-bottom:10px}
@@ -354,9 +356,14 @@
   </section>
 
   <section class="block" style="margin-top:24px">
-    <h2>Catalogue photos</h2>
-    <p class="sub">Add, remove, and reorder tablecloth photos.</p>
-    <div class="photo-manager" id="photoManager"></div>
+    <div class="photo-head">
+      <h2>Catalogue photos</h2>
+      <button class="btn gold sm photo-edit-tab" id="photoEditToggle" type="button">Edit</button>
+    </div>
+    <div id="photoEditorDetails" class="hidden">
+      <p class="sub" style="margin-top:8px">Add, remove, and reorder tablecloth photos.</p>
+      <div class="photo-manager" id="photoManager"></div>
+    </div>
   </section>
 
   <section class="block" style="margin-top:24px">
@@ -1063,6 +1070,12 @@
       if(e.key==="Enter"){e.preventDefault();wrap.querySelector('[data-add-photo="'+input.dataset.photoInput+'"]').click();}
     }));
   }
+  function togglePhotoEditor(){
+    const details=document.getElementById("photoEditorDetails"), btn=document.getElementById("photoEditToggle");
+    const open=details.classList.toggle("hidden");
+    btn.textContent=open?"Edit":"Close";
+    if(!open)renderPhotoManager();
+  }
   function renderAdmin(){ renderStats(); renderBookingList(); renderAdminCalendar(); renderPhotoManager(); }
   function adminUnlocked(){ return sessionStorage.getItem("linen_admin_unlocked")==="1"; }
   function updateAdminGate(){
@@ -1098,6 +1111,7 @@
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
   document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
   document.getElementById("adminLockBtn").onclick=()=>{sessionStorage.removeItem("linen_admin_unlocked");updateAdminGate();toast("Admin locked");};
+  document.getElementById("photoEditToggle").onclick=togglePhotoEditor;
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
     const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } else closePopCal(); };
   document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation(); closePopCal();
