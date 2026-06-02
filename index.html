@@ -773,6 +773,7 @@
         if(avail<=0){delete cart[inv.id]; inCart=0;}
         else if(inCart!==avail){cart[inv.id]=avail; inCart=avail;}
       }
+      if(have&&avail<=0)return;
       const card=document.createElement("div"); card.className="card";
       var pics=inv.imgs||[inv.img];var pic='<div class="pic"><img class="mainpic" loading="lazy" src="'+pics[0]+'" alt="'+inv.name+'"></div>';if(pics.length>1){pic+='<div class="thumbs">'+pics.map(function(u,i){return '<img class="thumb'+(i===0?' on':'')+'" loading="lazy" src="'+u+'">';}).join('')+'</div>';}card.innerHTML=pic+'<div class="body"><h4>'+inv.name+'</h4><div class="size">'+inv.size+'</div>'+(inv.dim?'<div class="dim">'+inv.dim+'</div>':'')+'</div>';if(pics.length>1){var _m=card.querySelector(".mainpic");card.querySelectorAll(".thumb").forEach(function(t){t.addEventListener("click",function(){_m.src=t.src;card.querySelectorAll(".thumb").forEach(function(x){x.classList.remove("on");});t.classList.add("on");});});}
       if(have&&avail>0){
@@ -784,6 +785,7 @@
       }
       wrap.appendChild(card);
     });
+    if(have&&!wrap.children.length)wrap.innerHTML='<div class="empty">No tablecloths are available for these dates.</div>';
   }
   function toggleSet(id,count){ if(cart[id])delete cart[id]; else cart[id]=count; renderCatalog(); renderCart(); }
 
