@@ -144,6 +144,7 @@
   .day.toofar{opacity:.3;cursor:not-allowed}
   .day.toofar:hover{transform:none;border-color:var(--line)}
   .dateadvice{margin-top:12px;background:#FBEFE0;border:1px solid #E7C9A6;color:#8A5A1E;border-radius:10px;padding:11px 14px;font-size:.85rem;font-weight:600}
+  .parsha-note{margin-top:12px;background:#E8F0EC;border:1px solid #C7DAD2;color:var(--teal);border-radius:10px;padding:11px 14px;font-size:.85rem;font-weight:700}
   .day.today{box-shadow:inset 0 0 0 2px var(--terra)}
   .day.yt{background:#FBF3DE} .day.yt.sel{background:var(--teal)}
   .lvl-hi{background:var(--ok)} .lvl-mid{background:var(--warn)} .lvl-lo{background:var(--bad)} .lvl-none{background:var(--line)}
@@ -349,8 +350,9 @@
     </div>
     <div class="searchnote">
       <span>Choose pickup and return dates — up to 5 days. Need them longer? Add a note in your reservation and we'll try to help.</span>
-    </div>
-    <div class="dateadvice hidden" id="dateAdvice">⚠️ The most we can lend is 5 days. If you need them longer, please add a note in your reservation below and we'll try to accommodate.</div>
+      </div>
+      <div class="dateadvice hidden" id="dateAdvice">⚠️ The most we can lend is 5 days. If you need them longer, please add a note in your reservation below and we'll try to accommodate.</div>
+      <div class="parsha-note hidden" id="parshaNote"></div>
   </div>
 
   <div class="cols">
@@ -499,6 +501,7 @@
   let pickDate=null, retDate=null;
   const MAX_DAYS=5;
   let calMonth=som(new Date()), pCalMonth=som(new Date());
+  const parshaCache={};
 
   /* ============ Date helpers ============ */
   function som(d){return new Date(d.getFullYear(),d.getMonth(),1);}
@@ -509,6 +512,12 @@
   function daysInc(a,b){return Math.round((parseISO(b)-parseISO(a))/864e5)+1;}
   function fmt(s){return parseISO(s).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});}
   function fmtShort(s){return parseISO(s).toLocaleDateString("en-GB",{day:"numeric",month:"short"});}
+  function shabbatInRange(s,e){
+    if(!s)return null;
+    let d=parseISO(s), end=parseISO(e||s);
+    while(d<=end){ if(d.getDay()===6)return iso(d); d=addDays(d,1); }
+    return null;
+  }
 
   /* ============ Hebrew calendar ============ */
   let HFMT=null;
@@ -860,6 +869,19 @@
   }
 
   function showAdvice(on){ document.getElementById("dateAdvice").classList.toggle("hidden",!on); }
+  function updateParshaNote(){
+    const note=document.getElementById("parshaNote"), shab=shabbatInRange(pickDate,retDate||pickDate);
+    if(!note)return;
+    if(!shab){note.classList.add("hidden");note.textContent="";return;}
+    if(parshaCache[shab]){note.textContent="Shabbos parsha: "+parshaCache[shab];note.classList.remove("hidden");return;}
+    note.textContent="Loading Shabbos parsha…";note.classList.remove("hidden");
+    const d=parseISO(shab), url="https://www.hebcal.com/hebcal?v=1&cfg=json&ss=on&maj=off&min=off&mod=off&nx=off&mf=off&c=off&year="+d.getFullYear()+"&month="+(d.getMonth()+1);
+    fetch(url).then(r=>r.json()).then(data=>{
+      const item=(data.items||[]).find(it=>it.date===shab&&(it.category==="parashat"||/^Parashat /.test(it.title||"")));
+      parshaCache[shab]=item?(item.title||"").replace(/^Parashat /,""):"this Shabbos";
+      if(shabbatInRange(pickDate,retDate||pickDate)===shab){note.textContent="Shabbos parsha: "+parshaCache[shab];note.classList.remove("hidden");}
+    }).catch(()=>{ if(shabbatInRange(pickDate,retDate||pickDate)===shab){note.textContent="Selected dates include Shabbos";note.classList.remove("hidden");} });
+  }
   function updateDateField(){
     const f=document.getElementById("dateField"), tx=document.getElementById("dateFieldText");
     if(pickDate&&retDate){ f.classList.remove("empty");
@@ -870,7 +892,7 @@
   }
   function openPopCal(){ calMonth=som(parseISO(pickDate||iso(today()))); renderCalendar(); document.getElementById("popCal").hidden=false; }
   function closePopCal(){ document.getElementById("popCal").hidden=true; }
-  function applyRange(){ updateDateField(); renderCalendar(); renderCatalog(); renderCart(); }
+  function applyRange(){ updateDateField(); updateParshaNote(); renderCalendar(); renderCatalog(); renderCart(); }
 
   function pickDay(dISO){
     if(parseISO(dISO)<today()) return;
@@ -894,7 +916,9 @@
   function setHint(error){ const h=document.getElementById("popHint"); if(!h) return;
     h.classList.toggle("err",!!error);
     if(error){ h.textContent="✕ Reservations can be a maximum of 5 days — choose an earlier return date."; return; }
-    h.textContent = (pickDate&&!retDate) ? "Now tap a return date (within 5 days)"
+    const shab=shabbatInRange(pickDate,retDate||pickDate);
+    h.textContent = shab ? "Selected dates include Shabbos — parsha shown below"
+      : (pickDate&&!retDate) ? "Now tap a return date (within 5 days)"
       : (pickDate&&retDate) ? "Tap a new date to start over"
       : "Tap a pickup date, then a return date · max 5 days"; }
 
