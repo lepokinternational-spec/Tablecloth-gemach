@@ -76,7 +76,7 @@
   .chip.holi{border-color:#E6D9B4;background:#FAF3DF}
 
   .searchnote{font-size:.83rem;color:var(--ink-soft);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}
-  .searchrow{display:grid;grid-template-columns:1.4fr .8fr auto;gap:12px;align-items:flex-end}
+  .searchrow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:flex-end}
   @media(max-width:760px){.searchrow{grid-template-columns:1fr}}
   .datepick{position:relative}
   .datefield{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:1rem;color:var(--ink);font-weight:600;text-align:left}
@@ -256,7 +256,6 @@
             </div>
           </div>
         </div>
-        <div class="field"><label>Quantity</label><input type="number" id="sAmount" min="1" placeholder="e.g. 12"></div>
         <button class="btn" id="searchBtn">See availability</button>
       </div>
     </div>
@@ -648,7 +647,7 @@
     else bks.forEach(b=>{
       body+='<div class="daycard"><div class="dctop"><b>'+b.name+'</b> <span style="color:var(--ink-soft);font-size:.8rem">'+b.id+'</span><span class="pill '+b.status+'" style="margin-left:auto">'+b.status+'</span></div>'
         +'<div class="dcmeta">📦 Loan: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'
-        +'<br>📞 '+b.phone+' · ✉️ '+b.email+'<br>📍 '+b.address+(b.amount?'<br>🔢 Quantity: '+b.amount:'')+(b.note?'<br>📝 '+b.note:'')+'</div>'
+        +'<br>📞 '+b.phone+' · ✉️ '+b.email+'<br>📍 '+b.address+(b.note?'<br>📝 '+b.note:'')+'</div>'
         +'<div class="items">'+b.items.map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join('')+'</div>'
         +'<div class="acts" data-id="'+b.id+'"></div></div>';
     });
@@ -822,7 +821,7 @@
     const ret=retDate||pickDate;
     for(const it of cartArr()){ if(availForWindow(it.id,pickDate,ret)<it.qty){ toast(it.name+" is no longer available"); renderCatalog(); return; } }
     const b={ id:"BK"+Date.now().toString(36).toUpperCase(), name,phone,email,address:addr,note,
-      amount:document.getElementById("sAmount").value||"",
+      amount:"",
       items:cartArr(), start:pickDate, pickup:pickDate, ret:ret, status:"pending",
       token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
     bookings.push(b); await saveBookings(); cart={};
@@ -843,7 +842,7 @@
     document.getElementById("modalBody").innerHTML=
       '<div class="email"><div class="head"><div class="from">New reservation · auto-sent to '+ADMIN_EMAIL+'</div><h3>Approve reservation '+b.id+'</h3></div>'
       +'<div class="meta">From: <span>'+b.name+'</span> · '+b.phone+' · '+b.email+'<br>Deliver to: <span>'+b.address+'</span>'
-      +(b.amount?'<br>Quantity: <span>'+b.amount+'</span>':'')+(b.note?'<br>Note: <span>'+b.note+'</span>':'')+'</div>'
+      +(b.note?'<br>Note: <span>'+b.note+'</span>':'')+'</div>'
       +'<div class="bd"><p>A new request needs approval. Requested: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+days+' '+(days===1?"day":"days")+').'+heD+'</p>'
       +'<div class="recap">'+lines+'</div>'
       +'<p style="font-size:.84rem;color:var(--ink-soft)">Approving lets you confirm/adjust pickup &amp; return dates, which are then emailed to the customer. In a live deployment this email lands in the admin\'s inbox; the buttons below are the approvable link.</p>'
@@ -884,7 +883,6 @@
       el.innerHTML='<div class="top"><div><h4>'+b.name+' <span style="font-family:\'Hanken Grotesk\';font-size:.8rem;color:var(--ink-soft);font-weight:600">· '+b.id+'</span></h4>'
         +'<div class="meta"><div>📦 Loan <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'+heR+'</div>'+win
         +'<div>📞 <b>'+b.phone+'</b> · ✉️ <b>'+b.email+'</b></div><div>📍 <b>'+b.address+'</b></div>'
-        +(b.amount?'<div>🔢 Quantity: '+b.amount+'</div>':'')
         +(b.note?'<div>📝 '+b.note+'</div>':'')+'</div></div><span class="pill '+b.status+'">'+b.status+'</span></div>'
         +'<div class="items">'+b.items.map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
       const acts=el.querySelector(".acts");
