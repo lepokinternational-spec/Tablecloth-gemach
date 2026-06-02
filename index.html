@@ -440,9 +440,9 @@
     <p class="sub">Full list with contact details and Hebrew dates.</p>
     <div id="bookingList" style="margin-top:16px"></div>
     <div style="margin-top:6px;font-size:.8rem;color:var(--ink-soft)">Approval emails are sent to <b id="adminEmail">linencollection29@gmail.com</b></div>
-    <button class="btn ghost sm" id="adminLockBtn" style="margin-top:14px">Lock admin</button>
+    <button class="btn ghost sm" id="adminLockBtn" style="margin-top:14px">Log out</button>
     <button class="btn ghost sm" id="resetPasswordBtn" style="margin-top:14px">Reset password</button>
-    <button class="btn ghost sm" id="resetBtn" style="margin-top:14px">Reset all demo data</button>
+    <button class="btn ghost sm" id="resetBtn" style="margin-top:14px">Delete all bookings</button>
   </section>
   </div>
 </div></main>
@@ -1368,7 +1368,7 @@
   });
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
   document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
-  document.getElementById("adminLockBtn").onclick=()=>{clearAdminSession();updateAdminGate();toast("Admin locked");};
+  document.getElementById("adminLockBtn").onclick=()=>{clearAdminSession();updateAdminGate();toast("Logged out");};
   document.getElementById("loginResetPasswordBtn").onclick=showResetPasswordModal;
   document.getElementById("resetPasswordBtn").onclick=showResetPasswordModal;
   document.getElementById("photoEditToggle").onclick=togglePhotoEditor;
@@ -1386,7 +1386,10 @@
   document.getElementById("calNext").onclick=(e)=>{e.stopPropagation();calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderCalendar();};
   document.getElementById("pCalPrev").onclick=()=>{pCalMonth=new Date(pCalMonth.getFullYear(),pCalMonth.getMonth()-1,1);renderAdminCalendar();};
   document.getElementById("pCalNext").onclick=()=>{pCalMonth=new Date(pCalMonth.getFullYear(),pCalMonth.getMonth()+1,1);renderAdminCalendar();};
-  document.getElementById("resetBtn").onclick=async()=>{bookings=[];await api("wipeall",{},true);renderAdmin();renderCalendar();renderCatalog();toast("All demo reservations cleared");};
+  document.getElementById("resetBtn").onclick=async()=>{
+    if(!confirm("Delete every booking? This cannot be undone."))return;
+    bookings=[];await api("wipeall",{},true);renderAdmin();renderCalendar();renderCatalog();toast("All bookings deleted");
+  };
   document.getElementById("newBookingBtn").onclick=()=>showNewBookingModal();
   document.getElementById("adminEmail").textContent=ADMIN_EMAIL;
 
