@@ -196,6 +196,9 @@
   .bk .items{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
   .tag{background:var(--linen-2);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:.8rem}
   .bk .acts{margin-top:13px;display:flex;gap:9px;flex-wrap:wrap}
+  .admin-login{max-width:440px;margin:0 auto 24px}
+  .admin-login .actions{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
+  .admin-login .actions .field{flex:1}
 
   /* modal / email */
   .overlay{position:fixed;inset:0;background:rgba(35,33,27,.55);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
@@ -308,6 +311,15 @@
     <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Bookings calendar</h1>
     <p class="lead">Every request triggers an approval email. Click any day to see who's booked and when, and approve or decline — availability updates everywhere instantly.</p>
   </div>
+  <section class="block admin-login" id="adminLogin">
+    <h2 style="font-size:1.3rem">Admin password</h2>
+    <div class="actions">
+      <div class="field"><label>Password</label><input type="password" id="adminPassword" autocomplete="current-password" placeholder="Enter password"></div>
+      <button class="btn" id="adminLoginBtn" type="button">Unlock</button>
+    </div>
+    <div class="err hidden" id="adminLoginErr" style="margin-top:10px">Incorrect password.</div>
+  </section>
+  <div id="adminContent" class="hidden">
   <div class="stats stagger" id="stats"></div>
 
   <section class="block">
@@ -334,8 +346,10 @@
     <p class="sub">Full list with contact details and Hebrew dates.</p>
     <div id="bookingList" style="margin-top:16px"></div>
     <div style="margin-top:6px;font-size:.8rem;color:var(--ink-soft)">Approval emails are sent to <b id="adminEmail">bookings@linenlibrary.org</b></div>
+    <button class="btn ghost sm" id="adminLockBtn" style="margin-top:14px">Lock admin</button>
     <button class="btn ghost sm" id="resetBtn" style="margin-top:14px">Reset all demo data</button>
   </section>
+  </div>
 </div></main>
 
 <div class="footnote wrap">Prototype · reservations are saved on this device and persist between visits. Hebrew dates &amp; holidays are computed from your browser's Hebrew calendar. A live deployment needs a small backend to send real approval emails.</div>
@@ -364,6 +378,7 @@
     {id:"black", name:"Black", size:"Plain weave", dim:"", stock:10, imgs:["images/black-1.jpg","images/black-2.jpg","images/black-3.jpg"]},
   ];
   const ADMIN_EMAIL="bookings@linenlibrary.org";
+  const ADMIN_PASSWORD="linen2026";
 
   /* ============ State ============ */
   let bookings=[], cart={};
@@ -959,6 +974,26 @@
     openModal();
   }
   function renderAdmin(){ renderStats(); renderBookingList(); renderAdminCalendar(); }
+  function adminUnlocked(){ return sessionStorage.getItem("linen_admin_unlocked")==="1"; }
+  function updateAdminGate(){
+    const unlocked=adminUnlocked();
+    document.getElementById("adminLogin").classList.toggle("hidden",unlocked);
+    document.getElementById("adminContent").classList.toggle("hidden",!unlocked);
+    document.getElementById("adminLoginErr").classList.add("hidden");
+    if(unlocked)renderAdmin();
+  }
+  function unlockAdmin(){
+    const input=document.getElementById("adminPassword");
+    if(input.value===ADMIN_PASSWORD){
+      sessionStorage.setItem("linen_admin_unlocked","1");
+      input.value="";
+      updateAdminGate();
+      toast("Admin unlocked");
+      return;
+    }
+    document.getElementById("adminLoginErr").classList.remove("hidden");
+    input.focus();
+  }
 
   /* ============ Nav / events ============ */
   document.getElementById("viewToggle").addEventListener("click",e=>{
@@ -967,9 +1002,12 @@
     const v=btn.dataset.view;
     document.getElementById("shopView").classList.toggle("hidden",v!=="shop");
     document.getElementById("adminView").classList.toggle("hidden",v!=="admin");
-    if(v==="admin")renderAdmin();
+    if(v==="admin")updateAdminGate();
     window.scrollTo({top:0,behavior:"smooth"});
   });
+  document.getElementById("adminLoginBtn").onclick=unlockAdmin;
+  document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
+  document.getElementById("adminLockBtn").onclick=()=>{sessionStorage.removeItem("linen_admin_unlocked");updateAdminGate();toast("Admin locked");};
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
     const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } else closePopCal(); };
   document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation(); closePopCal();
