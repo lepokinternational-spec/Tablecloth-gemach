@@ -92,6 +92,7 @@
   .popcal-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.76rem;color:var(--ink-soft);margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
   .popcal-foot span{flex:1}
   .popcal-foot #popHint.err{color:var(--bad);font-weight:700}
+  .cal-parsha{font-size:.78rem;color:var(--teal);font-weight:800;margin-top:3px}
   .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
 
   .cols{display:grid;grid-template-columns:1fr 350px;gap:26px;align-items:start;padding:26px 0 70px;position:relative;z-index:1}
@@ -144,7 +145,6 @@
   .day.toofar{opacity:.3;cursor:not-allowed}
   .day.toofar:hover{transform:none;border-color:var(--line)}
   .dateadvice{margin-top:12px;background:#FBEFE0;border:1px solid #E7C9A6;color:#8A5A1E;border-radius:10px;padding:11px 14px;font-size:.85rem;font-weight:600}
-  .parsha-note{margin-top:12px;background:#E8F0EC;border:1px solid #C7DAD2;color:var(--teal);border-radius:10px;padding:11px 14px;font-size:.85rem;font-weight:700}
   .day.today{box-shadow:inset 0 0 0 2px var(--terra)}
   .day.yt{background:#FBF3DE} .day.yt.sel{background:var(--teal)}
   .lvl-hi{background:var(--ok)} .lvl-mid{background:var(--warn)} .lvl-lo{background:var(--bad)} .lvl-none{background:var(--line)}
@@ -335,24 +335,23 @@
           <div class="popcal" id="popCal" hidden>
             <div class="cal-head">
               <button type="button" id="calPrev">‹</button>
-              <div class="lbls"><h3 id="calLabel"></h3><div class="he" id="calLabelHe" dir="rtl"></div></div>
+              <div class="lbls"><h3 id="calLabel"></h3><div class="he" id="calLabelHe" dir="rtl"></div><div class="cal-parsha hidden" id="calParshaNote"></div></div>
               <button type="button" id="calNext">›</button>
             </div>
             <div class="cal-grid" id="calGrid"></div>
             <div class="popcal-foot">
               <span id="popHint">Tap a pickup date, then a return date · max 5 days</span>
-              <button type="button" class="btn sm" id="calDone">Done</button>
+              <button type="button" class="btn sm" id="calDone">Check availability</button>
             </div>
           </div>
         </div>
-        <button class="btn" id="searchBtn">See availability</button>
+        <button class="btn" id="searchBtn">Check availability</button>
       </div>
     </div>
     <div class="searchnote">
       <span>Choose pickup and return dates — up to 5 days. Need them longer? Add a note in your reservation and we'll try to help.</span>
       </div>
       <div class="dateadvice hidden" id="dateAdvice">⚠️ The most we can lend is 5 days. If you need them longer, please add a note in your reservation below and we'll try to accommodate.</div>
-      <div class="parsha-note hidden" id="parshaNote"></div>
   </div>
 
   <div class="cols">
@@ -870,17 +869,17 @@
 
   function showAdvice(on){ document.getElementById("dateAdvice").classList.toggle("hidden",!on); }
   function updateParshaNote(){
-    const note=document.getElementById("parshaNote"), shab=shabbatInRange(pickDate,retDate||pickDate);
+    const note=document.getElementById("calParshaNote"), shab=shabbatInRange(pickDate,retDate||pickDate);
     if(!note)return;
     if(!shab){note.classList.add("hidden");note.textContent="";return;}
-    if(parshaCache[shab]){note.textContent="Shabbos parsha: "+parshaCache[shab];note.classList.remove("hidden");return;}
-    note.textContent="Loading Shabbos parsha…";note.classList.remove("hidden");
+    if(parshaCache[shab]){note.textContent="Parsha: "+parshaCache[shab];note.classList.remove("hidden");return;}
+    note.textContent="Loading parsha…";note.classList.remove("hidden");
     const d=parseISO(shab), url="https://www.hebcal.com/hebcal?v=1&cfg=json&ss=on&maj=off&min=off&mod=off&nx=off&mf=off&c=off&year="+d.getFullYear()+"&month="+(d.getMonth()+1);
     fetch(url).then(r=>r.json()).then(data=>{
       const item=(data.items||[]).find(it=>it.date===shab&&(it.category==="parashat"||/^Parashat /.test(it.title||"")));
       parshaCache[shab]=item?(item.title||"").replace(/^Parashat /,""):"this Shabbos";
-      if(shabbatInRange(pickDate,retDate||pickDate)===shab){note.textContent="Shabbos parsha: "+parshaCache[shab];note.classList.remove("hidden");}
-    }).catch(()=>{ if(shabbatInRange(pickDate,retDate||pickDate)===shab){note.textContent="Selected dates include Shabbos";note.classList.remove("hidden");} });
+      if(shabbatInRange(pickDate,retDate||pickDate)===shab){note.textContent="Parsha: "+parshaCache[shab];note.classList.remove("hidden");}
+    }).catch(()=>{ if(shabbatInRange(pickDate,retDate||pickDate)===shab){note.textContent="Includes Shabbos";note.classList.remove("hidden");} });
   }
   function updateDateField(){
     const f=document.getElementById("dateField"), tx=document.getElementById("dateFieldText");
@@ -908,16 +907,15 @@
       showAdvice(true); setHint(true); toast("Reservations cannot be more than 5 days");
       return;                                         // no selection made; needs a closer return date
     }
-    // valid return → set it and close the calendar (two clicks done)
+    // valid return → set it and keep the calendar open until Check availability
     retDate=dISO; showAdvice(false); setHint();
-    applyRange(); closePopCal();
-    document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
+    applyRange();
   }
   function setHint(error){ const h=document.getElementById("popHint"); if(!h) return;
     h.classList.toggle("err",!!error);
     if(error){ h.textContent="✕ Reservations can be a maximum of 5 days — choose an earlier return date."; return; }
     const shab=shabbatInRange(pickDate,retDate||pickDate);
-    h.textContent = shab ? "Selected dates include Shabbos — parsha shown below"
+    h.textContent = shab ? "Selected dates include Shabbos — parsha shown above"
       : (pickDate&&!retDate) ? "Now tap a return date (within 5 days)"
       : (pickDate&&retDate) ? "Tap a new date to start over"
       : "Tap a pickup date, then a return date · max 5 days"; }
@@ -1230,15 +1228,14 @@
   document.getElementById("adminLockBtn").onclick=()=>{sessionStorage.removeItem("linen_admin_unlocked");updateAdminGate();toast("Admin locked");};
   document.getElementById("photoEditToggle").onclick=togglePhotoEditor;
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
-    const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } else closePopCal(); };
-  document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation(); closePopCal();
-    if(pickDate) document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"}); };
-  document.addEventListener("click",(e)=>{ const pc=document.getElementById("popCal");
-    if(!pc||pc.hidden) return; if(!pc.contains(e.target) && e.target.id!=="dateField" && !e.target.closest("#dateField")) closePopCal(); });
-  document.getElementById("searchBtn").onclick=()=>{
+    const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } };
+  function checkAvailability(){
     if(!pickDate){ openPopCal(); toast("Pick your dates"); return; }
+    closePopCal();
     document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
-  };
+  }
+  document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation(); checkAvailability(); };
+  document.getElementById("searchBtn").onclick=checkAvailability;
   document.getElementById("calPrev").onclick=(e)=>{e.stopPropagation();calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);renderCalendar();};
   document.getElementById("calNext").onclick=(e)=>{e.stopPropagation();calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderCalendar();};
   document.getElementById("pCalPrev").onclick=()=>{pCalMonth=new Date(pCalMonth.getFullYear(),pCalMonth.getMonth()-1,1);renderAdminCalendar();};
