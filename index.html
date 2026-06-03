@@ -517,7 +517,7 @@
   async function sendApprovalEmail(b){
     if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return;
     try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",careInstructions:b.careInstructions||"",careInstructionsList:b.careInstructionsList||[],items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+      body:JSON.stringify({id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",customerNote:b.customerNote||"",careInstructions:b.careInstructions||"",careInstructionsList:b.careInstructionsList||[],items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
     }catch(e){console.error("email send failed",e);}
   }
   async function sendAdminRequestEmail(b){
@@ -1064,6 +1064,7 @@
       +'<div class="field"><label>Pickup date</label><button type="button" class="datefield ap-date on" id="apPickupBtn"><span id="apPickupText"></span><span class="he" id="apPickupHe" dir="rtl"></span></button></div>'
       +'<div class="field"><label>Return by</label><button type="button" class="datefield ap-date" id="apReturnBtn"><span id="apReturnText"></span><span class="he" id="apReturnHe" dir="rtl"></span></button></div></div>'
       +'<div class="admin-mini-cal"><div class="cal-head"><button type="button" id="apCalPrev">‹</button><div class="lbls"><h3 id="apCalLabel"></h3><div class="he" id="apCalLabelHe" dir="rtl"></div></div><button type="button" id="apCalNext">›</button></div><div class="cal-grid" id="apCalGrid"></div></div>'
+      +'<div class="field"><label>Note to customer</label><textarea id="apCustomerNote" placeholder="Optional message to include in the approval email">'+esc(b.customerNote||"")+'</textarea></div>'
       +'<div class="err hidden" id="apErr">Return must be on or after pickup.</div>'
       +'<button class="btn" id="apConfirm" style="width:100%">✓ Approve booking</button>'
       +'</div></div></div>';
@@ -1118,7 +1119,7 @@
     document.getElementById("apConfirm").onclick=async()=>{
       const p=apPickup, r=apReturn;
       if(!p||!r||parseISO(r)<parseISO(p)){ document.getElementById("apErr").classList.remove("hidden"); return; }
-      b.pickup=p; b.ret=r; b.status="approved"; attachCareInstructions(b);
+      b.pickup=p; b.ret=r; b.status="approved"; b.customerNote=document.getElementById("apCustomerNote").value.trim(); attachCareInstructions(b);
       await api("update",{booking:b,sendApproval:true,careInstructions:b.careInstructions,careInstructionsList:b.careInstructionsList},true);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
       closeModal();
@@ -1129,6 +1130,7 @@
   function showCustomerEmail(b){
     const lines=b.items.map(it=>'<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>').join('');
     const care=careEmailHtml(b);
+    const customerNote=b.customerNote?'<div class="recap"><div class="ln"><span><b>Note from The Linen Collection</b></span></div><div style="line-height:1.55">'+esc(b.customerNote).replace(/\n/g,"<br>")+'</div></div>':'';
     document.getElementById("modalBody").innerHTML=
       '<div class="email"><div class="head"><div class="from">Auto-sent to '+b.email+'</div><h3>Your linens are confirmed ✓</h3></div>'
       +'<div class="meta">Hi <span>'+b.name+'</span> — your reservation is approved.</div>'
@@ -1137,6 +1139,7 @@
       +'<div class="ln"><span>↩︎ Return by</span><span><b>'+fmt(b.ret)+'</b></span></div>'
       +'<div class="ln"><span>📋 Reservation</span><span>'+b.id+'</span></div></div>'
       +'<div class="recap">'+lines+'</div>'
+      +customerNote
       +care
       +'<button class="btn" id="ceClose" style="width:100%">Done</button></div></div>';
     document.getElementById("ceClose").onclick=closeModal;
