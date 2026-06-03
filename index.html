@@ -36,7 +36,8 @@
 
   header.bar{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(242,237,224,.85);border-bottom:1px solid var(--line)}
   .bar-in{display:flex;align-items:center;justify-content:space-between;height:70px;gap:12px}
-  .brand{display:flex;align-items:center;gap:12px}
+  .brand{display:flex;align-items:center;gap:12px;background:none;padding:0;text-align:left;color:inherit}
+  .brand:hover .mark{box-shadow:inset 0 0 0 3px rgba(217,185,104,.62),0 6px 18px -12px rgba(35,33,27,.55)}
   .brand .mark{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--teal-2));
     box-shadow:inset 0 0 0 3px rgba(217,185,104,.5);display:grid;place-items:center;color:var(--gold-soft);font-family:"Frank Ruhl Libre",serif;font-size:1.3rem}
   .brand b{font-family:"Fraunces",serif;font-size:1.3rem;font-weight:600}
@@ -343,7 +344,7 @@
 </style>
 
 <header class="bar"><div class="wrap bar-in">
-  <div class="brand"><div class="mark">✦</div><div><b>The Linen Collection</b><span dir="rtl" style="letter-spacing:normal;text-transform:none;font-size:.78rem">לעילוי נשמת שמחה בת משה</span></div></div>
+  <button class="brand" id="homeBrand" type="button" aria-label="Go to main page"><div class="mark">✦</div><div><b>The Linen Collection</b><span dir="rtl" style="letter-spacing:normal;text-transform:none;font-size:.78rem">לעילוי נשמת שמחה בת משה</span></div></button>
   <span class="freebadge">Free to borrow</span>
   <div class="toggle" id="viewToggle">
     <button data-view="shop" class="on">Browse &amp; Reserve</button>
@@ -1761,6 +1762,11 @@
     setView(btn.dataset.view);
     window.scrollTo({top:0,behavior:"smooth"});
   });
+  document.getElementById("homeBrand").onclick=()=>{
+    pendingApproveId=null;
+    setView("shop");
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
   document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
   document.getElementById("adminEmailLogin").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
