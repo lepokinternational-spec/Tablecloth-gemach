@@ -56,8 +56,9 @@
   .search{margin-top:26px;background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px}
   .field{display:flex;flex-direction:column;gap:5px}
   .field label{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;padding-left:2px}
-  .field input,.field select{font-family:inherit;font-size:1rem;color:var(--ink);border:1px solid var(--line);background:#fff;border-radius:10px;padding:12px;width:100%}
-  .field input:focus,.field select:focus{outline:2px solid var(--teal-2);outline-offset:1px}
+  .field input,.field select,.field textarea{font-family:inherit;font-size:1rem;color:var(--ink);border:1px solid var(--line);background:#fff;border-radius:10px;padding:12px;width:100%}
+  .field textarea{min-height:92px;resize:vertical;line-height:1.35}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--teal-2);outline-offset:1px}
   .btn{background:var(--teal);color:#fff;border-radius:11px;padding:13px 22px;font-weight:700;font-size:.95rem;transition:transform .12s,background .2s;white-space:nowrap}
   .btn:hover{background:var(--teal-2);transform:translateY(-1px)} .btn:active{transform:translateY(0)}
   .btn.ghost{background:transparent;color:var(--teal);border:1px solid var(--teal)}
@@ -241,6 +242,10 @@
   .new-cloth h3{font-size:1.05rem;margin-bottom:10px}
   .new-cloth-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr .55fr;gap:10px}
   .new-cloth-photo{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:10px}
+  .care-manager{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 16px;box-shadow:var(--shadow)}
+  .care-manager h3{font-size:1.05rem;margin-bottom:10px}
+  .care-list{display:grid;gap:10px;margin-top:12px}
+  .care-item{border-top:1px dashed var(--line);padding-top:10px}
   @media(max-width:820px){.new-cloth-grid{grid-template-columns:1fr 1fr}.new-cloth-photo{grid-template-columns:1fr}}
   @media(max-width:560px){.photo-add{grid-template-columns:1fr}.photo-tile{width:88px}}
 
@@ -434,10 +439,11 @@
 
   <section class="block" style="margin-top:24px">
     <div class="photo-head">
-      <h2>Catalogue photos</h2>
+      <h2>Catalogue details</h2>
       <button class="btn gold sm photo-edit-tab" id="photoEditToggle" type="button">Edit</button>
     </div>
     <div id="photoEditorDetails" class="hidden">
+      <div class="care-manager" id="careManager"></div>
       <div class="new-cloth">
         <h3>Add new tablecloth</h3>
         <div class="new-cloth-grid">
@@ -493,7 +499,7 @@
   async function sendApprovalEmail(b){
     if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return;
     try{ await fetch(EMAIL_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
+      body:JSON.stringify({id:b.id,name:b.name,email:b.email,phone:b.phone,address:b.address,pickup:b.pickup,ret:b.ret,note:b.note||"",careInstructions:b.careInstructions||"",careInstructionsList:b.careInstructionsList||[],items:(b.items||[]).map(function(it){return {name:it.name,qty:it.qty};})})});
     }catch(e){console.error("email send failed",e);}
   }
   async function sendAdminRequestEmail(b){
@@ -506,11 +512,13 @@
   const ADMIN_PASSWORD="linen2026";
   const PHOTO_KEY="gmh_photo_overrides";
   const CUSTOM_INVENTORY_KEY="gmh_custom_inventory";
+  const CARE_KEY="gmh_care_instructions";
 
   /* ============ State ============ */
   let bookings=[], cart={};
   let pendingApproveId=null;
   let ADMIN_TOKEN_VALUE="";
+  let careConfig={all:"",items:{}};
   const API="https://linen-email.linencollection29.workers.dev";
   async function api(action,payload,admin){
     const headers={"Content-Type":"application/json"};
@@ -677,6 +685,43 @@
   function photosFor(inv){return (inv.imgs&&inv.imgs.length?inv.imgs:(inv.img?[inv.img]:[])).filter(Boolean);}
   function cleanPhotoUrl(u){u=String(u||"").trim(); if(!u||/[<>"']/.test(u)||/^javascript:/i.test(u))return ""; return u;}
   function slugify(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,32)||"tablecloth";}
+  function normalizeCare(data){
+    data=data&&typeof data==="object"?data:{};
+    return {all:String(data.all||""),items:data.items&&typeof data.items==="object"?data.items:{}};
+  }
+  function loadCareInstructions(){
+    try{ careConfig=normalizeCare(JSON.parse(localStorage.getItem(CARE_KEY)||"{}")); }
+    catch(e){ careConfig={all:"",items:{}}; }
+  }
+  function saveCareInstructions(){ localStorage.setItem(CARE_KEY,JSON.stringify(normalizeCare(careConfig))); }
+  function careInstructionsForBooking(b){
+    const list=[];
+    const all=String(careConfig.all||"").trim();
+    if(all)list.push({name:"All tablecloths",text:all});
+    (b.items||[]).forEach(it=>{
+      const txt=String((careConfig.items||{})[it.id]||"").trim();
+      if(txt)list.push({name:it.name,text:txt});
+    });
+    return list;
+  }
+  function careText(list){ return (list||[]).map(x=>x.name+":\n"+x.text).join("\n\n"); }
+  function attachCareInstructions(b){
+    const list=careInstructionsForBooking(b);
+    b.careInstructionsList=list;
+    b.careInstructions=careText(list);
+    return b;
+  }
+  function displayCareList(b){
+    if(b&&Array.isArray(b.careInstructionsList)&&b.careInstructionsList.length)return b.careInstructionsList;
+    return careInstructionsForBooking(b||{items:[]});
+  }
+  function careEmailHtml(b){
+    const list=displayCareList(b);
+    if(!list.length)return "";
+    return '<div class="recap"><div style="font-weight:800;margin-bottom:6px">Care instructions</div>'
+      +list.map(c=>'<div style="font-size:.86rem;padding:5px 0"><b>'+esc(c.name)+'</b><br>'+esc(c.text).replace(/\n/g,"<br>")+'</div>').join('')
+      +'</div>';
+  }
   function cleanInventoryItem(raw){
     const name=String(raw&&raw.name||"").trim();
     const size=String(raw&&raw.size||"").trim();
@@ -913,10 +958,12 @@
     const defRet=b.ret||iso(addDays(parseISO(b.start),1));
     let apPickup=defPickup, apReturn=defRet, apTarget="pickup", apMonth=som(parseISO(defPickup));
     const lines=b.items.map(it=>'<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>').join('');
+    const carePreview=careEmailHtml(b);
     document.getElementById("modalBody").innerHTML=
       '<div class="email"><div class="head"><div class="from">Arrange &amp; approve · '+b.id+'</div><h3>Set pickup &amp; return</h3></div>'
       +'<div class="meta">For <span>'+b.name+'</span> · Requested: <span>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</span>'+(HFMT?' · <span class="he" dir="rtl">'+hebFull(parseISO(b.pickup||b.start))+'</span>':'')+'</div>'
       +'<div class="bd"><div class="recap">'+lines+'</div>'
+      +carePreview
       +'<div class="form"><div class="admin-date-row">'
       +'<div class="field"><label>Pickup date</label><button type="button" class="datefield ap-date on" id="apPickupBtn"><span id="apPickupText"></span><span class="he" id="apPickupHe" dir="rtl"></span></button></div>'
       +'<div class="field"><label>Return by</label><button type="button" class="datefield ap-date" id="apReturnBtn"><span id="apReturnText"></span><span class="he" id="apReturnHe" dir="rtl"></span></button></div></div>'
@@ -975,7 +1022,8 @@
     document.getElementById("apConfirm").onclick=async()=>{
       const p=apPickup, r=apReturn;
       if(!p||!r||parseISO(r)<parseISO(p)){ document.getElementById("apErr").classList.remove("hidden"); return; }
-      b.pickup=p; b.ret=r; b.status="approved"; await api("update",{booking:b,sendApproval:true},true);
+      b.pickup=p; b.ret=r; b.status="approved"; attachCareInstructions(b);
+      await api("update",{booking:b,sendApproval:true,careInstructions:b.careInstructions,careInstructionsList:b.careInstructionsList},true);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
       closeModal();
       toast("Approved "+b.id+" — customer confirmation requested");
@@ -984,6 +1032,7 @@
   }
   function showCustomerEmail(b){
     const lines=b.items.map(it=>'<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>').join('');
+    const care=careEmailHtml(b);
     document.getElementById("modalBody").innerHTML=
       '<div class="email"><div class="head"><div class="from">Auto-sent to '+b.email+'</div><h3>Your linens are confirmed ✓</h3></div>'
       +'<div class="meta">Hi <span>'+b.name+'</span> — your reservation is approved.</div>'
@@ -992,6 +1041,7 @@
       +'<div class="ln"><span>↩︎ Return by</span><span><b>'+fmt(b.ret)+'</b></span></div>'
       +'<div class="ln"><span>📋 Reservation</span><span>'+b.id+'</span></div></div>'
       +'<div class="recap">'+lines+'</div>'
+      +care
       +'<button class="btn" id="ceClose" style="width:100%">Done</button></div></div>';
     document.getElementById("ceClose").onclick=closeModal;
     openModal();
@@ -1310,6 +1360,7 @@
         address:document.getElementById("nbAddr").value.trim()||"—", note:"Booked by admin", amount:"",
         items, start:p, pickup:p, ret:r, status:"approved",
         token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
+      attachCareInstructions(b);
       try{ await api("create",{booking:b}); }catch(e){ document.getElementById("nbErr").classList.remove("hidden"); return; } bookings.push(b);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart(); closeModal();
       toast("Booking created for "+name);
@@ -1349,6 +1400,25 @@
     savePhotoOverrides(); saveCustomInventory(); renderPhotoManager(); renderCatalog(); renderCart();
     toast(msg||"Photos updated");
   }
+  function renderCareManager(){
+    const wrap=document.getElementById("careManager"); if(!wrap)return;
+    wrap.innerHTML='<h3>Care instructions</h3>'
+      +'<div class="field"><label>All tablecloths</label><textarea id="careAll" placeholder="e.g. Spot clean only. Do not machine wash. Return dry.">'+esc(careConfig.all||"")+'</textarea></div>'
+      +'<div class="care-list">'+INVENTORY.map(inv=>
+        '<div class="care-item"><div class="field"><label>'+esc(inv.name)+'</label><textarea data-care-id="'+esc(inv.id)+'" placeholder="Specific care instructions">'+esc((careConfig.items||{})[inv.id]||"")+'</textarea></div></div>'
+      ).join('')+'</div>'
+      +'<button class="btn sm" id="saveCareBtn" type="button" style="margin-top:12px">Save care instructions</button>';
+    document.getElementById("saveCareBtn").onclick=()=>{
+      const items={};
+      wrap.querySelectorAll("[data-care-id]").forEach(t=>{
+        const val=t.value.trim();
+        if(val)items[t.dataset.careId]=val;
+      });
+      careConfig={all:document.getElementById("careAll").value.trim(),items};
+      saveCareInstructions();
+      toast("Care instructions saved");
+    };
+  }
   function addNewTablecloth(){
     const name=document.getElementById("newClothName").value.trim();
     const size=document.getElementById("newClothSize").value.trim();
@@ -1362,7 +1432,7 @@
     ["newClothName","newClothSize","newClothDim","newClothPhoto"].forEach(i=>document.getElementById(i).value="");
     document.getElementById("newClothStock").value="1";
     saveCustomInventory(); savePhotoOverrides();
-    renderPhotoManager(); renderCatalog(); renderCart(); renderAdminCalendar();
+    renderPhotoManager(); renderCareManager(); renderCatalog(); renderCart(); renderAdminCalendar();
     toast("Tablecloth added");
   }
   function renderPhotoManager(){
@@ -1415,8 +1485,10 @@
       delete cart[inv.id];
       const idx=INVENTORY.findIndex(i=>i.id===inv.id);
       if(idx>=0)INVENTORY.splice(idx,1);
+      if(careConfig.items)delete careConfig.items[inv.id];
+      saveCareInstructions();
       saveCustomInventory(); savePhotoOverrides();
-      renderPhotoManager(); renderCatalog(); renderCart(); renderAdminCalendar();
+      renderPhotoManager(); renderCareManager(); renderCatalog(); renderCart(); renderAdminCalendar();
       toast("Tablecloth deleted");
     });
     wrap.querySelectorAll("[data-photo-input]").forEach(input=>input.addEventListener("keydown",e=>{
@@ -1427,9 +1499,9 @@
     const details=document.getElementById("photoEditorDetails"), btn=document.getElementById("photoEditToggle");
     const open=details.classList.toggle("hidden");
     btn.textContent=open?"Edit":"Close";
-    if(!open)renderPhotoManager();
+    if(!open){renderCareManager();renderPhotoManager();}
   }
-  function renderAdmin(){ renderStats(); renderBookingList(); renderAdminCalendar(); renderPhotoManager(); }
+  function renderAdmin(){ renderStats(); renderBookingList(); renderAdminCalendar(); renderCareManager(); renderPhotoManager(); }
   function adminUnlocked(){ return sessionStorage.getItem("linen_admin_unlocked")==="1"; }
   function clearAdminSession(){
     ADMIN_TOKEN_VALUE="";
@@ -1506,6 +1578,7 @@
 
   (async function init(){
     loadCustomInventory();
+    loadCareInstructions();
     loadPhotoOverrides();
     clearAdminSession();
     pendingApproveId=requestedApprovalId();
