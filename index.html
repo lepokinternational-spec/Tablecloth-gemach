@@ -1072,14 +1072,13 @@
       amount:"",
       items:cartArr(), start:pickDate, pickup:pickDate, ret:ret, status:"pending",
       token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
-    try{ await api("create",{booking:b}); }catch(e){ toast("Could not submit — please try again"); return; }
+    try{ await api("create",{booking:b,approveUrl:adminApproveUrl(b.id)}); }catch(e){ toast("Could not submit — please try again"); return; }
     bookings.push(b);
-    const sent=await sendAdminRequestEmail(b);
     cart={};
     ["fName","fPhone","fEmail","fAddr","fNote"].forEach(i=>document.getElementById(i).value="");
     document.getElementById("checkout").classList.add("hidden");
     renderCatalog(); renderCart(); renderCalendar(); renderAdmin();
-    toast(sent?"Request submitted — we'll confirm by email":"Request submitted, but email did not send");
+    toast("Request submitted — we'll confirm by email");
   };
   function val(id){return document.getElementById(id).value.trim();}
   function adminApproveUrl(id){
