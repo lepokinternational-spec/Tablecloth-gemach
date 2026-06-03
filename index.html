@@ -240,7 +240,7 @@
   .photo-editor.open .cloth-body{display:block}
   .photo-editor.open .cloth-arrow{transform:rotate(180deg)}
   .photo-list{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
-  .detail-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr .55fr;gap:10px;margin-bottom:12px}
+  .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
   .photo-tile{width:96px;border:1px solid var(--line);border-radius:9px;background:var(--linen-2);padding:6px;cursor:grab}
   .photo-tile.dragging{opacity:.45}
   .photo-tile img{display:block;width:100%;height:68px;object-fit:cover;border-radius:6px;background:#efe9da}
@@ -256,7 +256,7 @@
   .care-manager h3{font-size:1.05rem;margin-bottom:10px}
   .care-list{display:grid;gap:10px;margin-top:12px}
   .care-item{border-top:1px dashed var(--line);padding-top:10px}
-  @media(max-width:820px){.new-cloth-grid,.detail-grid{grid-template-columns:1fr 1fr}.new-cloth-photo{grid-template-columns:1fr}}
+  @media(max-width:820px){.new-cloth-grid{grid-template-columns:1fr 1fr}.new-cloth-photo{grid-template-columns:1fr}}
   @media(max-width:560px){.detail-grid{grid-template-columns:1fr}}
   @media(max-width:560px){.photo-add{grid-template-columns:1fr}.photo-tile{width:88px}}
 
@@ -418,9 +418,10 @@
     <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Bookings calendar</h1>
   </div>
   <section class="block admin-login" id="adminLogin">
-    <h2 style="font-size:1.3rem">Admin password</h2>
+    <h2 style="font-size:1.3rem">Admin login</h2>
     <p class="sub hidden" id="adminDeepLinkHint">Enter the admin password to review and approve this request.</p>
     <div class="actions">
+      <div class="field"><label>Email</label><input type="email" id="adminEmailLogin" autocomplete="username" placeholder="Admin email"></div>
       <div class="field"><label>Password</label><input type="password" id="adminPassword" autocomplete="current-password" placeholder="Enter password"></div>
       <button class="btn" id="adminLoginBtn" type="button">Login</button>
     </div>
@@ -529,19 +530,47 @@
   let bookings=[], cart={};
   let pendingApproveId=null;
   let ADMIN_TOKEN_VALUE="";
+  let ADMIN_EMAIL_VALUE="";
+  let adminMe=null, adminUsers=[], tableclothOwners={};
   let careConfig={all:"",items:{}};
   const API="https://linen-email.linencollection29.workers.dev";
+  function sameEmail(a,b){return String(a||"").trim().toLowerCase()===String(b||"").trim().toLowerCase();}
+  function adminHeaders(includeJson){
+    const headers=includeJson?{"Content-Type":"application/json"}:{};
+    if(ADMIN_TOKEN_VALUE)headers["X-Admin-Token"]=ADMIN_TOKEN_VALUE;
+    if(ADMIN_EMAIL_VALUE)headers["X-Admin-Email"]=ADMIN_EMAIL_VALUE;
+    return headers;
+  }
   async function api(action,payload,admin){
-    const headers={"Content-Type":"application/json"};
-    if(admin) headers["X-Admin-Token"]=ADMIN_TOKEN_VALUE;
+    const headers=admin?adminHeaders(true):{"Content-Type":"application/json"};
     const res=await fetch(API+"?action="+action,{method:"POST",headers,body:JSON.stringify(payload||{})});
     if(!res.ok) throw new Error("api "+action+" "+res.status);
     return res.json();
   }
+  async function apiGet(action,admin){
+    const r=await fetch(API+"?action="+action,{headers:admin?adminHeaders(false):{}});
+    if(!r.ok) throw new Error("api "+action+" "+r.status);
+    return r.json();
+  }
   async function apiList(){
-    const r=await fetch(API+"?action=list",{headers:{"X-Admin-Token":ADMIN_TOKEN_VALUE}});
+    const r=await fetch(API+"?action=list",{headers:adminHeaders(false)});
     if(!r.ok) throw new Error("unauthorized");
     return r.json();
+  }
+  async function loadAdminConfig(){
+    try{
+      const cfg=await apiGet("adminConfig",true);
+      adminMe=cfg.me||adminMe;
+      adminUsers=Array.isArray(cfg.admins)?cfg.admins:[];
+      tableclothOwners=cfg.owners&&typeof cfg.owners==="object"?cfg.owners:{};
+    }catch(e){
+      adminUsers=[]; tableclothOwners={};
+    }
+  }
+  async function saveOwnerConfig(){ await api("saveOwners",{owners:tableclothOwners},true); }
+  function ownerLabel(email){
+    const user=adminUsers.find(a=>sameEmail(a.email,email));
+    return user?(user.name||user.email):email;
   }
   let pickDate=null, retDate=null;
   const MAX_DAYS=5;
@@ -1435,10 +1464,14 @@
       const p=document.getElementById("newAdminPassword").value.trim(), c=document.getElementById("confirmAdminPassword").value.trim();
       if(p.length<8||p!==c){document.getElementById("pwErr").classList.remove("hidden");return;}
       try{
+        const loginEmail=document.getElementById("adminEmailLogin");
+        if(loginEmail&&!ADMIN_EMAIL_VALUE)ADMIN_EMAIL_VALUE=(loginEmail.value||"").trim().toLowerCase();
         if(needsCurrent)ADMIN_TOKEN_VALUE=document.getElementById("currentAdminPassword").value.trim();
         await api("resetPassword",{password:p},true);
         ADMIN_TOKEN_VALUE=p;
+        await loadAdminConfig();
         sessionStorage.setItem("linen_admin_token",ADMIN_TOKEN_VALUE);
+        sessionStorage.setItem("linen_admin_email",ADMIN_EMAIL_VALUE);
         closeModal();
         toast("Password reset");
       }catch(e){
@@ -1494,6 +1527,11 @@
       +'<div class="field"><label>All tablecloths</label><textarea id="careAll" placeholder="e.g. Spot clean only. Do not machine wash. Return dry.">'+esc(careConfig.all||"")+'</textarea></div>'
       +'<button class="btn sm" id="saveGlobalCareBtn" type="button" style="margin-top:12px">Save all-tablecloth care</button></div>';
     wrap.innerHTML=globalCare+INVENTORY.map(inv=>{
+      const canChooseOwner=adminUsers.length>1&&(!adminMe||adminMe.role==="super");
+      const ownerValue=tableclothOwners[inv.id]||"";
+      const ownerField=canChooseOwner
+        ? '<div class="field"><label>Admin</label><select data-detail="owner"><option value="">No owner</option>'+adminUsers.map(a=>'<option value="'+esc(a.email||"")+'" '+(sameEmail(ownerValue,a.email)?'selected':'')+'>'+esc(a.name||a.email||"Admin")+'</option>').join('')+'</select></div>'
+        : (ownerValue?'<div class="field"><label>Admin</label><input value="'+esc(ownerLabel(ownerValue))+'" disabled></div>':'');
       const pics=photosFor(inv);
       const meta=[inv.size,inv.dim,inv.stock+" included"].filter(Boolean).join(" · ");
       return '<div class="photo-editor" data-photo-id="'+esc(inv.id)+'">'
@@ -1504,6 +1542,7 @@
         +'<div class="field"><label>Type</label><input data-detail="size" value="'+esc(inv.size||"")+'"></div>'
         +'<div class="field"><label>Dimensions</label><input data-detail="dim" value="'+esc(inv.dim||"")+'"></div>'
         +'<div class="field"><label>Included</label><input data-detail="stock" type="number" min="1" step="1" value="'+esc(inv.stock)+'"></div>'
+        +ownerField
         +'</div>'
         +'<div class="field" style="margin-bottom:12px"><label>Care instructions</label><textarea data-detail="care" placeholder="Specific care instructions">'+esc((careConfig.items||{})[inv.id]||"")+'</textarea></div>'
         +'<button class="btn sm" type="button" data-save-details="'+esc(inv.id)+'" style="margin-bottom:12px">Save details</button>'
@@ -1524,7 +1563,7 @@
       saveCareInstructions();
       toast("Care instructions saved");
     };
-    wrap.querySelectorAll("[data-save-details]").forEach(btn=>btn.onclick=()=>{
+    wrap.querySelectorAll("[data-save-details]").forEach(btn=>btn.onclick=async()=>{
       const inv=INVENTORY.find(i=>i.id===btn.dataset.saveDetails), card=btn.closest(".photo-editor");
       if(!inv||!card)return;
       const name=card.querySelector('[data-detail="name"]').value.trim();
@@ -1532,13 +1571,23 @@
       const dim=card.querySelector('[data-detail="dim"]').value.trim();
       const stock=Math.max(1,parseInt(card.querySelector('[data-detail="stock"]').value,10)||1);
       const care=card.querySelector('[data-detail="care"]').value.trim();
+      const owner=card.querySelector('[data-detail="owner"]');
       if(!name){toast("Name is required");return;}
       inv.name=name; inv.size=size||"Tablecloth"; inv.dim=dim; inv.stock=stock;
+      if(owner){
+        if(owner.value)tableclothOwners[inv.id]=owner.value;
+        else delete tableclothOwners[inv.id];
+      }
       if(!careConfig.items)careConfig.items={};
       if(care)careConfig.items[inv.id]=care; else delete careConfig.items[inv.id];
       saveDetailOverrides(); saveCustomInventory(); saveCareInstructions();
+      let ownerSaved=true;
+      if(owner){
+        try{await saveOwnerConfig();}
+        catch(e){ownerSaved=false;}
+      }
       renderPhotoManager(); renderCatalog(); renderCart(); renderAdminCalendar();
-      toast("Tablecloth details saved");
+      toast(ownerSaved?"Tablecloth details saved":"Details saved, but admin owner was not saved");
     });
     wrap.querySelectorAll("[data-toggle-cloth]").forEach(btn=>btn.onclick=()=>{
       const card=btn.closest(".photo-editor"), willOpen=!card.classList.contains("open");
@@ -1599,7 +1648,10 @@
   function adminUnlocked(){ return sessionStorage.getItem("linen_admin_unlocked")==="1"; }
   function clearAdminSession(){
     ADMIN_TOKEN_VALUE="";
+    ADMIN_EMAIL_VALUE="";
+    adminMe=null; adminUsers=[]; tableclothOwners={};
     sessionStorage.removeItem("linen_admin_token");
+    sessionStorage.removeItem("linen_admin_email");
     sessionStorage.removeItem("linen_admin_unlocked");
   }
   function updateAdminGate(){
@@ -1612,18 +1664,26 @@
   }
   async function unlockAdmin(){
     const input=document.getElementById("adminPassword");
+    const emailInput=document.getElementById("adminEmailLogin");
+    ADMIN_EMAIL_VALUE=(emailInput.value||"").trim().toLowerCase();
     ADMIN_TOKEN_VALUE=input.value;
     try{
       const d=await apiList();
       bookings=d.bookings||[];
+      adminMe=d.me||adminMe;
+      if(adminMe&&adminMe.email&&!ADMIN_EMAIL_VALUE)ADMIN_EMAIL_VALUE=adminMe.email;
+      await loadAdminConfig();
+      sessionStorage.setItem("linen_admin_email",ADMIN_EMAIL_VALUE);
       sessionStorage.setItem("linen_admin_token",ADMIN_TOKEN_VALUE);
       sessionStorage.setItem("linen_admin_unlocked","1");
+      emailInput.value="";
       input.value="";
       updateAdminGate();
       renderAdmin(); renderCalendar(); renderCatalog();
       if(!promptApprovalFromLink())toast("Admin unlocked");
     }catch(e){
       ADMIN_TOKEN_VALUE="";
+      ADMIN_EMAIL_VALUE="";
       document.getElementById("adminLoginErr").classList.remove("hidden");
       input.focus();
     }
@@ -1638,6 +1698,7 @@
   });
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
   document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
+  document.getElementById("adminEmailLogin").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
   document.getElementById("adminLockBtn").onclick=()=>{clearAdminSession();updateAdminGate();toast("Logged out");};
   document.getElementById("loginResetPasswordBtn").onclick=showResetPasswordModal;
   document.getElementById("resetPasswordBtn").onclick=showResetPasswordModal;
