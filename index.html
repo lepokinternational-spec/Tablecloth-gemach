@@ -72,7 +72,6 @@
   .chip .he{font-family:"Frank Ruhl Libre",serif;color:var(--gold)}
   .chip.holi{border-color:#E6D9B4;background:#FAF3DF}
 
-  .searchnote{font-size:.83rem;color:var(--ink-soft);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}
   .searchrow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:flex-end}
   @media(max-width:760px){.searchrow{grid-template-columns:1fr}}
   .datepick{position:relative}
@@ -340,10 +339,7 @@
         <button class="btn" id="searchBtn">See availability</button>
       </div>
     </div>
-    <div class="searchnote">
-      <span>Choose pickup and return dates — up to 5 days. Need them longer? Add a note in your reservation and we'll try to help.</span>
-    </div>
-    <div class="dateadvice hidden" id="dateAdvice">⚠️ The most we can lend is 5 days. If you need them longer, please add a note in your reservation below and we'll try to accommodate.</div>
+    <div class="dateadvice hidden" id="dateAdvice">Maximum booking length is 5 days.</div>
   </div>
 
   <div class="cols">
@@ -358,13 +354,11 @@
       <h2 style="font-size:1.3rem">Your reservation</h2>
       <div class="daterange-pill" id="cartDates">No event date selected yet</div>
       <div id="cartItems"><div class="empty">Add linens to begin your request.</div></div>
-      <div id="cartCount" class="hidden"><div class="countrow"><span>Total included</span><span id="cartPieces">0</span></div>
-        <p class="sub" style="margin-top:10px">We'll confirm pickup &amp; return times by email once approved.</p></div>
+      <div id="cartCount" class="hidden"><div class="countrow"><span>Total included</span><span id="cartPieces">0</span></div></div>
       <button class="btn terra" id="toCheckout" style="width:100%;margin-top:16px" disabled>Continue to details</button>
       <div id="checkout" class="hidden">
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
         <h3 style="font-size:1.15rem">Your details</h3>
-        <p class="sub">So we can confirm and arrange the linens.</p>
         <div class="form">
           <div class="field"><label>Full name</label><input id="fName" placeholder="Alex Morgan"></div>
           <div class="err hidden" id="eName">Please enter your name.</div>
@@ -375,9 +369,8 @@
           <div class="err hidden" id="eContact">Enter a valid phone and email.</div>
           <div class="field"><label>Home address</label><input id="fAddr" placeholder="14 High Street, London"></div>
           <div class="err hidden" id="eAddr">Please enter your full address.</div>
-          <div class="field"><label>Note (optional — tell us here if you need them longer than 5 days)</label><input id="fNote" placeholder="e.g. could we keep them for 7 days?"></div>
+          <div class="field"><label>Note (optional)</label><input id="fNote" placeholder="e.g. could we keep them for 7 days?"></div>
           <button class="btn" id="placeBtn" style="width:100%;margin-top:4px">Send reservation request</button>
-          <p class="sub" style="text-align:center">Completely free. We approve by email before it's confirmed.</p>
         </div>
       </div>
     </section></aside>
@@ -389,7 +382,6 @@
   <div class="hero fade-in" style="padding-bottom:8px">
     <div class="eyebrow">Admin</div>
     <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Bookings calendar</h1>
-    <p class="lead">Every request triggers an approval email. Click any day to see who's booked and when, and approve or decline — availability updates everywhere instantly.</p>
   </div>
   <section class="block admin-login" id="adminLogin">
     <h2 style="font-size:1.3rem">Admin password</h2>
@@ -418,7 +410,6 @@
       <span><span class="dot" style="background:var(--orange)"></span>Pending</span>
       <span><span class="dot" style="background:var(--ok)"></span>Approved</span>
       <span><span class="dot" style="background:var(--gold)"></span>Holiday</span>
-      <span style="margin-left:auto;color:var(--ink-soft)">Tap a day for details</span>
     </div>
     <div class="cal-grid big" id="pCalGrid"></div>
   </section>
@@ -429,7 +420,6 @@
       <button class="btn gold sm photo-edit-tab" id="photoEditToggle" type="button">Edit</button>
     </div>
     <div id="photoEditorDetails" class="hidden">
-      <p class="sub" style="margin-top:8px">Add tablecloths from scratch, then add, remove, and reorder their photos.</p>
       <div class="new-cloth">
         <h3>Add new tablecloth</h3>
         <div class="new-cloth-grid">
@@ -449,9 +439,7 @@
 
   <section class="block" style="margin-top:24px">
     <h2>All reservations</h2>
-    <p class="sub">Full list with contact details and Hebrew dates.</p>
     <div id="bookingList" style="margin-top:16px"></div>
-    <div style="margin-top:6px;font-size:.8rem;color:var(--ink-soft)">Approval emails are sent to <b id="adminEmail">linencollection29@gmail.com</b></div>
     <button class="btn ghost sm" id="adminLockBtn" style="margin-top:14px">Log out</button>
     <button class="btn ghost sm" id="resetPasswordBtn" style="margin-top:14px">Reset password</button>
     <button class="btn ghost sm" id="resetBtn" style="margin-top:14px">Delete all bookings</button>
@@ -888,7 +876,6 @@
       +'<div class="admin-mini-cal"><div class="cal-head"><button type="button" id="apCalPrev">‹</button><div class="lbls"><h3 id="apCalLabel"></h3><div class="he" id="apCalLabelHe" dir="rtl"></div></div><button type="button" id="apCalNext">›</button></div><div class="cal-grid" id="apCalGrid"></div></div>'
       +'<div class="err hidden" id="apErr">Return must be on or after pickup.</div>'
       +'<button class="btn" id="apConfirm" style="width:100%">✓ Approve booking</button>'
-      +'<p class="sub" style="text-align:center">After approval, the Worker sends the confirmation email to the customer.</p>'
       +'</div></div></div>';
     function drawApproveFields(){
       document.getElementById("apPickupText").textContent=fmt(apPickup);
@@ -958,7 +945,6 @@
       +'<div class="ln"><span>↩︎ Return by</span><span><b>'+fmt(b.ret)+'</b></span></div>'
       +'<div class="ln"><span>📋 Reservation</span><span>'+b.id+'</span></div></div>'
       +'<div class="recap">'+lines+'</div>'
-      +'<p style="font-size:.84rem;color:var(--ink-soft)">In a live deployment this confirmation is emailed to the customer automatically.</p>'
       +'<button class="btn" id="ceClose" style="width:100%">Done</button></div></div>';
     document.getElementById("ceClose").onclick=closeModal;
     openModal();
@@ -1122,7 +1108,6 @@
       +(b.amount?'<br>Quantity: <span>'+b.amount+'</span>':'')+(b.note?'<br>Note: <span>'+b.note+'</span>':'')+'</div>'
       +'<div class="bd"><p>A new request needs approval. Requested: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+days+' '+(days===1?"day":"days")+').'+heD+'</p>'
       +'<div class="recap">'+lines+'</div>'
-      +'<p style="font-size:.84rem;color:var(--ink-soft)">The email includes an Approve link that opens this booking in the admin area after password login.</p>'
       +'<div class="cta"><button class="btn" style="flex:1" id="apN">✓ Approve &amp; confirm dates</button><button class="btn ghost" id="dcN">Decline</button></div>'
       +'<div class="approve-link">🔗 '+link+'</div></div></div>';
     document.getElementById("apN").onclick=()=>showApproveModal(b,iso(parseISO(b.start)));
