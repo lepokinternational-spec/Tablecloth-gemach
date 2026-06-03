@@ -889,8 +889,8 @@
       +'<div class="field"><label>Return by</label><button type="button" class="datefield ap-date" id="apReturnBtn"><span id="apReturnText"></span><span class="he" id="apReturnHe" dir="rtl"></span></button></div></div>'
       +'<div class="admin-mini-cal"><div class="cal-head"><button type="button" id="apCalPrev">‹</button><div class="lbls"><h3 id="apCalLabel"></h3><div class="he" id="apCalLabelHe" dir="rtl"></div></div><button type="button" id="apCalNext">›</button></div><div class="cal-grid" id="apCalGrid"></div></div>'
       +'<div class="err hidden" id="apErr">Return must be on or after pickup.</div>'
-      +'<button class="btn" id="apConfirm" style="width:100%">✓ Approve &amp; email customer</button>'
-      +'<p class="sub" style="text-align:center">An email with these pickup &amp; return dates is sent to the customer.</p>'
+      +'<button class="btn" id="apConfirm" style="width:100%">✓ Approve booking</button>'
+      +'<p class="sub" style="text-align:center">After approval, the Worker sends the confirmation email to the customer.</p>'
       +'</div></div></div>';
     function drawApproveFields(){
       document.getElementById("apPickupText").textContent=fmt(apPickup);
@@ -945,8 +945,8 @@
       if(!p||!r||parseISO(r)<parseISO(p)){ document.getElementById("apErr").classList.remove("hidden"); return; }
       b.pickup=p; b.ret=r; b.status="approved"; await api("update",{booking:b,sendApproval:true},true);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
-      toast("Approved "+b.id+" — confirmation sent to customer");
-      showCustomerEmail(b);
+      closeModal();
+      toast("Approved "+b.id+" — customer confirmation requested");
     };
     openModal();
   }
