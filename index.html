@@ -168,7 +168,9 @@
   .cal-grid.big .day.hasbk:hover{transform:scale(1.02);box-shadow:var(--shadow)}
   .cal-grid.big .day .topline{display:flex;justify-content:space-between;align-items:flex-start;width:100%}
   .cal-grid.big .day .bkbadges{margin-top:auto;display:flex;flex-direction:column;gap:3px;width:100%}
-  .bkbadge{font-size:.72rem;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .bkbadge{font-size:.72rem;font-weight:700;color:#fff;border-radius:6px;padding:3px 7px;line-height:1.22;overflow:hidden;display:block}
+  .bkbadge .who,.bkbadge .cloth{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bkbadge .cloth{font-size:.68rem;opacity:.92;font-weight:800}
   .bkbadge.p{background:var(--orange)} .bkbadge.a{background:var(--ok)}
   .bkmore{font-size:.7rem;color:var(--ink-soft);font-weight:700}
   .caholi{font-size:.66rem;font-weight:700;color:var(--gold);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
@@ -179,7 +181,7 @@
   .daycard .items{margin-top:9px} .daycard .acts{margin-top:11px;display:flex;gap:8px;flex-wrap:wrap}
   .day .holi.cal-big-dot{top:8px;right:8px}
   .adminlegend{display:flex;gap:18px;flex-wrap:wrap;font-size:.83rem;font-weight:600;color:var(--ink);margin-bottom:14px;align-items:center}
-  @media(max-width:640px){.cal-grid.big .day{min-height:74px;padding:5px}.cal-grid.big .day .g{font-size:.95rem}.bkbadge{font-size:.62rem;padding:1px 4px}}
+  @media(max-width:640px){.cal-grid.big .day{min-height:86px;padding:5px}.cal-grid.big .day .g{font-size:.95rem}.bkbadge{font-size:.6rem;padding:2px 4px}.bkbadge .cloth{font-size:.56rem}}
   .holilist{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:7px;max-height:200px;overflow:auto}
   .holirow{display:flex;align-items:center;gap:9px;font-size:.85rem}
   .holirow .swatch{width:9px;height:9px;border-radius:50%;flex:none}
@@ -306,7 +308,7 @@
     .cal-grid.big .day{min-height:58px;padding:4px;border-radius:8px}
     .cal-grid.big .day .g{font-size:.86rem}
     .cal-grid.big .day .h{font-size:.58rem}
-    .caholi,.bkbadges{display:none!important}
+    .caholi{display:none!important}
     .bk{padding:13px}
     .bk .acts .btn,.daycard .acts .btn{width:100%}
     .photo-head{align-items:flex-start}
@@ -874,6 +876,11 @@
     if(!names.length)return b.name||"Booking";
     return (b.name?b.name+" · ":"")+names[0]+(names.length>1?" +"+(names.length-1):"");
   }
+  function bookingBadgeHtml(b){
+    const names=bookingItemNames(b);
+    const cloth=names.length?names[0]+(names.length>1?" +"+(names.length-1):""):"Tablecloth";
+    return '<span class="who">'+esc(b.name||"Booking")+'</span><span class="cloth">'+esc(cloth)+'</span>';
+  }
   function bookingBadgeTitle(b){
     const items=(b.items||[]).map(i=>i.qty+"× "+i.name).join(", ");
     return [b.name,items].filter(Boolean).join(" - ");
@@ -903,7 +910,7 @@
       if(bks.length){
         cell.classList.add("hasbk");
         const wrap=document.createElement("div"); wrap.className="bkbadges";
-        bks.slice(0,2).forEach(b=>{ const bd=document.createElement("div"); bd.className="bkbadge "+(b.status==="approved"?"a":"p"); bd.textContent=bookingBadgeText(b); bd.title=bookingBadgeTitle(b); wrap.appendChild(bd); });
+        bks.slice(0,2).forEach(b=>{ const bd=document.createElement("div"); bd.className="bkbadge "+(b.status==="approved"?"a":"p"); bd.innerHTML=bookingBadgeHtml(b); bd.title=bookingBadgeTitle(b); wrap.appendChild(bd); });
         if(bks.length>2){ const m=document.createElement("div"); m.className="bkmore"; m.textContent="+"+(bks.length-2)+" more"; wrap.appendChild(m); }
         cell.appendChild(wrap);
         cell.addEventListener("click",()=>showDayModal(dISO));
