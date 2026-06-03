@@ -80,25 +80,24 @@
   .datefield:hover{border-color:var(--teal-2)} .datefield .cal-ic{font-size:1.1rem;opacity:.8}
   .datefield.empty{color:var(--ink-soft);font-weight:500}
   body.cal-open{overflow:hidden}
-  body.cal-open:before{content:"";position:fixed;inset:0;background:rgba(35,31,23,.38);z-index:9998;pointer-events:none}
-  .popcal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:min(720px,calc(100vw - 28px));max-height:calc(100vh - 28px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);padding:24px;animation:pop .18s}
+  .popcal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:min(560px,calc(100vw - 28px));max-height:calc(100vh - 28px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);padding:18px;animation:pop .18s}
   .popcal[hidden]{display:none}
-  .popcal .cal-head button{width:44px;height:44px;border-radius:12px}
-  .popcal .cal-head .lbls h3{font-size:1.55rem}
-  .popcal .cal-grid{margin-top:14px;gap:8px}
-  .popcal .day{min-height:76px;aspect-ratio:auto;justify-content:flex-start;padding:8px 4px}
+  .popcal .cal-head button{width:38px;height:38px;border-radius:11px}
+  .popcal .cal-head .lbls h3{font-size:1.35rem}
+  .popcal .cal-grid{margin-top:10px;gap:6px}
+  .popcal .day{min-height:62px;aspect-ratio:auto;justify-content:flex-start;padding:6px 3px}
   .popcal .day:hover:not(.empty):not(.past){transform:none}
   .popcal .day .g{font-size:1.05rem}
   .popcal .day .h{font-size:.72rem}
-  .day .parsha{font-size:.62rem;line-height:1.05;margin-top:4px;color:var(--teal);font-weight:800;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .day .parsha{font-family:"Frank Ruhl Libre",serif;font-size:.7rem;line-height:1.05;margin-top:4px;color:var(--teal);font-weight:800;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;direction:rtl}
   .day.sel .parsha{color:#fff}
   @media(max-width:560px){
-    .popcal{width:calc(100vw - 16px);padding:14px;border-radius:14px}
-    .popcal .cal-grid{gap:5px}
-    .popcal .day{min-height:60px;padding:6px 2px;border-radius:8px}
-    .popcal .day .g{font-size:.95rem}
+    .popcal{width:calc(100vw - 16px);padding:12px;border-radius:14px}
+    .popcal .cal-grid{gap:4px}
+    .popcal .day{min-height:54px;padding:5px 2px;border-radius:8px}
+    .popcal .day .g{font-size:.9rem}
     .popcal .day .h{font-size:.62rem}
-    .day .parsha{font-size:.5rem}
+    .day .parsha{font-size:.56rem}
   }
   .popcal-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.76rem;color:var(--ink-soft);margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
   .popcal-foot span{flex:1}
@@ -627,6 +626,9 @@
   function shortParshaName(title){
     return String(title||"").replace(/^Parashat\s+/,"").replace(/^Shabbat\s+/,"Shabbat ");
   }
+  function shortParshaHebrew(item){
+    return String(item&&item.hebrew||"").replace(/^פרשת\s+/,"").trim();
+  }
   function parshaFor(date){
     const y=date.getFullYear(), d=iso(date), map=parshaCache[y];
     return map&&map[d]?map[d]:"";
@@ -642,7 +644,7 @@
           if(!it.date||!it.title) return;
           const cats=it.category||it.categories||[];
           const isParsha=it.title.indexOf("Parashat ")===0 || it.title.indexOf("Shabbat ")===0 || cats.indexOf("parashat")>-1;
-          if(isParsha) map[it.date]=shortParshaName(it.title);
+          if(isParsha) map[it.date]=shortParshaHebrew(it)||shortParshaName(it.title);
         });
         parshaCache[year]=map;
         renderCalendar();
@@ -848,7 +850,7 @@
       const gnum=document.createElement("div"); gnum.className="g"; gnum.textContent=dn; cell.appendChild(gnum);
       const hd=hebDay(date); if(hd){ const hh=document.createElement("div"); hh.className="h"; hh.textContent=hd; cell.appendChild(hh); }
       const pName=(showParsha&&date.getDay()===6)?parshaFor(date):"";
-      if(pName){ const pp=document.createElement("div"); pp.className="parsha"; pp.textContent=pName; cell.appendChild(pp); }
+      if(pName){ const pp=document.createElement("div"); pp.className="parsha"; pp.dir="rtl"; pp.textContent=pName; cell.appendChild(pp); }
       if(hols.length){ const hm=document.createElement("span"); hm.className="holi"; hm.style.background=TYPE_COLOR[hols[0].t]; cell.appendChild(hm);
         cell.title=[hols.map(h=>h.n).join(" · "),pName,HFMT?hebFull(date):""].filter(Boolean).join(" — "); }
       else { cell.title=[pName,HFMT?hebFull(date):""].filter(Boolean).join(" — "); }
