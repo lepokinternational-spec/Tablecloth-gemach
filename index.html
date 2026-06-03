@@ -212,6 +212,9 @@
   .pill.pending{background:#FBF0DA;color:#8A6516} .pill.approved{background:#E1F0E5;color:#2A6B3E} .pill.declined{background:#F6E0DA;color:#9A3520} .pill.cancelled{background:#E9E7E2;color:#7A756B}
   .nbitem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:.9rem}
   .nbitem small{font-size:.76rem}
+  .nbselect{min-width:170px;border-radius:10px;padding:10px 14px;font-weight:800;background:var(--teal);color:#fff}
+  .nbselect.on{background:var(--gold);color:#1f1d18}
+  .nbselect:disabled{background:#E9E4D7;color:var(--ink-soft);cursor:not-allowed}
   .bk .meta{font-size:.85rem;color:var(--ink-soft);margin-top:6px;display:grid;gap:3px} .bk .meta b{color:var(--ink);font-weight:600} .bk .meta .he{color:var(--gold)}
   .bk .items{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
   .tag{background:var(--linen-2);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:.8rem}
@@ -334,7 +337,7 @@
     .admin-mini-cal .cal-grid{gap:3px}
     .admin-mini-cal .day{border-radius:7px}
     .nbitem{align-items:flex-start;flex-direction:column}
-    .nbitem .stepper{width:100%;justify-content:space-between}
+    .nbitem .nbselect{width:100%}
   }
 </style>
 
@@ -1456,15 +1459,15 @@
       const ok=p&&r&&parseISO(r)>=parseISO(p);
       const owned=editableInventory();
       document.getElementById("nbItems").innerHTML=owned.length?owned.map(inv=>{
-        const av=ok?availForWindow(inv.id,p,r):inv.stock, q=qty[inv.id]||0;
-        return '<div class="nbitem"><span>'+inv.name+'<br><small style="color:var(--ink-soft)">'+(ok?av+' available':inv.stock+' total')+'</small></span>'
-          +'<div class="stepper"><button type="button" data-dec="'+inv.id+'">−</button><input readonly value="'+q+'"><button type="button" data-inc="'+inv.id+'">+</button></div></div>';
+        const av=ok?availForWindow(inv.id,p,r):inv.stock, fullSet=inv.stock;
+        let selected=!!qty[inv.id];
+        const disabled=!ok||av<fullSet;
+        if(disabled&&selected){delete qty[inv.id];selected=false;}
+        const status=!ok?fullSet+" included":disabled?"Unavailable for these dates":fullSet+" included";
+        return '<div class="nbitem"><span>'+esc(inv.name)+'<br><small style="color:var(--ink-soft)">'+status+'</small></span>'
+          +'<button type="button" class="nbselect '+(selected?'on':'')+'" data-toggle-set="'+esc(inv.id)+'" '+(disabled?'disabled':'')+'>'+(selected?'Selected':'Select set')+' &middot; '+fullSet+' included</button></div>';
       }).join(''):'<p class="sub">No tablecloths are assigned to this admin.</p>';
-      document.querySelectorAll('#nbItems [data-dec]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.dec;qty[id]=Math.max(0,(qty[id]||0)-1);rows();});
-      document.querySelectorAll('#nbItems [data-inc]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.inc;
-        const p=nbPickup,r=nbReturn;
-        const av=(p&&r&&parseISO(r)>=parseISO(p))?availForWindow(id,p,r):INVENTORY.find(i=>i.id===id).stock;
-        const n=(qty[id]||0)+1; if(n>av){toast("Only "+av+" available for these dates");return;} qty[id]=n;rows();});
+      document.querySelectorAll('#nbItems [data-toggle-set]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.toggleSet, inv=INVENTORY.find(i=>i.id===id); if(!inv)return; if(qty[id])delete qty[id]; else qty[id]=inv.stock; rows();});
     }
     document.getElementById("nbPickupBtn").onclick=()=>{nbTarget="pickup";nbMonth=som(parseISO(nbPickup));drawNewBookingFields();drawNewBookingCalendar();};
     document.getElementById("nbReturnBtn").onclick=()=>{nbTarget="return";nbMonth=som(parseISO(nbReturn));drawNewBookingFields();drawNewBookingCalendar();};
