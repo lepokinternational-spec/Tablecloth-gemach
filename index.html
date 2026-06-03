@@ -206,8 +206,7 @@
   .admin-login{max-width:440px;margin:0 auto 24px}
   .admin-login .actions{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
   .admin-login .actions .field{flex:1}
-  .admin-login-buttons{display:grid;gap:8px;min-width:150px}
-  .admin-login-buttons .btn{width:100%}
+  .admin-login-reset{display:inline-block;margin-top:10px;background:none;color:var(--teal);font-size:.86rem;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:0}
   .photo-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
   .photo-edit-tab{border-radius:999px;padding:9px 18px}
   .photo-manager{display:grid;gap:12px;margin-top:16px}
@@ -276,8 +275,7 @@
     .stat .n{font-size:1.65rem}
     .admin-login{margin-bottom:18px}
     .admin-login .actions{display:grid;grid-template-columns:1fr;align-items:stretch;gap:12px}
-    .admin-login-buttons{grid-template-columns:1fr 1fr;min-width:0}
-    .admin-login-buttons .btn{min-height:48px;padding-left:10px;padding-right:10px}
+    .admin-login .actions .btn{width:100%;min-height:48px}
     .cal-head .lbls h3{font-size:1.15rem!important}
     .cal-head .lbls .he{font-size:.92rem!important}
     .adminlegend{gap:10px;font-size:.76rem}
@@ -400,11 +398,9 @@
     <p class="sub hidden" id="adminDeepLinkHint">Enter the admin password to review and approve this request.</p>
     <div class="actions">
       <div class="field"><label>Password</label><input type="password" id="adminPassword" autocomplete="current-password" placeholder="Enter password"></div>
-      <div class="admin-login-buttons">
-        <button class="btn" id="adminLoginBtn" type="button">Unlock</button>
-        <button class="btn ghost sm" id="loginResetPasswordBtn" type="button">Reset password</button>
-      </div>
+      <button class="btn" id="adminLoginBtn" type="button">Login</button>
     </div>
+    <button class="admin-login-reset" id="loginResetPasswordBtn" type="button">Reset password</button>
     <div class="err hidden" id="adminLoginErr" style="margin-top:10px">Incorrect password.</div>
   </section>
   <div id="adminContent" class="hidden">
