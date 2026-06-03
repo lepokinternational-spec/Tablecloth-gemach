@@ -433,7 +433,6 @@
 
   <section class="block" style="margin-top:24px">
     <h2>All reservations</h2>
-    <p class="sub">Full list with contact details and Hebrew dates.</p>
     <div id="bookingList" style="margin-top:16px"></div>
     <div style="margin-top:6px;font-size:.8rem;color:var(--ink-soft)">Approval emails are sent to <b id="adminEmail">linencollection29@gmail.com</b></div>
     <button class="btn ghost sm" id="adminLockBtn" style="margin-top:14px">Lock admin</button>
