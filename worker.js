@@ -73,8 +73,9 @@ export default {
 
         await upsertBooking(env, b);
 
+        const owners = await getOwners(env);
         await sendNewRequestEmails(env, b, body.approveUrl);
-        await sendEmail(env, b.email, "We received your tablecloth request", ackHtml(b));
+        await sendEmail(env, b.email, "We received your tablecloth request", ackHtml(b, contactEmailsForBooking(b, owners)));
 
         return json({ ok: true }, 200, cors);
       }
@@ -94,7 +95,7 @@ export default {
         await upsertBooking(env, b);
 
         if (body.sendApproval && b.email) {
-          await sendEmail(env, b.email, "Your tablecloth booking is approved", approvalHtml(b));
+          await sendEmail(env, b.email, "Your tablecloth booking is approved", approvalHtml(b, [admin.email]));
         }
 
         return json({ ok: true }, 200, cors);
@@ -175,7 +176,7 @@ export default {
       }
 
       if (!action && body.email && body.id) {
-        await sendEmail(env, body.email, "Your tablecloth booking is approved", approvalHtml(body));
+        await sendEmail(env, body.email, "Your tablecloth booking is approved", approvalHtml(body, [MAIN_ADMIN_EMAIL]));
         return json({ ok: true }, 200, cors);
       }
 
@@ -206,7 +207,7 @@ async function sendDailyReminders(env, dateISO) {
 
     const customerKey = "REMINDER_SENT:" + dateISO + ":customer:" + b.id + ":" + events.join("-");
     if (!(await env.SETTINGS.get(customerKey))) {
-      await sendEmail(env, b.email, customerReminderSubject(events), customerReminderHtml(b, events, dateISO));
+      await sendEmail(env, b.email, customerReminderSubject(events), customerReminderHtml(b, events, dateISO, contactEmailsForBooking(b, owners)));
       await env.SETTINGS.put(customerKey, "1", { expirationTtl: 60 * 60 * 24 * 45 });
       customerEmails++;
     }
@@ -250,6 +251,10 @@ function groupItemsByOwner(items, owners) {
     grouped.get(ownerEmail).push(item);
   }
   return grouped;
+}
+
+function contactEmailsForBooking(b, owners) {
+  return [...groupItemsByOwner(b.items || [], owners).keys()];
 }
 
 function bookingBelongsToAdmin(b, adminEmail, owners) {
@@ -480,27 +485,29 @@ function adminRequestHtml(b, approveUrl) {
   );
 }
 
-function ackHtml(b) {
+function ackHtml(b, contactEmails) {
   return emailShell(
     "We received your request",
     "Request received",
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ', we have your request <b>' + esc(b.id) + "</b> and will confirm by email shortly.</p>" +
-    tableBlock(b.items)
+    tableBlock(b.items) +
+    contactButtonsHtml(contactEmails, "Question about request " + b.id)
   );
 }
 
-function approvalHtml(b) {
+function approvalHtml(b, contactEmails) {
   return emailShell(
     "Your booking is approved",
     "Your linens are confirmed",
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ', your reservation <b>' + esc(b.id) + "</b> is approved.</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
     tableBlock(b.items) +
-    careHtml(b)
+    careHtml(b) +
+    contactButtonsHtml(contactEmails, "Question about booking " + b.id)
   );
 }
 
-function customerReminderHtml(b, events, dateISO) {
+function customerReminderHtml(b, events, dateISO, contactEmails) {
   const eventCopy = events.map(eventLabel).join(" and ");
   return emailShell(
     "Reminder",
@@ -508,7 +515,8 @@ function customerReminderHtml(b, events, dateISO) {
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ", this is your reminder for today, " + esc(fmtDate(dateISO)) + ".</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
     tableBlock(b.items) +
-    careHtml(b)
+    careHtml(b) +
+    contactButtonsHtml(contactEmails, "Question about booking " + b.id)
   );
 }
 
@@ -557,8 +565,18 @@ function emailShell(preheader, title, body) {
     "</div></div></div>";
 }
 
+function contactButtonsHtml(emails, subject) {
+  const clean = [...new Set((emails || []).map(normalizeEmail).filter(Boolean))];
+  if (!clean.length) clean.push(MAIN_ADMIN_EMAIL);
+  return '<div style="margin:22px 0 4px"><a href="mailto:' + esc(clean.join(",")) + '?subject=' + encodeURIComponent(subject || "Question about my booking") + '" style="' + secondaryButtonStyle() + '">Contact us</a></div>';
+}
+
 function buttonStyle() {
   return "display:inline-block;background:#1F4A45;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:10px";
+}
+
+function secondaryButtonStyle() {
+  return "display:inline-block;background:#F6F0E3;border:1px solid #D7C8AC;color:#1F4A45;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:10px;margin:0 8px 8px 0";
 }
 
 function json(o, s, c) {
