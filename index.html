@@ -233,6 +233,7 @@
   .photo-editor{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
   .photo-editor h4{font-size:1rem;margin-bottom:10px}
   .photo-list{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+  .detail-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr .55fr;gap:10px;margin-bottom:12px}
   .photo-tile{width:96px;border:1px solid var(--line);border-radius:9px;background:var(--linen-2);padding:6px;cursor:grab}
   .photo-tile.dragging{opacity:.45}
   .photo-tile img{display:block;width:100%;height:68px;object-fit:cover;border-radius:6px;background:#efe9da}
@@ -248,7 +249,8 @@
   .care-manager h3{font-size:1.05rem;margin-bottom:10px}
   .care-list{display:grid;gap:10px;margin-top:12px}
   .care-item{border-top:1px dashed var(--line);padding-top:10px}
-  @media(max-width:820px){.new-cloth-grid{grid-template-columns:1fr 1fr}.new-cloth-photo{grid-template-columns:1fr}}
+  @media(max-width:820px){.new-cloth-grid,.detail-grid{grid-template-columns:1fr 1fr}.new-cloth-photo{grid-template-columns:1fr}}
+  @media(max-width:560px){.detail-grid{grid-template-columns:1fr}}
   @media(max-width:560px){.photo-add{grid-template-columns:1fr}.photo-tile{width:88px}}
 
   /* modal / email */
@@ -445,7 +447,6 @@
       <button class="btn gold sm photo-edit-tab" id="photoEditToggle" type="button">Edit</button>
     </div>
     <div id="photoEditorDetails" class="hidden">
-      <div class="care-manager" id="careManager"></div>
       <div class="new-cloth">
         <h3>Add new tablecloth</h3>
         <div class="new-cloth-grid">
@@ -514,6 +515,7 @@
   const ADMIN_PASSWORD="linen2026";
   const PHOTO_KEY="gmh_photo_overrides";
   const CUSTOM_INVENTORY_KEY="gmh_custom_inventory";
+  const DETAIL_KEY="gmh_detail_overrides";
   const CARE_KEY="gmh_care_instructions";
 
   /* ============ State ============ */
@@ -749,6 +751,25 @@
   function saveCustomInventory(){
     const data=INVENTORY.filter(inv=>inv.custom).map(inv=>({id:inv.id,name:inv.name,size:inv.size,dim:inv.dim,stock:inv.stock,imgs:photosFor(inv),custom:true}));
     localStorage.setItem(CUSTOM_INVENTORY_KEY,JSON.stringify(data));
+  }
+  function loadDetailOverrides(){
+    try{
+      const raw=localStorage.getItem(DETAIL_KEY), data=raw?JSON.parse(raw):{};
+      INVENTORY.forEach(inv=>{
+        const d=data&&data[inv.id]; if(!d)return;
+        const name=String(d.name||"").trim(), size=String(d.size||"").trim(), dim=String(d.dim||"").trim();
+        const stock=Math.max(1,parseInt(d.stock,10)||inv.stock||1);
+        if(name)inv.name=name;
+        if(size)inv.size=size;
+        inv.dim=dim;
+        inv.stock=stock;
+      });
+    }catch(e){console.error(e);}
+  }
+  function saveDetailOverrides(){
+    const data={};
+    INVENTORY.forEach(inv=>{data[inv.id]={name:inv.name,size:inv.size,dim:inv.dim||"",stock:inv.stock};});
+    localStorage.setItem(DETAIL_KEY,JSON.stringify(data));
   }
   function loadPhotoOverrides(){
     try{
@@ -1456,15 +1477,26 @@
     INVENTORY.push({id,name,size:size||"Tablecloth",dim,stock,imgs:[photo],custom:true});
     ["newClothName","newClothSize","newClothDim","newClothPhoto"].forEach(i=>document.getElementById(i).value="");
     document.getElementById("newClothStock").value="1";
-    saveCustomInventory(); savePhotoOverrides();
+    saveCustomInventory(); saveDetailOverrides(); savePhotoOverrides();
     renderPhotoManager(); renderCareManager(); renderCatalog(); renderCart(); renderAdminCalendar();
     toast("Tablecloth added");
   }
   function renderPhotoManager(){
     const wrap=document.getElementById("photoManager"); if(!wrap)return;
-    wrap.innerHTML=INVENTORY.map(inv=>{
+    const globalCare='<div class="care-manager"><h3>Care instructions</h3>'
+      +'<div class="field"><label>All tablecloths</label><textarea id="careAll" placeholder="e.g. Spot clean only. Do not machine wash. Return dry.">'+esc(careConfig.all||"")+'</textarea></div>'
+      +'<button class="btn sm" id="saveGlobalCareBtn" type="button" style="margin-top:12px">Save all-tablecloth care</button></div>';
+    wrap.innerHTML=globalCare+INVENTORY.map(inv=>{
       const pics=photosFor(inv);
       return '<div class="photo-editor" data-photo-id="'+esc(inv.id)+'"><h4>'+esc(inv.name)+'</h4>'
+        +'<div class="detail-grid">'
+        +'<div class="field"><label>Name</label><input data-detail="name" value="'+esc(inv.name)+'"></div>'
+        +'<div class="field"><label>Type</label><input data-detail="size" value="'+esc(inv.size||"")+'"></div>'
+        +'<div class="field"><label>Dimensions</label><input data-detail="dim" value="'+esc(inv.dim||"")+'"></div>'
+        +'<div class="field"><label>Included</label><input data-detail="stock" type="number" min="1" step="1" value="'+esc(inv.stock)+'"></div>'
+        +'</div>'
+        +'<div class="field" style="margin-bottom:12px"><label>Care instructions</label><textarea data-detail="care" placeholder="Specific care instructions">'+esc((careConfig.items||{})[inv.id]||"")+'</textarea></div>'
+        +'<button class="btn sm" type="button" data-save-details="'+esc(inv.id)+'" style="margin-bottom:12px">Save details</button>'
         +'<div class="photo-list">'+pics.map((u,i)=>
           '<div class="photo-tile" draggable="true" data-photo-id="'+esc(inv.id)+'" data-index="'+i+'">'
           +'<img loading="lazy" src="'+esc(u)+'" alt="'+esc(inv.name)+' photo '+(i+1)+'">'
@@ -1476,6 +1508,28 @@
         +(inv.custom?'<button class="btn ghost sm" type="button" data-delete-cloth="'+esc(inv.id)+'" style="margin-top:10px">Delete tablecloth</button>':'')
         +'</div>';
     }).join('');
+    const globalCareBtn=document.getElementById("saveGlobalCareBtn");
+    if(globalCareBtn)globalCareBtn.onclick=()=>{
+      careConfig.all=document.getElementById("careAll").value.trim();
+      saveCareInstructions();
+      toast("Care instructions saved");
+    };
+    wrap.querySelectorAll("[data-save-details]").forEach(btn=>btn.onclick=()=>{
+      const inv=INVENTORY.find(i=>i.id===btn.dataset.saveDetails), card=btn.closest(".photo-editor");
+      if(!inv||!card)return;
+      const name=card.querySelector('[data-detail="name"]').value.trim();
+      const size=card.querySelector('[data-detail="size"]').value.trim();
+      const dim=card.querySelector('[data-detail="dim"]').value.trim();
+      const stock=Math.max(1,parseInt(card.querySelector('[data-detail="stock"]').value,10)||1);
+      const care=card.querySelector('[data-detail="care"]').value.trim();
+      if(!name){toast("Name is required");return;}
+      inv.name=name; inv.size=size||"Tablecloth"; inv.dim=dim; inv.stock=stock;
+      if(!careConfig.items)careConfig.items={};
+      if(care)careConfig.items[inv.id]=care; else delete careConfig.items[inv.id];
+      saveDetailOverrides(); saveCustomInventory(); saveCareInstructions();
+      renderPhotoManager(); renderCatalog(); renderCart(); renderAdminCalendar();
+      toast("Tablecloth details saved");
+    });
     wrap.querySelectorAll(".photo-tile").forEach(tile=>{
       tile.addEventListener("dragstart",e=>{photoDrag={id:tile.dataset.photoId,index:Number(tile.dataset.index)};tile.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
       tile.addEventListener("dragend",()=>{tile.classList.remove("dragging");photoDrag=null;});
@@ -1512,7 +1566,7 @@
       if(idx>=0)INVENTORY.splice(idx,1);
       if(careConfig.items)delete careConfig.items[inv.id];
       saveCareInstructions();
-      saveCustomInventory(); savePhotoOverrides();
+      saveCustomInventory(); saveDetailOverrides(); savePhotoOverrides();
       renderPhotoManager(); renderCareManager(); renderCatalog(); renderCart(); renderAdminCalendar();
       toast("Tablecloth deleted");
     });
@@ -1603,6 +1657,7 @@
 
   (async function init(){
     loadCustomInventory();
+    loadDetailOverrides();
     loadCareInstructions();
     loadPhotoOverrides();
     clearAdminSession();
