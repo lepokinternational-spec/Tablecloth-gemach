@@ -79,7 +79,7 @@
   .datefield{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:1rem;color:var(--ink);font-weight:600;text-align:left}
   .datefield:hover{border-color:var(--teal-2)} .datefield .cal-ic{font-size:1.1rem;opacity:.8}
   .datefield.empty{color:var(--ink-soft);font-weight:500}
-  body.cal-open{overflow:hidden}
+  body.cal-open{}
   .popcal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:min(560px,calc(100vw - 28px));max-height:calc(100vh - 28px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);padding:18px;animation:pop .18s}
   .popcal[hidden]{display:none}
   .popcal .cal-head button{width:38px;height:38px;border-radius:11px}
@@ -1652,6 +1652,12 @@
     if(!pickDate){ toast("Pick your dates"); return; }
     closePopCal(); document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
   };
+  document.addEventListener("click",e=>setTimeout(()=>{
+    const pc=document.getElementById("popCal"), df=document.getElementById("dateField");
+    if(!pc||pc.hidden)return;
+    if(pc.contains(e.target)||df.contains(e.target))return;
+    closePopCal();
+  },0));
   document.getElementById("searchBtn").onclick=()=>{
     if(!pickDate){ openPopCal(); toast("Pick your dates"); return; }
     closePopCal();
