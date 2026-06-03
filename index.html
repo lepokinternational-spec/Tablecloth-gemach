@@ -231,7 +231,14 @@
   .photo-edit-tab{border-radius:999px;padding:9px 18px}
   .photo-manager{display:grid;gap:12px;margin-top:16px}
   .photo-editor{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
-  .photo-editor h4{font-size:1rem;margin-bottom:10px}
+  .photo-editor h4{font-size:1rem}
+  .cloth-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;background:transparent;color:var(--ink);padding:0}
+  .cloth-toggle:hover{color:var(--teal)}
+  .cloth-meta{display:block;color:var(--ink-soft);font-size:.78rem;font-weight:600;margin-top:2px}
+  .cloth-arrow{font-size:1.25rem;color:var(--gold);line-height:1}
+  .cloth-body{display:none;margin-top:14px}
+  .photo-editor.open .cloth-body{display:block}
+  .photo-editor.open .cloth-arrow{transform:rotate(180deg)}
   .photo-list{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
   .detail-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr .55fr;gap:10px;margin-bottom:12px}
   .photo-tile{width:96px;border:1px solid var(--line);border-radius:9px;background:var(--linen-2);padding:6px;cursor:grab}
@@ -1488,7 +1495,10 @@
       +'<button class="btn sm" id="saveGlobalCareBtn" type="button" style="margin-top:12px">Save all-tablecloth care</button></div>';
     wrap.innerHTML=globalCare+INVENTORY.map(inv=>{
       const pics=photosFor(inv);
-      return '<div class="photo-editor" data-photo-id="'+esc(inv.id)+'"><h4>'+esc(inv.name)+'</h4>'
+      const meta=[inv.size,inv.dim,inv.stock+" included"].filter(Boolean).join(" · ");
+      return '<div class="photo-editor" data-photo-id="'+esc(inv.id)+'">'
+        +'<button class="cloth-toggle" type="button" data-toggle-cloth="'+esc(inv.id)+'"><span><h4>'+esc(inv.name)+'</h4><span class="cloth-meta">'+esc(meta)+'</span></span><span class="cloth-arrow">⌄</span></button>'
+        +'<div class="cloth-body">'
         +'<div class="detail-grid">'
         +'<div class="field"><label>Name</label><input data-detail="name" value="'+esc(inv.name)+'"></div>'
         +'<div class="field"><label>Type</label><input data-detail="size" value="'+esc(inv.size||"")+'"></div>'
@@ -1506,7 +1516,7 @@
         +'<div class="photo-add"><input type="text" data-photo-input="'+esc(inv.id)+'" placeholder="images/example.jpg or https://...">'
         +'<button class="btn sm" type="button" data-add-photo="'+esc(inv.id)+'">Add photo</button></div>'
         +(inv.custom?'<button class="btn ghost sm" type="button" data-delete-cloth="'+esc(inv.id)+'" style="margin-top:10px">Delete tablecloth</button>':'')
-        +'</div>';
+        +'</div></div>';
     }).join('');
     const globalCareBtn=document.getElementById("saveGlobalCareBtn");
     if(globalCareBtn)globalCareBtn.onclick=()=>{
@@ -1529,6 +1539,11 @@
       saveDetailOverrides(); saveCustomInventory(); saveCareInstructions();
       renderPhotoManager(); renderCatalog(); renderCart(); renderAdminCalendar();
       toast("Tablecloth details saved");
+    });
+    wrap.querySelectorAll("[data-toggle-cloth]").forEach(btn=>btn.onclick=()=>{
+      const card=btn.closest(".photo-editor"), willOpen=!card.classList.contains("open");
+      wrap.querySelectorAll(".photo-editor.open").forEach(c=>{if(c!==card)c.classList.remove("open");});
+      card.classList.toggle("open",willOpen);
     });
     wrap.querySelectorAll(".photo-tile").forEach(tile=>{
       tile.addEventListener("dragstart",e=>{photoDrag={id:tile.dataset.photoId,index:Number(tile.dataset.index)};tile.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
