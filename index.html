@@ -78,10 +78,28 @@
   .datefield{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:1rem;color:var(--ink);font-weight:600;text-align:left}
   .datefield:hover{border-color:var(--teal-2)} .datefield .cal-ic{font-size:1.1rem;opacity:.8}
   .datefield.empty{color:var(--ink-soft);font-weight:500}
-  .popcal{position:absolute;top:calc(100% + 8px);left:0;z-index:1000;width:340px;max-width:92vw;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);padding:16px;animation:pop .18s}
-  @media(max-width:760px){.popcal{left:0;right:0;width:auto}}
-  .popcal .cal-grid{margin-top:8px}
-  .popcal-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.76rem;color:var(--ink-soft);margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  body.cal-open{overflow:hidden}
+  body.cal-open:before{content:"";position:fixed;inset:0;background:rgba(35,31,23,.38);z-index:9998;pointer-events:none}
+  .popcal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:min(720px,calc(100vw - 28px));max-height:calc(100vh - 28px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);padding:24px;animation:pop .18s}
+  .popcal[hidden]{display:none}
+  .popcal .cal-head button{width:44px;height:44px;border-radius:12px}
+  .popcal .cal-head .lbls h3{font-size:1.55rem}
+  .popcal .cal-grid{margin-top:14px;gap:8px}
+  .popcal .day{min-height:76px;aspect-ratio:auto;justify-content:flex-start;padding:8px 4px}
+  .popcal .day:hover:not(.empty):not(.past){transform:none}
+  .popcal .day .g{font-size:1.05rem}
+  .popcal .day .h{font-size:.72rem}
+  .day .parsha{font-size:.62rem;line-height:1.05;margin-top:4px;color:var(--teal);font-weight:800;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .day.sel .parsha{color:#fff}
+  @media(max-width:560px){
+    .popcal{width:calc(100vw - 16px);padding:14px;border-radius:14px}
+    .popcal .cal-grid{gap:5px}
+    .popcal .day{min-height:60px;padding:6px 2px;border-radius:8px}
+    .popcal .day .g{font-size:.95rem}
+    .popcal .day .h{font-size:.62rem}
+    .day .parsha{font-size:.5rem}
+  }
+  .popcal-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.76rem;color:var(--ink-soft);margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
   .popcal-foot span{flex:1}
   .popcal-foot #popHint.err{color:var(--bad);font-weight:700}
   .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
@@ -332,7 +350,7 @@
             <div class="cal-grid" id="calGrid"></div>
             <div class="popcal-foot">
               <span id="popHint">Tap a pickup date, then a return date · max 5 days</span>
-              <button type="button" class="btn sm" id="calDone">Done</button>
+              <button type="button" class="btn sm" id="calDone">See availability</button>
             </div>
           </div>
         </div>
@@ -595,6 +613,32 @@
     return out;
   }
   const TYPE_COLOR={yt:"var(--yt)",fest:"var(--fest)",cm:"var(--cm)",minor:"var(--minor)",fast:"var(--fast)"};
+  const parshaCache={};
+  function shortParshaName(title){
+    return String(title||"").replace(/^Parashat\s+/,"").replace(/^Shabbat\s+/,"Shabbat ");
+  }
+  function parshaFor(date){
+    const y=date.getFullYear(), d=iso(date), map=parshaCache[y];
+    return map&&map[d]?map[d]:"";
+  }
+  function ensureParshaYear(year){
+    if(parshaCache[year]) return;
+    parshaCache[year]={loading:true};
+    fetch("https://www.hebcal.com/hebcal?v=1&cfg=json&maj=off&min=off&mod=off&nx=off&s=on&ss=on&leyning=off&year="+year+"&month=x")
+      .then(r=>r.ok?r.json():Promise.reject())
+      .then(data=>{
+        const map={};
+        (data.items||[]).forEach(it=>{
+          if(!it.date||!it.title) return;
+          const cats=it.category||it.categories||[];
+          const isParsha=it.title.indexOf("Parashat ")===0 || it.title.indexOf("Shabbat ")===0 || cats.indexOf("parashat")>-1;
+          if(isParsha) map[it.date]=shortParshaName(it.title);
+        });
+        parshaCache[year]=map;
+        renderCalendar();
+      })
+      .catch(()=>{parshaCache[year]={};});
+  }
 
   // upcoming festival windows for search chips
   function upcomingHolidays(maxDays){
@@ -739,6 +783,7 @@
   function buildCal(grid,label,labelHe,month){
     document.getElementById(label).textContent=month.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
     const he=document.getElementById(labelHe); if(he) he.textContent=monthHebrewLabel(month);
+    const showParsha=grid==="calGrid"; if(showParsha) ensureParshaYear(month.getFullYear());
     const g=document.getElementById(grid); g.innerHTML="";
     DOW.forEach(d=>{const e=document.createElement("div");e.className="dow";e.textContent=d;g.appendChild(e);});
     const firstDow=new Date(month.getFullYear(),month.getMonth(),1).getDay();
@@ -746,7 +791,7 @@
     const last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate(), t=today();
     for(let dn=1;dn<=last;dn++){
       const date=new Date(month.getFullYear(),month.getMonth(),dn), dISO=iso(date);
-      const cell=document.createElement("div"); cell.className="day";
+      const cell=document.createElement("div"); cell.className="day"; cell.dataset.date=dISO;
       const isPast=date<t;
       const hols=holidaysFor(date);
       const ytHol=hols.find(h=>h.t==="yt");
@@ -755,9 +800,11 @@
       if(dISO===iso(t)) cell.classList.add("today");
       const gnum=document.createElement("div"); gnum.className="g"; gnum.textContent=dn; cell.appendChild(gnum);
       const hd=hebDay(date); if(hd){ const hh=document.createElement("div"); hh.className="h"; hh.textContent=hd; cell.appendChild(hh); }
+      const pName=(showParsha&&date.getDay()===6)?parshaFor(date):"";
+      if(pName){ const pp=document.createElement("div"); pp.className="parsha"; pp.textContent=pName; cell.appendChild(pp); }
       if(hols.length){ const hm=document.createElement("span"); hm.className="holi"; hm.style.background=TYPE_COLOR[hols[0].t]; cell.appendChild(hm);
-        cell.title=hols.map(h=>h.n).join(" · ")+(HFMT?" — "+hebFull(date):""); }
-      else { cell.title=HFMT?hebFull(date):""; }
+        cell.title=[hols.map(h=>h.n).join(" · "),pName,HFMT?hebFull(date):""].filter(Boolean).join(" — "); }
+      else { cell.title=[pName,HFMT?hebFull(date):""].filter(Boolean).join(" — "); }
 
       if(pickDate&&dISO===pickDate)cell.classList.add("sel");
       if(retDate&&dISO===retDate)cell.classList.add("sel");
@@ -959,8 +1006,8 @@
     else if(pickDate){ f.classList.remove("empty"); tx.textContent=fmt(pickDate)+" → choose return date"; }
     else { f.classList.add("empty"); tx.textContent="Tap to choose dates…"; }
   }
-  function openPopCal(){ calMonth=som(parseISO(pickDate||iso(today()))); renderCalendar(); document.getElementById("popCal").hidden=false; }
-  function closePopCal(){ document.getElementById("popCal").hidden=true; }
+  function openPopCal(){ calMonth=som(parseISO(pickDate||iso(today()))); renderCalendar(); document.getElementById("popCal").hidden=false; document.body.classList.add("cal-open"); }
+  function closePopCal(){ document.getElementById("popCal").hidden=true; document.body.classList.remove("cal-open"); }
   function applyRange(){ updateDateField(); renderCalendar(); renderCatalog(); renderCart(); }
 
   function pickDay(dISO){
@@ -977,10 +1024,9 @@
       showAdvice(true); setHint(true); toast("Reservations cannot be more than 5 days");
       return;                                         // no selection made; needs a closer return date
     }
-    // valid return → set it and close the calendar (two clicks done)
+    // valid return → set it and keep the larger calendar open until availability is checked
     retDate=dISO; showAdvice(false); setHint();
-    applyRange(); closePopCal();
-    document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
+    applyRange();
   }
   function setHint(error){ const h=document.getElementById("popHint"); if(!h) return;
     h.classList.toggle("err",!!error);
@@ -1436,12 +1482,13 @@
   });
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
     const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } else closePopCal(); };
-  document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation(); closePopCal();
-    if(pickDate) document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"}); };
-  document.addEventListener("click",(e)=>{ const pc=document.getElementById("popCal");
-    if(!pc||pc.hidden) return; if(!pc.contains(e.target) && e.target.id!=="dateField" && !e.target.closest("#dateField")) closePopCal(); });
+  document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation();
+    if(!pickDate){ toast("Pick your dates"); return; }
+    closePopCal(); document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
+  };
   document.getElementById("searchBtn").onclick=()=>{
     if(!pickDate){ openPopCal(); toast("Pick your dates"); return; }
+    closePopCal();
     document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
   };
   document.getElementById("calPrev").onclick=(e)=>{e.stopPropagation();calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);renderCalendar();};
@@ -1453,7 +1500,7 @@
     bookings=[];await api("wipeall",{},true);renderAdmin();renderCalendar();renderCatalog();toast("All bookings deleted");
   };
   document.getElementById("newBookingBtn").onclick=()=>showNewBookingModal();
-  document.getElementById("adminEmail").textContent=ADMIN_EMAIL;
+  const adminEmailEl=document.getElementById("adminEmail"); if(adminEmailEl) adminEmailEl.textContent=ADMIN_EMAIL;
 
   (function defaults(){ pickDate=iso(addDays(today(),14)); retDate=iso(addDays(today(),15)); calMonth=som(parseISO(pickDate)); })();
 
