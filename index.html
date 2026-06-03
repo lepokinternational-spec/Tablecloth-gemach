@@ -583,7 +583,21 @@
     const seen={}, list=(adminUsers||[]).concat(DEFAULT_ADMINS).filter(a=>a&&a.email);
     return list.filter(a=>{const key=String(a.email).trim().toLowerCase(); if(seen[key])return false; seen[key]=1; return true;});
   }
-  function canChooseOwners(){return ownerUsers().length>1;}
+  function currentAdminEmail(){return (adminMe&&adminMe.email)||ADMIN_EMAIL_VALUE||"";}
+  function isSuperAdmin(){return !!adminMe&&adminMe.role==="super";}
+  function canChooseOwners(){return isSuperAdmin()&&ownerUsers().length>1;}
+  function clothOwnerEmail(id){return tableclothOwners[id]||ADMIN_EMAIL;}
+  function clothOwnedByCurrentAdmin(inv){
+    const email=currentAdminEmail();
+    return !!email&&sameEmail(clothOwnerEmail(inv.id),email);
+  }
+  function editableInventory(){return INVENTORY.filter(clothOwnedByCurrentAdmin);}
+  function bookingOwnedByCurrentAdmin(b){
+    const email=currentAdminEmail();
+    if(!email)return false;
+    return (b.items||[]).some(item=>sameEmail(clothOwnerEmail(item.id),email));
+  }
+  function adminBookings(){return bookings.filter(bookingOwnedByCurrentAdmin);}
   function ownerLabel(email){
     const user=ownerUsers().find(a=>sameEmail(a.email,email));
     return user?(user.name||user.email):email;
@@ -958,7 +972,7 @@
   function renderCalendar(){ buildCal("calGrid","calLabel","calLabelHe",calMonth); }
 
   function bookingsOnDay(dISO){ const dd=parseISO(dISO);
-    return bookings.filter(b=>{ if(b.status==="declined"||b.status==="cancelled")return false; const w=loanWindow(b); return parseISO(w[0])<=dd && parseISO(w[1])>=dd; }); }
+    return adminBookings().filter(b=>{ if(b.status==="declined"||b.status==="cancelled")return false; const w=loanWindow(b); return parseISO(w[0])<=dd && parseISO(w[1])>=dd; }); }
   function bookingItemNames(b){ return (b.items||[]).map(i=>i.name).filter(Boolean); }
   function bookingBadgeText(b){
     const names=bookingItemNames(b);
@@ -1042,7 +1056,7 @@
     openModal();
   }
   async function decideDay(id,status,dISO){
-    const b=bookings.find(x=>x.id===id); if(!b)return; b.status=status; await api("update",{booking:b},true);
+    const b=bookings.find(x=>x.id===id); if(!b)return; if(!bookingOwnedByCurrentAdmin(b)){toast("You can only update your own tablecloths");return;} b.status=status; await api("update",{booking:b},true);
     renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
     toast(status==="approved"?"Reservation "+id+" approved":"Reservation "+id+" "+status);
     showDayModal(dISO);
@@ -1050,6 +1064,7 @@
 
   // admin sets pickup & return, then a confirmation email goes to the customer
   function showApproveModal(b,dISO){
+    if(!bookingOwnedByCurrentAdmin(b)){toast("You can only approve your own tablecloths");return;}
     const defPickup=b.pickup||iso(addDays(parseISO(b.start),-1));
     const defRet=b.ret||iso(addDays(parseISO(b.start),1));
     let apPickup=defPickup, apReturn=defRet, apTarget="pickup", apMonth=som(parseISO(defPickup));
@@ -1318,15 +1333,16 @@
   function closeModal(){document.getElementById("overlay").classList.remove("show");}
   document.getElementById("modalClose").onclick=closeModal;
   document.getElementById("overlay").onclick=e=>{if(e.target.id==="overlay")closeModal();};
-  async function decide(id,status){ const b=bookings.find(x=>x.id===id); if(!b)return; b.status=status; await api("update",{booking:b},true);
+  async function decide(id,status){ const b=bookings.find(x=>x.id===id); if(!b)return; if(!bookingOwnedByCurrentAdmin(b)){toast("You can only update your own tablecloths");return;} b.status=status; await api("update",{booking:b},true);
     renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
     toast(status==="approved"?"Reservation "+id+" approved — calendar updated":"Reservation "+id+" declined"); }
 
   /* ============ Admin ============ */
   function renderStats(){
-    const pend=bookings.filter(b=>b.status==="pending").length, appr=bookings.filter(b=>b.status==="approved").length;
-    let pieces=0; bookings.filter(b=>b.status==="approved").forEach(b=>b.items.forEach(i=>pieces+=i.qty));
-    let fam=new Set(bookings.filter(b=>b.status==="approved").map(b=>b.name)).size;
+    const mine=adminBookings();
+    const pend=mine.filter(b=>b.status==="pending").length, appr=mine.filter(b=>b.status==="approved").length;
+    let pieces=0; mine.filter(b=>b.status==="approved").forEach(b=>b.items.forEach(i=>pieces+=i.qty));
+    let fam=new Set(mine.filter(b=>b.status==="approved").map(b=>b.name)).size;
     document.getElementById("stats").innerHTML=
       '<div class="stat acc"><div class="n">'+pend+'</div><div class="l">Awaiting approval</div></div>'
       +'<div class="stat"><div class="n">'+appr+'</div><div class="l">Confirmed</div></div>'
@@ -1335,7 +1351,7 @@
   }
   function renderBookingList(){
     const wrap=document.getElementById("bookingList");
-    const list=[...bookings].sort((a,b)=>new Date(b.created)-new Date(a.created));
+    const list=[...adminBookings()].sort((a,b)=>new Date(b.created)-new Date(a.created));
     if(!list.length){ wrap.innerHTML='<div class="sub" style="padding:20px 0">No reservations yet. Create one from the Browse &amp; Reserve tab.</div>'; return; }
     wrap.innerHTML="";
     list.forEach(b=>{
@@ -1366,6 +1382,7 @@
   function mkbtn(t,c,fn){const b=document.createElement("button");b.className=c;b.textContent=t;b.onclick=fn;return b;}
   async function cancelBooking(id){
     const b=bookings.find(x=>x.id===id); if(!b)return;
+    if(!bookingOwnedByCurrentAdmin(b)){toast("You can only cancel your own tablecloths");return;}
     b.status="cancelled"; await api("cancel",{id:b.id},true);
     renderAdmin(); renderCalendar(); renderCatalog(); renderCart(); closeModal();
     toast("Reservation "+id+" cancelled");
@@ -1437,11 +1454,12 @@
     function rows(){
       const p=nbPickup, r=nbReturn;
       const ok=p&&r&&parseISO(r)>=parseISO(p);
-      document.getElementById("nbItems").innerHTML=INVENTORY.map(inv=>{
+      const owned=editableInventory();
+      document.getElementById("nbItems").innerHTML=owned.length?owned.map(inv=>{
         const av=ok?availForWindow(inv.id,p,r):inv.stock, q=qty[inv.id]||0;
         return '<div class="nbitem"><span>'+inv.name+'<br><small style="color:var(--ink-soft)">'+(ok?av+' available':inv.stock+' total')+'</small></span>'
           +'<div class="stepper"><button type="button" data-dec="'+inv.id+'">−</button><input readonly value="'+q+'"><button type="button" data-inc="'+inv.id+'">+</button></div></div>';
-      }).join('');
+      }).join(''):'<p class="sub">No tablecloths are assigned to this admin.</p>';
       document.querySelectorAll('#nbItems [data-dec]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.dec;qty[id]=Math.max(0,(qty[id]||0)-1);rows();});
       document.querySelectorAll('#nbItems [data-inc]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.inc;
         const p=nbPickup,r=nbReturn;
@@ -1457,7 +1475,7 @@
     document.getElementById("nbCreate").onclick=async()=>{
       const name=document.getElementById("nbName").value.trim();
       const p=nbPickup, r=nbReturn;
-      const items=INVENTORY.filter(i=>qty[i.id]>0).map(i=>({id:i.id,name:i.name,qty:qty[i.id]}));
+      const items=editableInventory().filter(i=>qty[i.id]>0).map(i=>({id:i.id,name:i.name,qty:qty[i.id]}));
       if(!name||!p||!r||parseISO(r)<parseISO(p)||!items.length){ document.getElementById("nbErr").classList.remove("hidden"); return; }
       const b={ id:"BK"+Date.now().toString(36).toUpperCase(), name,
         phone:document.getElementById("nbPhone").value.trim(), email:document.getElementById("nbEmail").value.trim(),
@@ -1510,9 +1528,10 @@
   }
   function renderCareManager(){
     const wrap=document.getElementById("careManager"); if(!wrap)return;
+    const list=editableInventory();
     wrap.innerHTML='<h3>Care instructions</h3>'
-      +'<div class="field"><label>All tablecloths</label><textarea id="careAll" placeholder="e.g. Spot clean only. Do not machine wash. Return dry.">'+esc(careConfig.all||"")+'</textarea></div>'
-      +'<div class="care-list">'+INVENTORY.map(inv=>
+      +(isSuperAdmin()?'<div class="field"><label>All tablecloths</label><textarea id="careAll" placeholder="e.g. Spot clean only. Do not machine wash. Return dry.">'+esc(careConfig.all||"")+'</textarea></div>':'')
+      +'<div class="care-list">'+list.map(inv=>
         '<div class="care-item"><div class="field"><label>'+esc(inv.name)+'</label><textarea data-care-id="'+esc(inv.id)+'" placeholder="Specific care instructions">'+esc((careConfig.items||{})[inv.id]||"")+'</textarea></div></div>'
       ).join('')+'</div>'
       +'<button class="btn sm" id="saveCareBtn" type="button" style="margin-top:12px">Save care instructions</button>';
@@ -1522,7 +1541,7 @@
         const val=t.value.trim();
         if(val)items[t.dataset.careId]=val;
       });
-      careConfig={all:document.getElementById("careAll").value.trim(),items};
+      careConfig={all:isSuperAdmin()?document.getElementById("careAll").value.trim():(careConfig.all||""),items:Object.assign({},careConfig.items||{},items)};
       saveCareInstructions();
       toast("Care instructions saved");
     };
@@ -1532,7 +1551,7 @@
     if(!wrap||!sel)return;
     const show=canChooseOwners();
     wrap.classList.toggle("hidden",!show);
-    if(show)sel.innerHTML=ownerOptions(adminMe&&adminMe.email?adminMe.email:"");
+    if(show)sel.innerHTML=ownerOptions(currentAdminEmail());
   }
   async function addNewTablecloth(){
     const name=document.getElementById("newClothName").value.trim();
@@ -1546,12 +1565,12 @@
     while(INVENTORY.some(inv=>inv.id===id)){id=base+"-"+n;n++;}
     INVENTORY.push({id,name,size:size||"Tablecloth",dim,stock,imgs:[photo],custom:true});
     if(ownerSelect&&canChooseOwners()&&ownerSelect.value)tableclothOwners[id]=ownerSelect.value;
-    else if(adminMe&&adminMe.email)tableclothOwners[id]=adminMe.email;
+    else if(currentAdminEmail())tableclothOwners[id]=currentAdminEmail();
     ["newClothName","newClothSize","newClothDim","newClothPhoto"].forEach(i=>document.getElementById(i).value="");
     document.getElementById("newClothStock").value="1";
     saveCustomInventory(); saveDetailOverrides(); savePhotoOverrides();
     let ownerSaved=true;
-    if(tableclothOwners[id]){
+    if(canChooseOwners()&&tableclothOwners[id]){
       try{await saveOwnerConfig();}
       catch(e){ownerSaved=false;}
     }
@@ -1561,10 +1580,13 @@
   function renderPhotoManager(){
     const wrap=document.getElementById("photoManager"); if(!wrap)return;
     renderNewClothOwnerSelect();
-    const globalCare='<div class="care-manager"><h3>Care instructions</h3>'
+    const canEditAll=isSuperAdmin();
+    const list=editableInventory();
+    const globalCare=canEditAll?'<div class="care-manager"><h3>Care instructions</h3>'
       +'<div class="field"><label>All tablecloths</label><textarea id="careAll" placeholder="e.g. Spot clean only. Do not machine wash. Return dry.">'+esc(careConfig.all||"")+'</textarea></div>'
-      +'<button class="btn sm" id="saveGlobalCareBtn" type="button" style="margin-top:12px">Save all-tablecloth care</button></div>';
-    wrap.innerHTML=globalCare+INVENTORY.map(inv=>{
+      +'<button class="btn sm" id="saveGlobalCareBtn" type="button" style="margin-top:12px">Save all-tablecloth care</button></div>':'';
+    const emptyMsg=list.length?'':'<div class="care-manager"><h3>No tablecloths assigned</h3><p class="sub">Only the main admin can assign tablecloths to this admin.</p></div>';
+    wrap.innerHTML=globalCare+emptyMsg+list.map(inv=>{
       const canChooseOwner=canChooseOwners();
       const ownerValue=tableclothOwners[inv.id]||"";
       const ownerField=canChooseOwner
@@ -1604,6 +1626,7 @@
     wrap.querySelectorAll("[data-save-details]").forEach(btn=>btn.onclick=async()=>{
       const inv=INVENTORY.find(i=>i.id===btn.dataset.saveDetails), card=btn.closest(".photo-editor");
       if(!inv||!card)return;
+      if(!clothOwnedByCurrentAdmin(inv)){toast("You can only edit your own tablecloths");return;}
       const name=card.querySelector('[data-detail="name"]').value.trim();
       const size=card.querySelector('[data-detail="size"]').value.trim();
       const dim=card.querySelector('[data-detail="dim"]').value.trim();
