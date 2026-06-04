@@ -470,7 +470,7 @@
           <div class="field" id="newClothOwnerWrap"><label>Admin</label><select id="newClothOwner"></select></div>
         </div>
         <div class="new-cloth-photo">
-          <div class="field"><label>Main photo</label><input id="newClothPhoto" placeholder="images/example.jpg or https://..."></div>
+          <div class="field"><label>Main photo</label><input id="newClothPhoto" type="file" accept="image/*"></div>
           <button class="btn sm" id="newClothBtn" type="button">Add tablecloth</button>
         </div>
       </div>
@@ -771,6 +771,41 @@
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   function photosFor(inv){return (inv.imgs&&inv.imgs.length?inv.imgs:(inv.img?[inv.img]:[])).filter(Boolean);}
   function cleanPhotoUrl(u){u=String(u||"").trim(); if(!u||/[<>"']/.test(u)||/^javascript:/i.test(u))return ""; return u;}
+  function fileAsDataUrl(file){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(String(reader.result||""));
+      reader.onerror=reject;
+      reader.readAsDataURL(file);
+    });
+  }
+  async function photoFromFile(file){
+    if(!file||!/^image\//i.test(file.type||""))return "";
+    const raw=await fileAsDataUrl(file);
+    if(file.type==="image/svg+xml")return raw;
+    return new Promise(resolve=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=1400, w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        if(!w||!h){resolve(raw);return;}
+        const scale=Math.min(1,max/Math.max(w,h));
+        const canvas=document.createElement("canvas");
+        canvas.width=Math.max(1,Math.round(w*scale));
+        canvas.height=Math.max(1,Math.round(h*scale));
+        canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+        canvas.toBlob(blob=>{
+          if(!blob){resolve(raw);return;}
+          fileAsDataUrl(blob).then(resolve).catch(()=>resolve(raw));
+        },"image/jpeg",.84);
+      };
+      img.onerror=()=>resolve(raw);
+      img.src=raw;
+    });
+  }
+  async function photoFromFileInput(input){
+    const file=input&&input.files&&input.files[0];
+    return file?photoFromFile(file):"";
+  }
   function slugify(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,32)||"tablecloth";}
   function normalizeCare(data){
     data=data&&typeof data==="object"?data:{};
@@ -1569,9 +1604,9 @@
     const size=document.getElementById("newClothSize").value.trim();
     const dim=document.getElementById("newClothDim").value.trim();
     const stock=Math.max(1,parseInt(document.getElementById("newClothStock").value,10)||1);
-    const photo=cleanPhotoUrl(document.getElementById("newClothPhoto").value);
+    const photo=await photoFromFileInput(document.getElementById("newClothPhoto"));
     const ownerSelect=document.getElementById("newClothOwner");
-    if(!name||!photo){toast("Add a name and main photo");return;}
+    if(!name||!photo){toast("Add a name and upload a main photo");return;}
     let id="custom-"+slugify(name), base=id, n=2;
     while(INVENTORY.some(inv=>inv.id===id)){id=base+"-"+n;n++;}
     INVENTORY.push({id,name,size:size||"Tablecloth",dim,stock,imgs:[photo],custom:true});
@@ -1623,8 +1658,8 @@
           +'<span class="mainmark">'+(i===0?'Main':'')+'</span>'
           +'<button type="button" data-remove-photo="'+esc(inv.id)+'" data-index="'+i+'">Remove</button></div>'
         ).join('')+'</div>'
-        +'<div class="photo-add"><input type="text" data-photo-input="'+esc(inv.id)+'" placeholder="images/example.jpg or https://...">'
-        +'<button class="btn sm" type="button" data-add-photo="'+esc(inv.id)+'">Add photo</button></div>'
+        +'<div class="photo-add"><input type="file" accept="image/*" data-photo-input="'+esc(inv.id)+'">'
+        +'<button class="btn sm" type="button" data-add-photo="'+esc(inv.id)+'">Upload photo</button></div>'
         +(inv.custom?'<button class="btn ghost sm" type="button" data-delete-cloth="'+esc(inv.id)+'" style="margin-top:10px">Delete tablecloth</button>':'')
         +'</div></div>';
     }).join('');
@@ -1686,11 +1721,11 @@
       if(pics.length<=1){toast("Each tablecloth needs at least one photo");return;}
       pics.splice(idx,1); inv.imgs=pics; photosChanged("Photo removed");
     });
-    wrap.querySelectorAll("[data-add-photo]").forEach(btn=>btn.onclick=()=>{
+    wrap.querySelectorAll("[data-add-photo]").forEach(btn=>btn.onclick=async()=>{
       const inv=INVENTORY.find(i=>i.id===btn.dataset.addPhoto), input=wrap.querySelector('[data-photo-input="'+btn.dataset.addPhoto+'"]');
-      const url=cleanPhotoUrl(input&&input.value);
-      if(!inv||!url){toast("Add a valid image path or URL");return;}
-      const pics=photosFor(inv).slice(); pics.push(url); inv.imgs=pics; if(input)input.value="";
+      const photo=await photoFromFileInput(input);
+      if(!inv||!photo){toast("Choose a photo to upload");return;}
+      const pics=photosFor(inv).slice(); pics.push(photo); inv.imgs=pics; if(input)input.value="";
       photosChanged("Photo added");
     });
     wrap.querySelectorAll("[data-delete-cloth]").forEach(btn=>btn.onclick=()=>{
@@ -1706,9 +1741,6 @@
       renderPhotoManager(); renderCareManager(); renderCatalog(); renderCart(); renderAdminCalendar();
       toast("Tablecloth deleted");
     });
-    wrap.querySelectorAll("[data-photo-input]").forEach(input=>input.addEventListener("keydown",e=>{
-      if(e.key==="Enter"){e.preventDefault();wrap.querySelector('[data-add-photo="'+input.dataset.photoInput+'"]').click();}
-    }));
   }
   function togglePhotoEditor(){
     const details=document.getElementById("photoEditorDetails"), btn=document.getElementById("photoEditToggle");
@@ -1781,7 +1813,7 @@
   document.getElementById("resetPasswordBtn").onclick=showResetPasswordModal;
   document.getElementById("photoEditToggle").onclick=togglePhotoEditor;
   document.getElementById("newClothBtn").onclick=addNewTablecloth;
-  ["newClothName","newClothSize","newClothDim","newClothStock","newClothPhoto"].forEach(id=>{
+  ["newClothName","newClothSize","newClothDim","newClothStock"].forEach(id=>{
     document.getElementById(id).addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addNewTablecloth();}});
   });
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
