@@ -1372,7 +1372,7 @@
     document.getElementById("shopView").classList.toggle("hidden",v!=="shop");
     document.getElementById("adminView").classList.toggle("hidden",v!=="admin");
     if(v==="admin"){
-      if(opts.clear!==false)clearAdminSession();
+      if(opts.clear===true)clearAdminSession();
       updateAdminGate();
     }
   }
@@ -1786,6 +1786,25 @@
     sessionStorage.removeItem("linen_admin_email");
     sessionStorage.removeItem("linen_admin_unlocked");
   }
+  async function restoreAdminSession(){
+    const token=sessionStorage.getItem("linen_admin_token")||"";
+    const email=sessionStorage.getItem("linen_admin_email")||"";
+    if(sessionStorage.getItem("linen_admin_unlocked")!=="1"||!token)return false;
+    ADMIN_TOKEN_VALUE=token;
+    ADMIN_EMAIL_VALUE=normalizeAdminEmail(email);
+    try{
+      const d=await apiList();
+      bookings=d.bookings||[];
+      adminMe=d.me||adminMe;
+      if(adminMe&&adminMe.email)ADMIN_EMAIL_VALUE=normalizeAdminEmail(adminMe.email);
+      await loadAdminConfig();
+      sessionStorage.setItem("linen_admin_email",ADMIN_EMAIL_VALUE);
+      return true;
+    }catch(e){
+      clearAdminSession();
+      return false;
+    }
+  }
   function updateAdminGate(){
     const unlocked=adminUnlocked();
     document.getElementById("adminLogin").classList.toggle("hidden",unlocked);
@@ -1879,9 +1898,9 @@
     loadDetailOverrides();
     loadCareInstructions();
     loadPhotoOverrides();
-    clearAdminSession();
     pendingApproveId=requestedApprovalId();
     await loadBookings();
+    await restoreAdminSession();
     updateDateField(); renderCalendar(); renderCatalog(); renderCart();
     if(pendingApproveId)setView("admin",{clear:false}); else updateAdminGate();
   })();
