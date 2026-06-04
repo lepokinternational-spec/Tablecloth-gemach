@@ -95,7 +95,7 @@ export default {
         await upsertBooking(env, b);
 
         if (body.sendApproval && b.email) {
-          await sendEmail(env, b.email, "Your tablecloth booking is approved", approvalHtml(b, [admin.email]));
+          await sendEmail(env, b.email, "Your tablecloth booking is approved", approvalHtml(b, [admin.email], collectionAddressesForBooking(b, owners, admin.email)));
         }
 
         return json({ ok: true }, 200, cors);
@@ -176,7 +176,7 @@ export default {
       }
 
       if (!action && body.email && body.id) {
-        await sendEmail(env, body.email, "Your tablecloth booking is approved", approvalHtml(body, [MAIN_ADMIN_EMAIL]));
+        await sendEmail(env, body.email, "Your tablecloth booking is approved", approvalHtml(body, [MAIN_ADMIN_EMAIL], collectionAddressesForBooking(body, {}, MAIN_ADMIN_EMAIL)));
         return json({ ok: true }, 200, cors);
       }
 
@@ -255,6 +255,36 @@ function groupItemsByOwner(items, owners) {
 
 function contactEmailsForBooking(b, owners) {
   return [...groupItemsByOwner(b.items || [], owners).keys()];
+}
+
+function collectionAddressForEmail(email) {
+  return normalizeEmail(email) === normalizeEmail(MIRI_ADMIN_EMAIL) ? "11 francklyn gardens" : "29 Broadfields avenue";
+}
+
+function collectionAddressesForBooking(b, owners, fallbackEmail) {
+  const grouped = new Map();
+  for (const item of b.items || []) {
+    const ownerEmail = normalizeEmail((item.id && owners && owners[item.id]) || fallbackEmail || MAIN_ADMIN_EMAIL);
+    if (!grouped.has(ownerEmail)) grouped.set(ownerEmail, []);
+    grouped.get(ownerEmail).push(item);
+  }
+  const addresses = [];
+  const seen = new Set();
+
+  for (const [email, items] of grouped.entries()) {
+    const cleanEmail = normalizeEmail(email);
+    const address = collectionAddressForEmail(cleanEmail);
+    const key = cleanEmail + "|" + address.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    addresses.push({ email: cleanEmail, address, items });
+  }
+
+  if (!addresses.length) {
+    addresses.push({ email: MAIN_ADMIN_EMAIL, address: collectionAddressForEmail(MAIN_ADMIN_EMAIL), items: [] });
+  }
+
+  return addresses;
 }
 
 function bookingBelongsToAdmin(b, adminEmail, owners) {
@@ -503,15 +533,29 @@ function ackHtml(b, contactEmails) {
   );
 }
 
-function approvalHtml(b, contactEmails) {
+function approvalHtml(b, contactEmails, collectionAddresses) {
   return emailShell(
     "Your booking is approved",
     "Your linens are confirmed",
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ', your reservation <b>' + esc(b.id) + "</b> is approved.</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
+    collectionAddressHtml(collectionAddresses) +
     tableBlock(b.items) +
     careHtml(b) +
     contactButtonsHtml(contactEmails, "Question about booking " + b.id)
+  );
+}
+
+function collectionAddressHtml(addresses) {
+  if (!addresses || !addresses.length) return "";
+  return infoBox(
+    "<b>Collection address</b><br>" +
+    addresses.map(a =>
+      esc(a.address) +
+      (a.items && a.items.length
+        ? '<br><span style="font-size:13px;color:#6B665B">' + a.items.map(it => esc(it.name)).join(", ") + "</span>"
+        : "")
+    ).join("<br><br>")
   );
 }
 
