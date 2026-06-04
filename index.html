@@ -454,6 +454,12 @@
     <div class="cal-grid big" id="pCalGrid"></div>
   </section>
 
+  <div class="actions" style="margin-top:18px">
+    <button class="btn ghost sm" id="adminLockBtn">Log out</button>
+    <button class="btn ghost sm" id="resetPasswordBtn">Reset password</button>
+    <button class="btn ghost sm" id="resetBtn">Delete all bookings</button>
+  </div>
+
   <section class="block" style="margin-top:24px">
     <div class="photo-head">
       <h2>Catalogue details</h2>
@@ -476,14 +482,6 @@
       </div>
       <div class="photo-manager" id="photoManager"></div>
     </div>
-  </section>
-
-  <section class="block" style="margin-top:24px">
-    <h2>All reservations</h2>
-    <div id="bookingList" style="margin-top:16px"></div>
-    <button class="btn ghost sm" id="adminLockBtn" style="margin-top:14px">Log out</button>
-    <button class="btn ghost sm" id="resetPasswordBtn" style="margin-top:14px">Reset password</button>
-    <button class="btn ghost sm" id="resetBtn" style="margin-top:14px">Delete all bookings</button>
   </section>
   </div>
 </div></main>
@@ -1779,7 +1777,7 @@
     btn.textContent=open?"Edit":"Close";
     if(!open){renderCareManager();renderPhotoManager();}
   }
-  function renderAdmin(){ renderStats(); renderBookingList(); renderAdminCalendar(); renderCareManager(); renderPhotoManager(); }
+  function renderAdmin(){ renderStats(); renderAdminCalendar(); renderCareManager(); renderPhotoManager(); }
   function adminUnlocked(){ return sessionStorage.getItem("linen_admin_unlocked")==="1"; }
   function clearAdminSession(){
     ADMIN_TOKEN_VALUE="";
