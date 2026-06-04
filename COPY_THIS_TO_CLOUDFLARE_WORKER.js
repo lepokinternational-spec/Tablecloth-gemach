@@ -1,14 +1,20 @@
 const ORIGIN = "https://tcgemach.co.uk";
 const MAIN_ADMIN_EMAIL = "linencollection29@gmail.com";
+const MIRI_ADMIN_EMAIL = "linencollection11@gmail.com";
 
 const DEFAULT_ADMINS = [
   { name: "Miri Koppel", email: "linencollection29@gmail.com", role: "super", envPassword: "ADMIN_TOKEN" },
-  { name: "Miri Grossnass", email: "linencollection11@gmail.com", role: "admin", envPassword: "MIRI_ADMIN_TOKEN" },
+  { name: "Miri Grossnass", email: MIRI_ADMIN_EMAIL, role: "admin", envPassword: "MIRI_ADMIN_TOKEN" },
 ];
 
 const DEFAULT_OWNERS = {
-  whitechaircovers: "linencollection11@gmail.com",
+  whitechaircovers: MIRI_ADMIN_EMAIL,
   goldchargers: MAIN_ADMIN_EMAIL,
+};
+
+const EMAIL_ALIASES = {
+  "mirikoppel10@gmail.com": MIRI_ADMIN_EMAIL,
+  "linencollection11@gmail.com": MIRI_ADMIN_EMAIL,
 };
 
 export default {
@@ -284,10 +290,18 @@ async function getOwners(env) {
   if (!raw) return { ...DEFAULT_OWNERS };
   try {
     const owners = JSON.parse(raw);
-    return owners && typeof owners === "object" ? { ...DEFAULT_OWNERS, ...owners } : { ...DEFAULT_OWNERS };
+    return owners && typeof owners === "object" ? normalizeOwnerMap({ ...DEFAULT_OWNERS, ...owners }) : { ...DEFAULT_OWNERS };
   } catch {
     return { ...DEFAULT_OWNERS };
   }
+}
+
+function normalizeOwnerMap(owners) {
+  const clean = {};
+  for (const [clothId, email] of Object.entries(owners || {})) {
+    if (clothId && email) clean[clothId] = normalizeEmail(email);
+  }
+  return clean;
 }
 
 async function getAdmins(env) {
@@ -581,7 +595,8 @@ function json(o, s, c) {
 }
 
 function normalizeEmail(s) {
-  return String(s || "").trim().toLowerCase();
+  const email = String(s || "").trim().toLowerCase();
+  return EMAIL_ALIASES[email] || email;
 }
 
 function esc(s) {

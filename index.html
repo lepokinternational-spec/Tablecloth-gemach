@@ -520,6 +520,7 @@
     {id:"goldchargers", name:"Gold Chargers", size:"Chargers", dim:"", stock:60, imgs:["images/black-1.jpg"]},
   ];
   const ADMIN_EMAIL="linencollection29@gmail.com";
+  const MIRI_ADMIN_EMAIL="linencollection11@gmail.com";
   const EMAIL_ENDPOINT="https://linen-email.linencollection29.workers.dev/";
   async function sendApprovalEmail(b){
     if(!EMAIL_ENDPOINT||EMAIL_ENDPOINT.indexOf("PASTE_YOUR")>=0)return;
@@ -547,16 +548,29 @@
   let ADMIN_EMAIL_VALUE="";
   const DEFAULT_ADMINS=[
     {name:"Miri Koppel",email:"linencollection29@gmail.com",role:"super"},
-    {name:"Miri Grossnass",email:"linencollection11@gmail.com",role:"admin"}
+    {name:"Miri Grossnass",email:MIRI_ADMIN_EMAIL,role:"admin"}
   ];
+  const ADMIN_EMAIL_ALIASES={
+    "mirikoppel10@gmail.com":MIRI_ADMIN_EMAIL,
+    "linencollection11@gmail.com":MIRI_ADMIN_EMAIL
+  };
   const DEFAULT_OWNERS={
-    whitechaircovers:"linencollection11@gmail.com",
+    whitechaircovers:MIRI_ADMIN_EMAIL,
     goldchargers:ADMIN_EMAIL
   };
   let adminMe=null, adminUsers=[], tableclothOwners={};
   let careConfig={all:"",items:{}};
   const API="https://linen-email.linencollection29.workers.dev";
-  function sameEmail(a,b){return String(a||"").trim().toLowerCase()===String(b||"").trim().toLowerCase();}
+  function normalizeAdminEmail(s){
+    const email=String(s||"").trim().toLowerCase();
+    return ADMIN_EMAIL_ALIASES[email]||email;
+  }
+  function sameEmail(a,b){return normalizeAdminEmail(a)===normalizeAdminEmail(b);}
+  function normalizedOwnerMap(source){
+    const out={};
+    Object.entries(source||{}).forEach(([id,email])=>{if(id&&email)out[id]=normalizeAdminEmail(email);});
+    return out;
+  }
   function adminHeaders(includeJson){
     const headers=includeJson?{"Content-Type":"application/json"}:{};
     if(ADMIN_TOKEN_VALUE)headers["X-Admin-Token"]=ADMIN_TOKEN_VALUE;
@@ -583,15 +597,15 @@
     try{
       const cfg=await apiGet("adminConfig",true);
       adminMe=cfg.me||adminMe;
-      adminUsers=Array.isArray(cfg.admins)?cfg.admins:[];
-      tableclothOwners=Object.assign({},DEFAULT_OWNERS,(cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{});
+      adminUsers=Array.isArray(cfg.admins)?cfg.admins.map(a=>Object.assign({},a,{email:normalizeAdminEmail(a.email)})):[];
+      tableclothOwners=Object.assign({},DEFAULT_OWNERS,normalizedOwnerMap((cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{}));
     }catch(e){
       adminUsers=[]; tableclothOwners=Object.assign({},DEFAULT_OWNERS);
     }
   }
-  async function saveOwnerConfig(){ await api("saveOwners",{owners:Object.assign({},DEFAULT_OWNERS,tableclothOwners)},true); }
+  async function saveOwnerConfig(){ await api("saveOwners",{owners:normalizedOwnerMap(Object.assign({},DEFAULT_OWNERS,tableclothOwners))},true); }
   function ownerUsers(){
-    const seen={}, list=DEFAULT_ADMINS.concat(adminUsers||[]).filter(a=>a&&a.email);
+    const seen={}, list=DEFAULT_ADMINS.concat(adminUsers||[]).filter(a=>a&&a.email).map(a=>Object.assign({},a,{email:normalizeAdminEmail(a.email)}));
     return list.filter(a=>{
       const emailKey=String(a.email||"").trim().toLowerCase();
       const nameKey=String(a.name||"").trim().toLowerCase();
@@ -602,10 +616,10 @@
       return true;
     });
   }
-  function currentAdminEmail(){return (adminMe&&adminMe.email)||ADMIN_EMAIL_VALUE||"";}
+  function currentAdminEmail(){return normalizeAdminEmail((adminMe&&adminMe.email)||ADMIN_EMAIL_VALUE||"");}
   function isSuperAdmin(){return !!adminMe&&adminMe.role==="super";}
   function canChooseOwners(){return isSuperAdmin()&&ownerUsers().length>1;}
-  function clothOwnerEmail(id){return tableclothOwners[id]||DEFAULT_OWNERS[id]||ADMIN_EMAIL;}
+  function clothOwnerEmail(id){return normalizeAdminEmail(tableclothOwners[id]||DEFAULT_OWNERS[id]||ADMIN_EMAIL);}
   function clothOwnedByCurrentAdmin(inv){
     const email=currentAdminEmail();
     return !!email&&sameEmail(clothOwnerEmail(inv.id),email);
