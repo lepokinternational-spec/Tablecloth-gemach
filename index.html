@@ -35,14 +35,14 @@
   .hidden{display:none!important}
 
   header.bar{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(242,237,224,.85);border-bottom:1px solid var(--line)}
-  .bar-in{display:flex;align-items:center;justify-content:space-between;height:70px;gap:12px}
-  .brand{display:flex;align-items:center;gap:12px;background:none;padding:0;text-align:left;color:inherit}
+  .bar-in{display:grid;grid-template-columns:minmax(360px,1fr) auto auto;align-items:center;height:76px;gap:18px;max-width:1480px}
+  .brand{display:flex;align-items:center;gap:12px;background:none;padding:0;text-align:left;color:inherit;min-width:0}
   .brand:hover .mark{box-shadow:inset 0 0 0 3px rgba(217,185,104,.62),0 6px 18px -12px rgba(35,33,27,.55)}
   .brand .mark{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--teal-2));
     box-shadow:inset 0 0 0 3px rgba(217,185,104,.5);display:grid;place-items:center;color:var(--gold-soft);font-family:"Frank Ruhl Libre",serif;font-size:1.3rem}
-  .brand b{font-family:"Fraunces",serif;font-size:1.3rem;font-weight:600}
+  .brand b{font-family:"Fraunces",serif;font-size:1.42rem;font-weight:600;line-height:1.02}
   .brand span{display:block;font-size:.64rem;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-soft);margin-top:-2px}
-  .brand .dedication{letter-spacing:normal;text-transform:none;font-size:.78rem;line-height:1.08}
+  .brand .dedication{letter-spacing:normal;text-transform:none;font-size:.72rem;line-height:1.12;white-space:nowrap}
   .toggle{display:flex;background:var(--linen-2);border:1px solid var(--line);border-radius:999px;padding:4px;gap:2px}
   .toggle button{background:none;padding:9px 16px;border-radius:999px;font-size:.85rem;font-weight:600;color:var(--ink-soft);transition:.2s}
   .toggle button.on{background:var(--teal);color:#fff;box-shadow:var(--shadow)}
@@ -289,11 +289,12 @@
   .stagger>*:nth-child(2){animation-delay:.05s}.stagger>*:nth-child(3){animation-delay:.1s}.stagger>*:nth-child(4){animation-delay:.15s}
   @media(max-width:640px){
     .wrap{padding:0 12px}
-    .bar-in{height:auto;min-height:66px;padding:10px 0;flex-wrap:wrap;align-items:flex-start}
+    .bar-in{height:auto;min-height:66px;padding:10px 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:9px}
     .brand{gap:9px;min-width:0}
     .brand .mark{width:34px;height:34px;border-radius:9px;font-size:1.05rem;flex:none}
     .brand b{font-size:1.05rem;line-height:1.1}
     .brand span{font-size:.68rem;line-height:1.15}
+    .brand .dedication{white-space:normal;font-size:.66rem}
     .toggle{width:100%;display:grid;grid-template-columns:1fr 1fr;margin-top:8px;border-radius:12px}
     .toggle button{padding:10px 8px;border-radius:9px}
     .hero{padding:24px 0 10px}
