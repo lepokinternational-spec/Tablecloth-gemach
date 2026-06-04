@@ -892,6 +892,9 @@
       +list.map(c=>'<div style="font-size:.86rem;padding:5px 0"><b>'+esc(c.name)+'</b><br>'+esc(c.text).replace(/\n/g,"<br>")+'</div>').join('')
       +'</div>';
   }
+  function suggestedDonationPreviewHtml(){
+    return '<div class="recap"><div class="ln"><span><b>Suggested donation</b></span><span>£5</span></div><div style="line-height:1.55;margin-top:8px">If the tablecloths are returned late you undertake to pay a late fee.</div></div>';
+  }
   function cleanInventoryItem(raw){
     const name=String(raw&&raw.name||"").trim();
     const size=String(raw&&raw.size||"").trim();
@@ -1254,6 +1257,7 @@
       +'<div class="ln"><span>↩︎ Return by</span><span><b>'+fmt(b.ret)+'</b></span></div>'
       +'<div class="ln"><span>📋 Reservation</span><span>'+b.id+'</span></div></div>'
       +collectionAddress
+      +suggestedDonationPreviewHtml()
       +'<div class="recap">'+lines+'</div>'
       +customerNote
       +care

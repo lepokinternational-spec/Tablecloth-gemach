@@ -540,10 +540,15 @@ function approvalHtml(b, contactEmails, collectionAddresses) {
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ', your reservation <b>' + esc(b.id) + "</b> is approved.</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
     collectionAddressHtml(collectionAddresses) +
+    suggestedDonationHtml() +
     tableBlock(b.items) +
     careHtml(b) +
     contactButtonsHtml(contactEmails, "Question about booking " + b.id)
   );
+}
+
+function suggestedDonationHtml() {
+  return infoBox("<b>Suggested donation</b><br>£5<br><br>If the tablecloths are returned late you undertake to pay a late fee.");
 }
 
 function collectionAddressHtml(addresses) {
