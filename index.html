@@ -584,12 +584,12 @@
       const cfg=await apiGet("adminConfig",true);
       adminMe=cfg.me||adminMe;
       adminUsers=Array.isArray(cfg.admins)?cfg.admins:[];
-      tableclothOwners=cfg.owners&&typeof cfg.owners==="object"?cfg.owners:{};
+      tableclothOwners=Object.assign({},DEFAULT_OWNERS,(cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{});
     }catch(e){
-      adminUsers=[]; tableclothOwners={};
+      adminUsers=[]; tableclothOwners=Object.assign({},DEFAULT_OWNERS);
     }
   }
-  async function saveOwnerConfig(){ await api("saveOwners",{owners:tableclothOwners},true); }
+  async function saveOwnerConfig(){ await api("saveOwners",{owners:Object.assign({},DEFAULT_OWNERS,tableclothOwners)},true); }
   function ownerUsers(){
     const seen={}, list=(adminUsers||[]).concat(DEFAULT_ADMINS).filter(a=>a&&a.email);
     return list.filter(a=>{const key=String(a.email).trim().toLowerCase(); if(seen[key])return false; seen[key]=1; return true;});
