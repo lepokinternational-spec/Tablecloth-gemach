@@ -88,7 +88,7 @@ export default {
         if (!b || !b.id) return json({ error: "bad booking" }, 400, cors);
 
         const owners = await getOwners(env);
-        if (!bookingBelongsToAdmin(b, admin.email, owners)) {
+        if (!body.adminCreate && !bookingBelongsToAdmin(b, admin.email, owners)) {
           return json({ error: "not your tablecloths" }, 403, cors);
         }
 

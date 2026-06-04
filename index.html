@@ -599,6 +599,10 @@
       adminMe=cfg.me||adminMe;
       adminUsers=Array.isArray(cfg.admins)?cfg.admins.map(a=>Object.assign({},a,{email:normalizeAdminEmail(a.email)})):[];
       tableclothOwners=Object.assign({},DEFAULT_OWNERS,normalizedOwnerMap((cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{}));
+      INVENTORY.forEach(inv=>{
+        if(inv.custom&&inv.owner&&!tableclothOwners[inv.id])tableclothOwners[inv.id]=normalizeAdminEmail(inv.owner);
+        if(inv.custom&&!tableclothOwners[inv.id]&&sameEmail(currentAdminEmail(),MIRI_ADMIN_EMAIL))tableclothOwners[inv.id]=MIRI_ADMIN_EMAIL;
+      });
     }catch(e){
       adminUsers=[]; tableclothOwners=Object.assign({},DEFAULT_OWNERS);
     }
@@ -874,7 +878,8 @@
     const stock=Math.max(1,parseInt(raw&&raw.stock,10)||1);
     const imgs=Array.isArray(raw&&raw.imgs)?raw.imgs.map(cleanPhotoUrl).filter(Boolean):[];
     if(!name||!imgs.length)return null;
-    return {id:String(raw.id||("custom-"+slugify(name)+"-"+Date.now().toString(36))).trim(), name, size:size||"Tablecloth", dim, stock, imgs, custom:true};
+    const owner=normalizeAdminEmail(raw&&raw.owner);
+    return {id:String(raw.id||("custom-"+slugify(name)+"-"+Date.now().toString(36))).trim(), name, size:size||"Tablecloth", dim, stock, imgs, custom:true, owner};
   }
   function loadCustomInventory(){
     try{
@@ -887,7 +892,7 @@
     }catch(e){console.error(e);}
   }
   function saveCustomInventory(){
-    const data=INVENTORY.filter(inv=>inv.custom).map(inv=>({id:inv.id,name:inv.name,size:inv.size,dim:inv.dim,stock:inv.stock,imgs:photosFor(inv),custom:true}));
+    const data=INVENTORY.filter(inv=>inv.custom).map(inv=>({id:inv.id,name:inv.name,size:inv.size,dim:inv.dim,stock:inv.stock,imgs:photosFor(inv),custom:true,owner:normalizeAdminEmail(tableclothOwners[inv.id]||inv.owner||currentAdminEmail())}));
     localStorage.setItem(CUSTOM_INVENTORY_KEY,JSON.stringify(data));
   }
   function loadDetailOverrides(){
@@ -1552,7 +1557,7 @@
         items, start:p, pickup:p, ret:r, status:"approved",
         token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
       attachCareInstructions(b);
-      try{ await api("create",{booking:b}); }catch(e){ document.getElementById("nbErr").classList.remove("hidden"); return; } bookings.push(b);
+      try{ await api("update",{booking:b,adminCreate:true},true); }catch(e){ document.getElementById("nbErr").classList.remove("hidden"); return; } bookings.push(b);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart(); closeModal();
       toast("Booking created for "+name);
     };
