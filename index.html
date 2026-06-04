@@ -591,8 +591,16 @@
   }
   async function saveOwnerConfig(){ await api("saveOwners",{owners:Object.assign({},DEFAULT_OWNERS,tableclothOwners)},true); }
   function ownerUsers(){
-    const seen={}, list=(adminUsers||[]).concat(DEFAULT_ADMINS).filter(a=>a&&a.email);
-    return list.filter(a=>{const key=String(a.email).trim().toLowerCase(); if(seen[key])return false; seen[key]=1; return true;});
+    const seen={}, list=DEFAULT_ADMINS.concat(adminUsers||[]).filter(a=>a&&a.email);
+    return list.filter(a=>{
+      const emailKey=String(a.email||"").trim().toLowerCase();
+      const nameKey=String(a.name||"").trim().toLowerCase();
+      const key=emailKey||nameKey;
+      const displayKey=nameKey&&nameKey!=="admin"?("name:"+nameKey):key;
+      if(seen[key]||seen[displayKey])return false;
+      seen[key]=1; seen[displayKey]=1;
+      return true;
+    });
   }
   function currentAdminEmail(){return (adminMe&&adminMe.email)||ADMIN_EMAIL_VALUE||"";}
   function isSuperAdmin(){return !!adminMe&&adminMe.role==="super";}
@@ -614,7 +622,8 @@
     return user?(user.name||user.email):email;
   }
   function ownerOptions(selected){
-    return '<option value="">No owner</option>'+ownerUsers().map(a=>'<option value="'+esc(a.email||"")+'" '+(sameEmail(selected,a.email)?'selected':'')+'>'+esc(a.name||a.email||"Admin")+'</option>').join('');
+    const chosen=selected||ADMIN_EMAIL;
+    return ownerUsers().map(a=>'<option value="'+esc(a.email||"")+'" '+(sameEmail(chosen,a.email)?'selected':'')+'>'+esc(a.name||a.email||"Admin")+'</option>').join('');
   }
   let pickDate=null, retDate=null;
   const MAX_DAYS=5;
@@ -1753,7 +1762,7 @@
   function clearAdminSession(){
     ADMIN_TOKEN_VALUE="";
     ADMIN_EMAIL_VALUE="";
-    adminMe=null; adminUsers=[]; tableclothOwners={};
+    adminMe=null; adminUsers=[]; tableclothOwners=Object.assign({},DEFAULT_OWNERS);
     sessionStorage.removeItem("linen_admin_token");
     sessionStorage.removeItem("linen_admin_email");
     sessionStorage.removeItem("linen_admin_unlocked");
