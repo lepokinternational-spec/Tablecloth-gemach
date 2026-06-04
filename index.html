@@ -1368,6 +1368,9 @@
   }
   function setView(v,opts){
     opts=opts||{};
+    const previous=sessionStorage.getItem("linen_active_view")||(document.getElementById("adminView").classList.contains("hidden")?"shop":"admin");
+    if(previous==="admin"&&v!=="admin"&&opts.preserveAdmin!==true)clearAdminSession();
+    sessionStorage.setItem("linen_active_view",v);
     document.querySelectorAll("#viewToggle button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));
     document.getElementById("shopView").classList.toggle("hidden",v!=="shop");
     document.getElementById("adminView").classList.toggle("hidden",v!=="admin");
@@ -1899,10 +1902,13 @@
     loadCareInstructions();
     loadPhotoOverrides();
     pendingApproveId=requestedApprovalId();
+    const preferredView=sessionStorage.getItem("linen_active_view");
     await loadBookings();
     await restoreAdminSession();
     updateDateField(); renderCalendar(); renderCatalog(); renderCart();
-    if(pendingApproveId)setView("admin",{clear:false}); else updateAdminGate();
+    if(pendingApproveId)setView("admin",{clear:false});
+    else if(preferredView==="admin")setView("admin",{clear:false,preserveAdmin:true});
+    else updateAdminGate();
   })();
 })();
 
