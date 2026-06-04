@@ -17,6 +17,11 @@ const DEFAULT_ADMINS = [
   { name: "Miri Grossnass", email: "linencollection11@gmail.com", role: "admin", envPassword: "MIRI_ADMIN_TOKEN" },
 ];
 
+const DEFAULT_OWNERS = {
+  whitechaircovers: "linencollection11@gmail.com",
+  goldchargers: MAIN_ADMIN_EMAIL,
+};
+
 export default {
   async fetch(request, env) {
     const cors = {
@@ -287,12 +292,12 @@ async function upsertBooking(env, booking) {
 
 async function getOwners(env) {
   const raw = await env.SETTINGS.get("TABLECLOTH_OWNERS");
-  if (!raw) return {};
+  if (!raw) return { ...DEFAULT_OWNERS };
   try {
     const owners = JSON.parse(raw);
-    return owners && typeof owners === "object" ? owners : {};
+    return owners && typeof owners === "object" ? { ...DEFAULT_OWNERS, ...owners } : { ...DEFAULT_OWNERS };
   } catch {
-    return {};
+    return { ...DEFAULT_OWNERS };
   }
 }
 

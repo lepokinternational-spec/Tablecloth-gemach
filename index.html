@@ -510,12 +510,14 @@
     {id:"floral", name:"Floral Bloom", size:"Large floral print", dim:"240 × 140 cm", stock:2, imgs:["images/floral-1.jpg"]},
     {id:"stripe", name:"Monochrome Stripe", size:"Runner", dim:"", stock:10, imgs:["images/stripe-1.jpg","images/stripe-2.jpg"]},
     {id:"black", name:"Black", size:"Plain weave", dim:"", stock:10, imgs:["images/black-1.jpg","images/black-2.jpg","images/black-3.jpg"]},
-    {id:"lightyellow", name:"Light Yellow Linen Effect", size:"Linen effect", dim:"150 × 240 cm", stock:1, imgs:["images/lightyellow-1.jpg","images/lightyellow-2.jpg","images/lightyellow-3.jpg","images/lightyellow-4.jpg"]},
+    {id:"lightyellow", name:"Light Yellow Linen Effect", size:"Linen effect", dim:"150 × 240 cm", stock:1, imgs:["images/lightyellow-1.jpg","images/lightyellow-2.jpg","images/lightyellow-4.jpg"]},
     {id:"ivorytextured", name:"Ivory Textured Floral", size:"Textured floral", dim:"", stock:1, imgs:["images/ivorytextured-1.jpg"]},
     {id:"taupefloral", name:"Taupe Floral", size:"Floral print", dim:"", stock:1, imgs:["images/taupefloral-1.jpg","images/taupefloral-2.jpg"]},
     {id:"rustichessian", name:"Rustic Hessian", size:"Woven", dim:"", stock:1, imgs:["images/rustichessian-1.jpg","images/rustichessian-2.jpg","images/rustichessian-3.jpg"]},
     {id:"bluetextile", name:"Blue Toile Floral", size:"Floral print", dim:"", stock:1, imgs:["images/bluetextile-1.jpg","images/bluetextile-2.jpg","images/bluetextile-3.jpg"]},
-    {id:"naturallinen", name:"Natural Linen", size:"Woven", dim:"", stock:1, imgs:["images/naturallinen-1.jpg"]},
+    {id:"naturallinen", name:"Natural Linen", size:"Woven", dim:"", stock:1, imgs:["images/lightyellow-3.jpg","images/naturallinen-1.jpg"]},
+    {id:"whitechaircovers", name:"White Chair Covers", size:"Chair covers", dim:"", stock:200, imgs:["images/naturallinen-1.jpg"]},
+    {id:"goldchargers", name:"Gold Chargers", size:"Chargers", dim:"", stock:60, imgs:["images/lightyellow-1.jpg"]},
   ];
   const ADMIN_EMAIL="linencollection29@gmail.com";
   const EMAIL_ENDPOINT="https://linen-email.linencollection29.workers.dev/";
@@ -547,6 +549,10 @@
     {name:"Miri Koppel",email:"linencollection29@gmail.com",role:"super"},
     {name:"Miri Grossnass",email:"linencollection11@gmail.com",role:"admin"}
   ];
+  const DEFAULT_OWNERS={
+    whitechaircovers:"linencollection11@gmail.com",
+    goldchargers:ADMIN_EMAIL
+  };
   let adminMe=null, adminUsers=[], tableclothOwners={};
   let careConfig={all:"",items:{}};
   const API="https://linen-email.linencollection29.workers.dev";
@@ -591,7 +597,7 @@
   function currentAdminEmail(){return (adminMe&&adminMe.email)||ADMIN_EMAIL_VALUE||"";}
   function isSuperAdmin(){return !!adminMe&&adminMe.role==="super";}
   function canChooseOwners(){return isSuperAdmin()&&ownerUsers().length>1;}
-  function clothOwnerEmail(id){return tableclothOwners[id]||ADMIN_EMAIL;}
+  function clothOwnerEmail(id){return tableclothOwners[id]||DEFAULT_OWNERS[id]||ADMIN_EMAIL;}
   function clothOwnedByCurrentAdmin(inv){
     const email=currentAdminEmail();
     return !!email&&sameEmail(clothOwnerEmail(inv.id),email);
@@ -1593,7 +1599,7 @@
     const emptyMsg=list.length?'':'<div class="care-manager"><h3>No tablecloths assigned</h3><p class="sub">Only the main admin can assign tablecloths to this admin.</p></div>';
     wrap.innerHTML=globalCare+emptyMsg+list.map(inv=>{
       const canChooseOwner=canChooseOwners();
-      const ownerValue=tableclothOwners[inv.id]||"";
+      const ownerValue=tableclothOwners[inv.id]||DEFAULT_OWNERS[inv.id]||"";
       const ownerField=canChooseOwner
         ? '<div class="field"><label>Admin</label><select data-detail="owner">'+ownerOptions(ownerValue)+'</select></div>'
         : (ownerValue?'<div class="field"><label>Admin</label><input value="'+esc(ownerLabel(ownerValue))+'" disabled></div>':'');
