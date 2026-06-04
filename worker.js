@@ -14,7 +14,7 @@ const MAIN_ADMIN_EMAIL = "linencollection29@gmail.com";
 
 const DEFAULT_ADMINS = [
   { name: "Miri Koppel", email: "linencollection29@gmail.com", role: "super", envPassword: "ADMIN_TOKEN" },
-  { name: "Miri Grossnass", email: "mirikoppel10@gmail.com", role: "admin", envPassword: "MIRI_ADMIN_TOKEN" },
+  { name: "Miri Grossnass", email: "linencollection11@gmail.com", role: "admin", envPassword: "MIRI_ADMIN_TOKEN" },
 ];
 
 export default {
