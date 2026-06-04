@@ -42,6 +42,7 @@
     box-shadow:inset 0 0 0 3px rgba(217,185,104,.5);display:grid;place-items:center;color:var(--gold-soft);font-family:"Frank Ruhl Libre",serif;font-size:1.3rem}
   .brand b{font-family:"Fraunces",serif;font-size:1.3rem;font-weight:600}
   .brand span{display:block;font-size:.64rem;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-soft);margin-top:-2px}
+  .brand .dedication{letter-spacing:normal;text-transform:none;font-size:.78rem;line-height:1.08}
   .toggle{display:flex;background:var(--linen-2);border:1px solid var(--line);border-radius:999px;padding:4px;gap:2px}
   .toggle button{background:none;padding:9px 16px;border-radius:999px;font-size:.85rem;font-weight:600;color:var(--ink-soft);transition:.2s}
   .toggle button.on{background:var(--teal);color:#fff;box-shadow:var(--shadow)}
@@ -344,7 +345,7 @@
 </style>
 
 <header class="bar"><div class="wrap bar-in">
-  <button class="brand" id="homeBrand" type="button" aria-label="Go to main page"><div class="mark">✦</div><div><b>The Linen Collection</b><span dir="rtl" style="letter-spacing:normal;text-transform:none;font-size:.78rem">לעילוי נשמת שמחה בת משה</span></div></button>
+  <button class="brand" id="homeBrand" type="button" aria-label="Go to main page"><div class="mark">✦</div><div><b>The Linen Collection</b><span class="dedication" dir="rtl">לעילוי נשמת שמחה בת משה</span><span class="dedication" dir="rtl">לעילוי נשמת רוזה בת אלכזנדר זיסקינד</span></div></button>
   <span class="freebadge">Free to borrow</span>
   <div class="toggle" id="viewToggle">
     <button data-view="shop" class="on">Browse &amp; Reserve</button>
