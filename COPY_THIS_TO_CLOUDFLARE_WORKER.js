@@ -207,7 +207,7 @@ async function sendDailyReminders(env, dateISO) {
 
     const customerKey = "REMINDER_SENT:" + dateISO + ":customer:" + b.id + ":" + events.join("-");
     if (!(await env.SETTINGS.get(customerKey))) {
-      await sendEmail(env, b.email, customerReminderSubject(events), customerReminderHtml(b, events, dateISO, contactEmailsForBooking(b, owners)));
+      await sendEmail(env, b.email, customerReminderSubject(events), customerReminderHtml(b, events, dateISO, contactEmailsForBooking(b, owners), collectionAddressesForBooking(b, owners)));
       await env.SETTINGS.put(customerKey, "1", { expirationTtl: 60 * 60 * 24 * 45 });
       customerEmails++;
     }
@@ -559,13 +559,14 @@ function collectionAddressHtml(addresses) {
   );
 }
 
-function customerReminderHtml(b, events, dateISO, contactEmails) {
+function customerReminderHtml(b, events, dateISO, contactEmails, collectionAddresses) {
   const eventCopy = events.map(eventLabel).join(" and ");
   return emailShell(
     "Reminder",
     eventCopy,
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ", this is your reminder for today, " + esc(fmtDate(dateISO)) + ".</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
+    collectionAddressHtml(collectionAddresses) +
     tableBlock(b.items) +
     careHtml(b) +
     contactButtonsHtml(contactEmails, "Question about booking " + b.id)
