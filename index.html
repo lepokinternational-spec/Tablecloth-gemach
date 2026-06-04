@@ -776,6 +776,7 @@
         });
         parshaCache[year]=map;
         renderCalendar();
+        renderAdminCalendar();
       })
       .catch(()=>{parshaCache[year]={};});
   }
@@ -1085,6 +1086,7 @@
     const month=pCalMonth;
     document.getElementById("pCalLabel").textContent=month.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
     const he=document.getElementById("pCalLabelHe"); if(he) he.textContent=monthHebrewLabel(month);
+    ensureParshaYear(month.getFullYear());
     const g=document.getElementById("pCalGrid"); g.innerHTML="";
     DOW.forEach(d=>{const e=document.createElement("div");e.className="dow";e.textContent=d;g.appendChild(e);});
     const firstDow=new Date(month.getFullYear(),month.getMonth(),1).getDay();
@@ -1101,6 +1103,8 @@
       const hspan=document.createElement("div"); hspan.className="h"; hspan.textContent=hebDay(date);
       top.appendChild(gnum); top.appendChild(hspan); cell.appendChild(top);
       if(hols.length){ const cl=document.createElement("div"); cl.className="caholi"; cl.textContent=hols[0].n; cell.appendChild(cl); }
+      const pName=date.getDay()===6?parshaFor(date):"";
+      if(pName){ const pp=document.createElement("div"); pp.className="parsha"; pp.dir="rtl"; pp.textContent=pName; cell.appendChild(pp); }
       const bks=bookingsOnDay(dISO);
       if(bks.length){
         cell.classList.add("hasbk");
@@ -1110,6 +1114,7 @@
         cell.appendChild(wrap);
         cell.addEventListener("click",()=>showDayModal(dISO));
       }
+      cell.title=[hols.map(h=>h.n).join(" · "),pName,HFMT?hebFull(date):""].filter(Boolean).join(" — ");
       g.appendChild(cell);
     }
   }
