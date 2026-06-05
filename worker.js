@@ -3,7 +3,7 @@ const MAIN_ADMIN_EMAIL = "linencollection29@gmail.com";
 const MIRI_ADMIN_EMAIL = "linencollection11@gmail.com";
 
 const DEFAULT_ADMINS = [
-  { name: "Miri Koppel", email: "linencollection29@gmail.com", role: "super", envPassword: "ADMIN_TOKEN" },
+  { name: "Shifra Koppel", email: "linencollection29@gmail.com", role: "super", envPassword: "ADMIN_TOKEN" },
   { name: "Miri Grossnass", email: MIRI_ADMIN_EMAIL, role: "admin", envPassword: "MIRI_ADMIN_TOKEN" },
 ];
 
