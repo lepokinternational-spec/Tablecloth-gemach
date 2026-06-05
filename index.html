@@ -290,6 +290,7 @@
   .stagger>*{animation:rise .5s both}
   .stagger>*:nth-child(2){animation-delay:.05s}.stagger>*:nth-child(3){animation-delay:.1s}.stagger>*:nth-child(4){animation-delay:.15s}
   @media(max-width:640px){
+    html,body{max-width:100%;overflow-x:hidden}
     .wrap{padding:0 12px}
     .bar-in{height:auto;min-height:72px;padding:10px 0;display:grid;grid-template-columns:1fr;align-items:start;gap:9px}
     .brand{grid-template-columns:42px minmax(0,1fr);gap:10px;width:100%}
@@ -303,34 +304,54 @@
     .hero .eyebrow{font-size:.66rem;letter-spacing:.2em}
     .hero h1{font-size:2rem;max-width:12ch;margin-top:10px}
     .hero p.lead{font-size:.94rem}
-    #adminView .hero{padding:18px 0 8px}
-    #adminView .hero h1{font-size:1.85rem!important;max-width:none;margin:8px 0 6px}
+    #adminView .hero{padding:18px 0 6px}
+    #adminView .hero h1{font-size:1.72rem!important;max-width:none;margin:7px 0 4px}
     #adminView .hero p.lead{font-size:.9rem;line-height:1.42}
     section.block,.search{padding:16px;border-radius:13px}
+    #adminView section.block{padding:13px 10px}
     .grid{grid-template-columns:1fr;gap:14px}
     .pic{height:220px}
     .thumbs{left:12px;right:12px;bottom:12px;max-width:none}
     .cols{gap:18px;padding:16px 0 42px}
     .cart{position:static}
-    .stats{grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
-    .stat{padding:13px}
+    .stats{grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+    .stat{padding:12px 13px;border-radius:10px}
     .stat .n{font-size:1.65rem}
+    .stat .l{font-size:.6rem;letter-spacing:.08em}
     .admin-login{margin-bottom:18px}
     .admin-login .actions{display:grid;grid-template-columns:1fr;align-items:stretch;gap:12px}
     .admin-login .actions .btn{width:100%;min-height:48px}
     .cal-head .lbls h3{font-size:1.15rem!important}
     .cal-head .lbls .he{font-size:.92rem!important}
-    .adminlegend{gap:10px;font-size:.76rem}
-    .adminlegend span:last-child{width:100%;margin-left:0!important}
-    .cal-grid.big{gap:4px}
-    .cal-grid.big .day{min-height:58px;padding:4px;border-radius:8px}
-    .cal-grid.big .day .g{font-size:.86rem}
-    .cal-grid.big .day .h{font-size:.58rem}
-    .caholi{display:none!important}
+    .adminlegend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:10px;font-size:.61rem}
+    .adminlegend > span{display:flex!important;align-items:center;justify-content:center;gap:4px;min-width:0;width:auto!important;margin:0!important;line-height:1.1;border:1px solid var(--line);border-radius:999px;padding:5px 3px;background:#fff}
+    .adminlegend .dot{width:9px;height:5px;border-radius:999px;margin:0;flex:none}
+    .cal-grid.big{gap:3px;min-width:0;width:100%;overflow:hidden}
+    .cal-grid.big .dow{font-size:.52rem;letter-spacing:.04em;min-width:0;padding-bottom:3px}
+    .cal-grid.big .day{min-width:0;min-height:64px;padding:3px;border-radius:7px;overflow:hidden}
+    .cal-grid.big .day .topline{min-width:0}
+    .cal-grid.big .day .g{font-size:.78rem}
+    .cal-grid.big .day .h{font-size:.5rem}
+    .cal-grid.big .day .parsha{font-size:.44rem;line-height:1;margin-top:2px}
+    .cal-grid.big .day .bkbadges{gap:2px;min-width:0;overflow:hidden}
+    .bkbadge{font-size:.48rem;padding:2px 3px;border-radius:4px;line-height:1.05;min-width:0}
+    .bkbadge .who,.bkbadge .cloth{white-space:normal;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;text-overflow:clip}
+    .bkbadge .cloth{font-size:.45rem}
+    .bkmore{font-size:.52rem}
+    .caholi{font-size:.45rem;margin-top:1px}
     .bk{padding:13px}
     .bk .acts .btn,.daycard .acts .btn{width:100%}
+    #adminView .actions{display:grid;grid-template-columns:1fr;gap:8px}
+    #adminView .actions .btn{width:100%;justify-content:center}
     .photo-head{align-items:flex-start}
     .photo-head .btn{width:100%}
+    .photo-editor{padding:12px}
+    .cloth-toggle h4{font-size:.95rem}
+    .cloth-meta{font-size:.72rem}
+    .photo-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .photo-tile{width:auto}
+    .photo-tile img{height:64px}
+    .photo-add .btn,.new-cloth-photo .btn{width:100%}
     .overlay{align-items:flex-start;padding:10px}
     .modal{max-height:calc(100vh - 20px);border-radius:14px}
     .email .head{padding:16px 18px;border-radius:14px 14px 0 0}
