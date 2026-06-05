@@ -548,7 +548,14 @@ function approvalHtml(b, contactEmails, collectionAddresses) {
 }
 
 function suggestedDonationHtml() {
-  return infoBox("<b>Suggested donation</b><br>£5<br><br>If the tablecloths are returned late you undertake to pay a late fee.");
+  return infoBox(
+    "<b>Suggested donation</b><br>&pound;5<br><br>" +
+    "<b>Bank details</b><br>" +
+    "The Linen Collection<br>" +
+    "Sort code: 04-00-06<br>" +
+    "Account number: 67852631<br><br>" +
+    "If the tablecloths are returned late you undertake to pay a late fee."
+  );
 }
 
 function collectionAddressHtml(addresses) {
@@ -572,6 +579,7 @@ function customerReminderHtml(b, events, dateISO, contactEmails, collectionAddre
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ", this is your reminder for today, " + esc(fmtDate(dateISO)) + ".</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
     collectionAddressHtml(collectionAddresses) +
+    (events.includes("return") ? suggestedDonationHtml() : "") +
     tableBlock(b.items) +
     careHtml(b) +
     contactButtonsHtml(contactEmails, "Question about booking " + b.id)
