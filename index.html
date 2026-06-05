@@ -286,6 +286,9 @@
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-size:.9rem;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:.3s;z-index:200;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .footnote{text-align:center;color:var(--ink-soft);font-size:.78rem;padding:0 0 40px;max-width:680px;margin:0 auto}
+  .site-credit{display:flex;justify-content:flex-end;align-items:center;padding:0 22px 20px;pointer-events:none}
+  .site-credit img{width:104px;max-width:28vw;height:auto;opacity:.32;filter:grayscale(.55) saturate(.55)}
+  .site-credit img:hover{opacity:.5}
   .fade-in{animation:rise .5s both} @keyframes rise{from{opacity:0;transform:translateY(12px)}}
   .stagger>*{animation:rise .5s both}
   .stagger>*:nth-child(2){animation-delay:.05s}.stagger>*:nth-child(3){animation-delay:.1s}.stagger>*:nth-child(4){animation-delay:.15s}
@@ -352,6 +355,8 @@
     .photo-tile{width:auto}
     .photo-tile img{height:64px}
     .photo-add .btn,.new-cloth-photo .btn{width:100%}
+    .site-credit{justify-content:center;padding:0 12px 18px}
+    .site-credit img{width:92px;max-width:34vw;opacity:.3}
     .overlay{align-items:flex-start;padding:10px}
     .modal{max-height:calc(100vh - 20px);border-radius:14px}
     .email .head{padding:16px 18px;border-radius:14px 14px 0 0}
@@ -510,6 +515,10 @@
   </section>
   </div>
 </div></main>
+
+<footer class="site-credit" aria-label="Website credit">
+  <img src="images/pixelworks-logo.png" alt="PixelWorks Design">
+</footer>
 
 <div class="overlay" id="overlay"><div class="modal"><button class="close" id="modalClose">✕</button><div id="modalBody"></div></div></div>
 <div class="toast" id="toast"></div>
