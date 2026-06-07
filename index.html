@@ -221,6 +221,9 @@
   .nbselect.on{background:var(--gold);color:#1f1d18}
   .nbselect:disabled{background:#E9E4D7;color:var(--ink-soft);cursor:not-allowed}
   .bk .meta{font-size:.85rem;color:var(--ink-soft);margin-top:6px;display:grid;gap:3px} .bk .meta b{color:var(--ink);font-weight:600} .bk .meta .he{color:var(--gold)}
+  .contact-actions{display:inline-flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .contact-actions a{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:30px;border:1px solid var(--line);border-radius:999px;background:var(--linen-2);color:var(--teal);font-weight:800;text-decoration:none}
+  .contact-actions a:hover{background:#fff;border-color:var(--teal)}
   .bk .items{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
   .tag{background:var(--linen-2);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:.8rem}
   .bk .acts{margin-top:13px;display:flex;gap:9px;flex-wrap:wrap}
@@ -875,6 +878,14 @@
   async function loadBookings(){ try{ const r=await fetch(API+"?action=availability"); const d=await r.json(); bookings=d.bookings||[]; }catch(e){ bookings=[]; } }
   async function saveBookings(){ /* writes now go through api() per action */ }
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  function cleanPhoneForLink(phone){return String(phone||"").replace(/[^\d+]/g,"");}
+  function contactLinksHtml(b){
+    const phone=cleanPhoneForLink(b&&b.phone), email=String((b&&b.email)||"").trim(), name=esc((b&&b.name)||"customer");
+    const links=[];
+    if(phone)links.push('<a href="sms:'+esc(phone)+'" title="Text '+name+'" aria-label="Text '+name+'">📱</a>');
+    if(email)links.push('<a href="mailto:'+encodeURIComponent(email)+'" title="Email '+name+'" aria-label="Email '+name+'">✉️</a>');
+    return links.length?'<span class="contact-actions">'+links.join("")+'</span>':"";
+  }
   function photosFor(inv){return (inv.imgs&&inv.imgs.length?inv.imgs:(inv.img?[inv.img]:[])).filter(Boolean);}
   function cleanPhotoUrl(u){u=String(u||"").trim(); if(!u||/[<>"']/.test(u)||/^javascript:/i.test(u))return ""; return u;}
   function fileAsDataUrl(file){
@@ -1194,7 +1205,7 @@
     else bks.forEach(b=>{
       body+='<div class="daycard"><div class="dctop"><b>'+b.name+'</b> <span style="color:var(--ink-soft);font-size:.8rem">'+b.id+'</span><span class="pill '+b.status+'" style="margin-left:auto">'+b.status+'</span></div>'
         +'<div class="dcmeta">📦 Loan: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'
-        +'<br>📞 '+b.phone+' · ✉️ '+b.email+'<br>📍 '+b.address+(b.amount?'<br>🔢 Quantity: '+b.amount:'')+(b.note?'<br>📝 '+b.note:'')+'</div>'
+        +'<br>'+contactLinksHtml(b)+'<br>📍 '+b.address+(b.amount?'<br>🔢 Quantity: '+b.amount:'')+(b.note?'<br>📝 '+b.note:'')+'</div>'
         +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join('')+'</div>'
         +'<div class="acts" data-id="'+b.id+'"></div></div>';
     });
@@ -1526,7 +1537,7 @@
       const el=document.createElement("div"); el.className="bk";
       el.innerHTML='<div class="top"><div><h4>'+b.name+' <span style="font-family:\'Hanken Grotesk\';font-size:.8rem;color:var(--ink-soft);font-weight:600">· '+b.id+'</span></h4>'
         +'<div class="meta"><div>📦 Loan <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'+heR+'</div>'+win
-        +'<div>📞 <b>'+b.phone+'</b> · ✉️ <b>'+b.email+'</b></div><div>📍 <b>'+b.address+'</b></div>'
+        +'<div>'+contactLinksHtml(b)+'</div><div>📍 <b>'+b.address+'</b></div>'
         +(b.amount?'<div>🔢 Quantity: '+b.amount+'</div>':'')
         +(b.note?'<div>📝 '+b.note+'</div>':'')+'</div></div><span class="pill '+b.status+'">'+b.status+'</span></div>'
         +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
