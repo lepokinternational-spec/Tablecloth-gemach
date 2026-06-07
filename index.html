@@ -684,10 +684,31 @@
     return !!email&&sameEmail(clothOwnerEmail(inv.id),email);
   }
   function editableInventory(){return INVENTORY.filter(clothOwnedByCurrentAdmin);}
+  function normalizedItemName(s){return String(s||"").trim().toLowerCase();}
+  function inventoryForBookingItem(item){
+    if(!item)return null;
+    if(item.id){
+      const byId=INVENTORY.find(inv=>inv.id===item.id);
+      if(byId)return byId;
+    }
+    const name=normalizedItemName(item.name);
+    return name?INVENTORY.find(inv=>normalizedItemName(inv.name)===name):null;
+  }
+  function bookingItemOwnerEmail(item){
+    const inv=inventoryForBookingItem(item);
+    return clothOwnerEmail(inv?inv.id:(item&&item.id));
+  }
+  function itemOwnedByCurrentAdmin(item){
+    const email=currentAdminEmail();
+    return !!email&&sameEmail(bookingItemOwnerEmail(item),email);
+  }
+  function ownedBookingItems(b){
+    return (b.items||[]).filter(itemOwnedByCurrentAdmin);
+  }
   function bookingOwnedByCurrentAdmin(b){
     const email=currentAdminEmail();
     if(!email)return false;
-    return (b.items||[]).some(item=>sameEmail(clothOwnerEmail(item.id),email));
+    return (b.items||[]).some(item=>sameEmail(bookingItemOwnerEmail(item),email));
   }
   function adminBookings(){return bookings.filter(bookingOwnedByCurrentAdmin);}
   function ownerLabel(email){
@@ -1106,7 +1127,7 @@
 
   function bookingsOnDay(dISO){ const dd=parseISO(dISO);
     return adminBookings().filter(b=>{ if(b.status==="declined"||b.status==="cancelled")return false; const w=loanWindow(b); return parseISO(w[0])<=dd && parseISO(w[1])>=dd; }); }
-  function bookingItemNames(b){ return (b.items||[]).map(i=>i.name).filter(Boolean); }
+  function bookingItemNames(b){ return ownedBookingItems(b).map(i=>i.name).filter(Boolean); }
   function bookingBadgeText(b){
     const names=bookingItemNames(b);
     if(!names.length)return b.name||"Booking";
@@ -1118,7 +1139,7 @@
     return '<span class="who">'+esc(b.name||"Booking")+'</span><span class="cloth">'+esc(cloth)+'</span>';
   }
   function bookingBadgeTitle(b){
-    const items=(b.items||[]).map(i=>i.qty+"× "+i.name).join(", ");
+    const items=ownedBookingItems(b).map(i=>i.qty+"× "+i.name).join(", ");
     return [b.name,items].filter(Boolean).join(" - ");
   }
 
@@ -1172,7 +1193,7 @@
       body+='<div class="daycard"><div class="dctop"><b>'+b.name+'</b> <span style="color:var(--ink-soft);font-size:.8rem">'+b.id+'</span><span class="pill '+b.status+'" style="margin-left:auto">'+b.status+'</span></div>'
         +'<div class="dcmeta">📦 Loan: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'
         +'<br>📞 '+b.phone+' · ✉️ '+b.email+'<br>📍 '+b.address+(b.amount?'<br>🔢 Quantity: '+b.amount:'')+(b.note?'<br>📝 '+b.note:'')+'</div>'
-        +'<div class="items">'+b.items.map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join('')+'</div>'
+        +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join('')+'</div>'
         +'<div class="acts" data-id="'+b.id+'"></div></div>';
     });
     body+='</div></div>';
@@ -1484,7 +1505,7 @@
   function renderStats(){
     const mine=adminBookings();
     const pend=mine.filter(b=>b.status==="pending").length, appr=mine.filter(b=>b.status==="approved").length;
-    let pieces=0; mine.filter(b=>b.status==="approved").forEach(b=>b.items.forEach(i=>pieces+=i.qty));
+    let pieces=0; mine.filter(b=>b.status==="approved").forEach(b=>ownedBookingItems(b).forEach(i=>pieces+=i.qty));
     let fam=new Set(mine.filter(b=>b.status==="approved").map(b=>b.name)).size;
     document.getElementById("stats").innerHTML=
       '<div class="stat acc"><div class="n">'+pend+'</div><div class="l">Awaiting approval</div></div>'
@@ -1506,7 +1527,7 @@
         +'<div>📞 <b>'+b.phone+'</b> · ✉️ <b>'+b.email+'</b></div><div>📍 <b>'+b.address+'</b></div>'
         +(b.amount?'<div>🔢 Quantity: '+b.amount+'</div>':'')
         +(b.note?'<div>📝 '+b.note+'</div>':'')+'</div></div><span class="pill '+b.status+'">'+b.status+'</span></div>'
-        +'<div class="items">'+b.items.map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
+        +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
       const acts=el.querySelector(".acts");
       if(b.status==="pending"){
         acts.append(mkbtn("✓ Approve & set dates","btn sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
