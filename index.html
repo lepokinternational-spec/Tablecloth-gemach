@@ -234,6 +234,8 @@
   .admin-login{max-width:440px;margin:0 auto 24px}
   .admin-login .actions{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
   .admin-login .actions .field{flex:1}
+  .password-toggle{display:inline-flex;align-items:center;gap:7px;margin-top:8px;color:var(--teal);font-size:.86rem;font-weight:700;cursor:pointer;user-select:none}
+  .password-toggle input{width:16px;height:16px;accent-color:var(--teal)}
   .admin-login-reset{display:inline-block;margin-top:10px;background:none;color:var(--teal);font-size:.86rem;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:0}
   .photo-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
   .photo-edit-tab{border-radius:999px;padding:9px 18px}
@@ -466,7 +468,7 @@
     <p class="sub hidden" id="adminDeepLinkHint">Enter the admin password to review and approve this request.</p>
     <div class="actions">
       <div class="field"><label>Email</label><input type="email" id="adminEmailLogin" autocomplete="username" placeholder="Admin email"></div>
-      <div class="field"><label>Password</label><input type="password" id="adminPassword" autocomplete="current-password" placeholder="Enter password"></div>
+      <div class="field"><label>Password</label><input type="password" id="adminPassword" autocomplete="current-password" placeholder="Enter password"><label class="password-toggle"><input type="checkbox" id="showAdminPassword"> Show password</label></div>
       <button class="btn" id="adminLoginBtn" type="button">Login</button>
     </div>
     <button class="admin-login-reset" id="loginResetPasswordBtn" type="button">Reset password</button>
@@ -1919,6 +1921,8 @@
       sessionStorage.setItem("linen_admin_unlocked","1");
       emailInput.value="";
       input.value="";
+      input.type="password";
+      const showPw=document.getElementById("showAdminPassword"); if(showPw)showPw.checked=false;
       updateAdminGate();
       renderAdmin(); renderCalendar(); renderCatalog();
       if(!promptApprovalFromLink())toast("Admin unlocked");
@@ -1945,6 +1949,9 @@
   document.getElementById("adminLoginBtn").onclick=unlockAdmin;
   document.getElementById("adminPassword").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
   document.getElementById("adminEmailLogin").addEventListener("keydown",e=>{ if(e.key==="Enter")unlockAdmin(); });
+  document.getElementById("showAdminPassword").onchange=e=>{
+    document.getElementById("adminPassword").type=e.target.checked?"text":"password";
+  };
   document.getElementById("adminLockBtn").onclick=()=>{clearAdminSession();updateAdminGate();toast("Logged out");};
   document.getElementById("loginResetPasswordBtn").onclick=showResetPasswordModal;
   document.getElementById("resetPasswordBtn").onclick=showResetPasswordModal;
