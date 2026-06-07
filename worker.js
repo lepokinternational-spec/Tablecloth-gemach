@@ -539,7 +539,7 @@ function approvalHtml(b, contactEmails, collectionAddresses) {
     "Your linens are confirmed",
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ', your reservation <b>' + esc(b.id) + "</b> is approved.</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
-    collectionAddressHtml(collectionAddresses) +
+    collectionAddressHtml(collectionAddresses, "Pickup / drop-off address") +
     suggestedDonationHtml() +
     tableBlock(b.items) +
     careHtml(b) +
@@ -558,10 +558,10 @@ function suggestedDonationHtml() {
   );
 }
 
-function collectionAddressHtml(addresses) {
+function collectionAddressHtml(addresses, title) {
   if (!addresses || !addresses.length) return "";
   return infoBox(
-    "<b>Collection address</b><br>" +
+    "<b>" + esc(title || "Pickup / drop-off address") + "</b><br>" +
     addresses.map(a =>
       esc(a.address) +
       (a.items && a.items.length
@@ -578,12 +578,18 @@ function customerReminderHtml(b, events, dateISO, contactEmails, collectionAddre
     eventCopy,
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ", this is your reminder for today, " + esc(fmtDate(dateISO)) + ".</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
-    collectionAddressHtml(collectionAddresses) +
+    collectionAddressHtml(collectionAddresses, addressTitleForEvents(events)) +
     (events.includes("return") ? suggestedDonationHtml() : "") +
     tableBlock(b.items) +
     careHtml(b) +
     contactButtonsHtml(contactEmails, "Question about booking " + b.id)
   );
+}
+
+function addressTitleForEvents(events) {
+  if ((events || []).includes("pickup") && (events || []).includes("return")) return "Pickup / drop-off address";
+  if ((events || []).includes("return")) return "Drop-off address";
+  return "Pickup address";
 }
 
 function adminDigestHtml(entries, dateISO) {
