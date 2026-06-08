@@ -631,7 +631,16 @@
   async function api(action,payload,admin){
     const headers=admin?adminHeaders(true):{"Content-Type":"application/json"};
     const res=await fetch(API+"?action="+action,{method:"POST",headers,body:JSON.stringify(payload||{})});
-    if(!res.ok) throw new Error("api "+action+" "+res.status);
+    if(!res.ok){
+      let msg="api "+action+" "+res.status;
+      try{
+        const data=await res.json();
+        if(data&&data.error)msg=data.error;
+      }catch(_){
+        try{ const text=await res.text(); if(text)msg=text; }catch(__){}
+      }
+      throw new Error(msg);
+    }
     return res.json();
   }
   async function apiGet(action,admin){
@@ -1467,14 +1476,14 @@
   async function submitBookingRequest(b){
     try{
       await api("create",{booking:b,approveUrl:adminApproveUrl(b.id)});
-      return true;
+      return {ok:true};
     }catch(e){
       try{
         const d=await apiGet("availability",false);
-        return Array.isArray(d.bookings)&&d.bookings.some(x=>x&&x.id===b.id);
+        if(Array.isArray(d.bookings)&&d.bookings.some(x=>x&&x.id===b.id))return {ok:true};
       }catch(_){
-        return false;
       }
+      return {ok:false,error:e&&e.message?e.message:String(e||"unknown error")};
     }
   }
 
@@ -1490,7 +1499,8 @@
       amount:"",
       items:cartArr(), start:pickDate, pickup:pickDate, ret:ret, status:"pending",
       token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
-    if(!(await submitBookingRequest(b))){ toast("Could not submit — please try again"); return; }
+    const submitResult=await submitBookingRequest(b);
+    if(!submitResult.ok){ toast("Could not submit — "+(submitResult.error||"please try again")); return; }
     bookings.push(b);
     cart={};
     ["fName","fPhone","fEmail","fAddr","fNote"].forEach(i=>document.getElementById(i).value="");
