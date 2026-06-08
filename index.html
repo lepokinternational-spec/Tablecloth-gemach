@@ -965,21 +965,25 @@
     catch(e){ careConfig={all:"",items:{}}; }
   }
   function saveCareInstructions(){ localStorage.setItem(CARE_KEY,JSON.stringify(normalizeCare(careConfig))); }
-  function careInstructionsForBooking(b){
+  function itemCareInstructionsForBooking(b){
     const list=[];
-    const all=String(careConfig.all||"").trim();
-    if(all)list.push({name:"All tablecloths",text:all});
     (b.items||[]).forEach(it=>{
       const txt=String((careConfig.items||{})[it.id]||"").trim();
       if(txt)list.push({name:it.name,text:txt});
     });
     return list;
   }
+  function careInstructionsForBooking(b){
+    const list=[];
+    const all=String(careConfig.all||"").trim();
+    if(all)list.push({name:"All tablecloths",text:all});
+    return list.concat(itemCareInstructionsForBooking(b));
+  }
   function careText(list){ return (list||[]).map(x=>x.name+":\n"+x.text).join("\n\n"); }
   function attachCareInstructions(b){
-    const list=careInstructionsForBooking(b);
-    b.careInstructionsList=list;
-    b.careInstructions=careText(list);
+    const itemList=itemCareInstructionsForBooking(b);
+    b.careInstructionsList=itemList;
+    b.careInstructions=String(careConfig.all||"").trim();
     return b;
   }
   function displayCareList(b){

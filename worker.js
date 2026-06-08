@@ -515,12 +515,19 @@ function careHtml(b) {
   const rows = [];
   if (b.customerNote) rows.push("<p><b>Note:</b><br>" + nl2br(esc(b.customerNote)) + "</p>");
   if (b.careInstructions) rows.push("<p><b>Care instructions:</b><br>" + nl2br(esc(b.careInstructions)) + "</p>");
-  if (Array.isArray(b.careInstructionsList) && b.careInstructionsList.length) {
-    rows.push("<p><b>Item care:</b><br>" + b.careInstructionsList.map(x =>
+  const itemCare = Array.isArray(b.careInstructionsList)
+    ? b.careInstructionsList.filter(x => normalizeCareName(x.name) !== "all tablecloths" && String(x.text || "").trim())
+    : [];
+  if (itemCare.length) {
+    rows.push("<p><b>Item care:</b><br>" + itemCare.map(x =>
       esc(x.name || "Tablecloth") + ": " + esc(x.text || "")
     ).join("<br>") + "</p>");
   }
   return rows.join("");
+}
+
+function normalizeCareName(s) {
+  return String(s || "").trim().toLowerCase();
 }
 
 function adminRequestHtml(b, approveUrl) {
