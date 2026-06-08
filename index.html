@@ -137,7 +137,6 @@
   .setpick.selected{background:var(--gold);color:#fff;border-color:var(--gold)}
   .qtypick{width:100%;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
   .qtypick .qnote{font-size:.78rem;color:var(--ink-soft);line-height:1.2}
-  .qtypick .qnote b{display:block;color:var(--ink);font-size:.86rem}
   .qtypick .stepper button:disabled{opacity:.4;cursor:not-allowed}
   .citem small{display:block;color:var(--ink-soft);font-size:.78rem;margin-top:2px}
   .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden}
@@ -1414,7 +1413,7 @@
       if(have&&avail>0){
         const body=card.querySelector(".body"); const row=document.createElement("div"); row.className="qtyrow";
         if(variableQty){
-          row.innerHTML='<div class="qtypick"><div class="qnote"><b>Choose quantity</b>'+avail+' available</div><div class="stepper"><button type="button" data-qminus="'+esc(inv.id)+'" '+(inCart<=0?'disabled':'')+'>−</button><input value="'+inCart+'" readonly aria-label="'+esc(inv.name)+' quantity"><button type="button" data-qplus="'+esc(inv.id)+'" '+(inCart>=avail?'disabled':'')+'>+</button></div></div>';
+          row.innerHTML='<div class="qtypick"><div class="qnote">'+avail+' available</div><div class="stepper"><button type="button" data-qminus="'+esc(inv.id)+'" '+(inCart<=0?'disabled':'')+'>−</button><input value="'+inCart+'" readonly aria-label="'+esc(inv.name)+' quantity"><button type="button" data-qplus="'+esc(inv.id)+'" '+(inCart>=avail?'disabled':'')+'>+</button></div></div>';
           body.appendChild(row);
           row.querySelector('[data-qminus]').onclick=()=>setItemQty(inv.id,inCart-1,avail);
           row.querySelector('[data-qplus]').onclick=()=>setItemQty(inv.id,inCart+1,avail);
