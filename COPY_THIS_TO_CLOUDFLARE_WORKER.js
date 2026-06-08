@@ -1,4 +1,7 @@
-const ORIGIN = "https://tcgemach.co.uk";
+const ALLOWED_ORIGINS = new Set([
+  "https://tcgemach.co.uk",
+  "https://www.tcgemach.co.uk",
+]);
 const MAIN_ADMIN_EMAIL = "linencollection29@gmail.com";
 const MIRI_ADMIN_EMAIL = "linencollection11@gmail.com";
 
@@ -19,11 +22,7 @@ const EMAIL_ALIASES = {
 
 export default {
   async fetch(request, env) {
-    const cors = {
-      "Access-Control-Allow-Origin": ORIGIN,
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token, X-Admin-Email",
-    };
+    const cors = corsHeaders(request);
 
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
 
@@ -677,6 +676,17 @@ function json(o, s, c) {
     status: s,
     headers: { ...c, "Content-Type": "application/json" },
   });
+}
+
+function corsHeaders(request) {
+  const origin = request.headers.get("Origin") || "";
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : "https://tcgemach.co.uk";
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token, X-Admin-Email",
+    "Access-Control-Max-Age": "86400",
+  };
 }
 
 function normalizeEmail(s) {
