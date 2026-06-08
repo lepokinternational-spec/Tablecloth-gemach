@@ -78,10 +78,15 @@ export default {
         await upsertBooking(env, b);
 
         const owners = await getOwners(env);
-        await sendNewRequestEmails(env, b, body.approveUrl);
-        await sendEmail(env, b.email, "We received your tablecloth request", ackHtml(b, contactEmailsForBooking(b, owners)));
+        const emailErrors = await sendNewRequestEmails(env, b, body.approveUrl);
+        try {
+          await sendEmail(env, b.email, "We received your tablecloth request", ackHtml(b, contactEmailsForBooking(b, owners)));
+        } catch (e) {
+          emailErrors.push("customer confirmation: " + errorMessage(e));
+          console.error("customer confirmation email failed", e);
+        }
 
-        return json({ ok: true }, 200, cors);
+        return json({ ok: true, emailErrors }, 200, cors);
       }
 
       if (action === "update") {
@@ -240,11 +245,19 @@ async function sendDailyReminders(env, dateISO) {
 async function sendNewRequestEmails(env, b, approveUrl) {
   const owners = await getOwners(env);
   const grouped = groupItemsByOwner(b.items || [], owners);
+  const errors = [];
 
   for (const [adminEmail, items] of grouped.entries()) {
     const copy = { ...b, items };
-    await sendEmail(env, adminEmail, "New tablecloth request - " + b.id, adminRequestHtml(copy, approveUrl));
+    try {
+      await sendEmail(env, adminEmail, "New tablecloth request - " + b.id, adminRequestHtml(copy, approveUrl));
+    } catch (e) {
+      errors.push(adminEmail + ": " + errorMessage(e));
+      console.error("admin request email failed", adminEmail, e);
+    }
   }
+
+  return errors;
 }
 
 function groupItemsByOwner(items, owners) {
@@ -414,6 +427,10 @@ async function sendEmail(env, to, subject, html) {
     const text = await res.text();
     throw new Error("Resend failed: " + text);
   }
+}
+
+function errorMessage(e) {
+  return e && e.message ? e.message : String(e);
 }
 
 function normalizeBooking(b) {
