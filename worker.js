@@ -66,7 +66,7 @@ export default {
       }
 
       if (request.method !== "POST") return json({ error: "method" }, 405, cors);
-      const body = await request.json().catch(() => ({}));
+      const body = await readRequestBody(request);
 
       if (action === "create") {
         if (body.website) return json({ ok: true }, 200, cors);
@@ -239,6 +239,25 @@ async function sendDailyReminders(env, dateISO) {
   }
 
   return { date: dateISO, customerEmails, adminEmails };
+}
+
+async function readRequestBody(request) {
+  const type = (request.headers.get("Content-Type") || "").toLowerCase();
+  try {
+    if (type.includes("application/json")) return await request.json();
+    if (type.includes("application/x-www-form-urlencoded") || type.includes("multipart/form-data")) {
+      const form = await request.formData();
+      const payload = form.get("payload");
+      if (payload) return JSON.parse(String(payload));
+      const body = {};
+      for (const [key, value] of form.entries()) body[key] = value;
+      return body;
+    }
+    const text = await request.text();
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return {};
+  }
 }
 
 async function sendNewRequestEmails(env, b, approveUrl) {

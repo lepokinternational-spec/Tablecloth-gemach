@@ -1484,8 +1484,9 @@
   function validPhone(v){return v.replace(/[^\d]/g,"").length>=7;}
   function toggleErr(id,show){document.getElementById(id).classList.toggle("hidden",!show);}
   async function submitBookingRequest(b){
+    const payload={booking:b,approveUrl:adminApproveUrl(b.id)};
     try{
-      await api("create",{booking:b,approveUrl:adminApproveUrl(b.id)});
+      await api("create",payload);
       return {ok:true};
     }catch(e){
       try{
@@ -1493,8 +1494,42 @@
         if(Array.isArray(d.bookings)&&d.bookings.some(x=>x&&x.id===b.id))return {ok:true};
       }catch(_){
       }
+      if(e&&/failed to fetch/i.test(e.message||"")){
+        const fallbackOk=await formPostBookingRequest(payload);
+        if(fallbackOk)return {ok:true};
+      }
       return {ok:false,error:e&&e.message?e.message:String(e||"unknown error")};
     }
+  }
+  function formPostBookingRequest(payload){
+    return new Promise(resolve=>{
+      const frame=document.createElement("iframe");
+      const form=document.createElement("form");
+      const input=document.createElement("input");
+      const name="bookingSubmitFrame"+Date.now();
+      let done=false;
+      frame.name=name;
+      frame.style.display="none";
+      form.method="POST";
+      form.action=API+"?action=create";
+      form.target=name;
+      form.style.display="none";
+      input.type="hidden";
+      input.name="payload";
+      input.value=JSON.stringify(payload);
+      form.appendChild(input);
+      document.body.appendChild(frame);
+      document.body.appendChild(form);
+      function finish(ok){
+        if(done)return;
+        done=true;
+        setTimeout(()=>{frame.remove();form.remove();},100);
+        resolve(ok);
+      }
+      frame.onload=()=>finish(true);
+      setTimeout(()=>finish(false),5000);
+      form.submit();
+    });
   }
 
   document.getElementById("placeBtn").onclick=async()=>{
