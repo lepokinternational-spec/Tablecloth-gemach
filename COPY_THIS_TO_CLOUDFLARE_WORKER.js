@@ -40,6 +40,10 @@ export default {
         }, 200, cors);
       }
 
+      if (request.method === "GET" && action === "ownerConfig") {
+        return json({ owners: await getOwners(env) }, 200, cors);
+      }
+
       if (request.method === "GET" && action === "list") {
         const admin = await requireAdmin(request, env);
         if (!admin) return json({ error: "unauthorized" }, 401, cors);

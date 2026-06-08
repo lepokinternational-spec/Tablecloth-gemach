@@ -135,6 +135,10 @@
   .qtyrow{display:flex;align-items:center;gap:8px;margin-top:12px}
   .setpick{width:100%;justify-content:center}
   .setpick.selected{background:var(--gold);color:#fff;border-color:var(--gold)}
+  .qtypick{width:100%;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .qtypick .qnote{font-size:.78rem;color:var(--ink-soft);line-height:1.2}
+  .qtypick .qnote b{display:block;color:var(--ink);font-size:.86rem}
+  .qtypick .stepper button:disabled{opacity:.4;cursor:not-allowed}
   .citem small{display:block;color:var(--ink-soft);font-size:.78rem;margin-top:2px}
   .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden}
   .stepper button{background:var(--linen-2);width:34px;height:36px;font-size:1.15rem;color:var(--ink)} .stepper button:hover{background:var(--line)}
@@ -221,6 +225,7 @@
   .nbselect{min-width:170px;border-radius:10px;padding:10px 14px;font-weight:800;background:var(--teal);color:#fff}
   .nbselect.on{background:var(--gold);color:#1f1d18}
   .nbselect:disabled{background:#E9E4D7;color:var(--ink-soft);cursor:not-allowed}
+  .nbitem .stepper input{width:58px}
   .bk .meta{font-size:.85rem;color:var(--ink-soft);margin-top:6px;display:grid;gap:3px} .bk .meta b{color:var(--ink);font-weight:600} .bk .meta .he{color:var(--gold)}
   .contact-actions{display:inline-flex;gap:7px;align-items:center;flex-wrap:wrap}
   .contact-actions a{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:30px;border:1px solid var(--line);border-radius:999px;background:var(--linen-2);color:var(--teal);font-weight:800;text-decoration:none}
@@ -518,7 +523,7 @@
           <div class="field"><label>Name</label><input id="newClothName" placeholder="e.g. Navy Velvet"></div>
           <div class="field"><label>Type</label><input id="newClothSize" placeholder="e.g. Velvet"></div>
           <div class="field"><label>Dimensions</label><input id="newClothDim" placeholder="e.g. 250 × 150 cm"></div>
-          <div class="field"><label>Included</label><input id="newClothStock" type="number" min="1" step="1" value="1"></div>
+          <div class="field"><label>Maximum included</label><input id="newClothStock" type="number" min="1" step="1" value="1"></div>
           <div class="field" id="newClothOwnerWrap"><label>Admin</label><select id="newClothOwner"></select></div>
         </div>
         <div class="new-cloth-photo">
@@ -635,6 +640,14 @@
     if(!r.ok) throw new Error("api "+action+" "+r.status);
     return r.json();
   }
+  async function loadPublicOwnerConfig(){
+    try{
+      const cfg=await apiGet("ownerConfig",false);
+      tableclothOwners=Object.assign({},DEFAULT_OWNERS,normalizedOwnerMap((cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{}));
+    }catch(e){
+      tableclothOwners=Object.assign({},DEFAULT_OWNERS,tableclothOwners||{});
+    }
+  }
   async function apiList(){
     const r=await fetch(API+"?action=list",{headers:adminHeaders(false)});
     if(!r.ok) throw new Error("unauthorized");
@@ -692,6 +705,7 @@
     const email=currentAdminEmail();
     return !!email&&sameEmail(clothOwnerEmail(inv.id),email);
   }
+  function hasVariableQuantity(inv){return !!inv&&sameEmail(clothOwnerEmail(inv.id),MIRI_ADMIN_EMAIL);}
   function editableInventory(){return INVENTORY.filter(clothOwnedByCurrentAdmin);}
   function normalizedItemName(s){return String(s||"").trim().toLowerCase();}
   function inventoryForBookingItem(item){
@@ -1386,10 +1400,12 @@
       : "Choose your dates above to see live availability.";
     INVENTORY.forEach(inv=>{
       const avail=have?availForWindow(inv.id,pickDate,e):inv.stock;
+      const variableQty=hasVariableQuantity(inv);
       let inCart=cart[inv.id]||0;
       if(have&&inCart>0){
         if(avail<=0){delete cart[inv.id]; inCart=0;}
-        else if(inCart!==avail){cart[inv.id]=avail; inCart=avail;}
+        else if(variableQty&&inCart>avail){cart[inv.id]=avail; inCart=avail;}
+        else if(!variableQty&&inCart!==avail){cart[inv.id]=avail; inCart=avail;}
       }
       const partialDays=(have&&avail<=0)?availableDatesInWindow(inv.id,pickDate,e):[];
       if(have&&avail<=0&&!partialDays.length)return;
@@ -1397,10 +1413,17 @@
       var pics=photosFor(inv);var pic='<div class="pic"><img class="mainpic" loading="lazy" src="'+esc(pics[0])+'" alt="'+esc(inv.name)+'">';if(pics.length>1){pic+='<div class="thumbs">'+pics.map(function(u,i){return '<img class="thumb'+(i===0?' on':'')+'" loading="lazy" src="'+esc(u)+'">';}).join('')+'</div>';}pic+='</div>';card.innerHTML=pic+'<div class="body"><h4>'+esc(inv.name)+'</h4><div class="size">'+esc(inv.size)+'</div>'+(inv.dim?'<div class="dim">'+esc(inv.dim)+'</div>':'')+'</div>';if(pics.length>1){var _m=card.querySelector(".mainpic");card.querySelectorAll(".thumb").forEach(function(t){t.addEventListener("click",function(){_m.src=t.src;card.querySelectorAll(".thumb").forEach(function(x){x.classList.remove("on");});t.classList.add("on");});});}
       if(have&&avail>0){
         const body=card.querySelector(".body"); const row=document.createElement("div"); row.className="qtyrow";
-        const btn=document.createElement("button"); btn.type="button"; btn.className="btn sm setpick"+(inCart?" selected":"");
-        btn.textContent=(inCart?"Selected":"Select set")+" · "+avail+" included";
-        btn.onclick=()=>toggleSet(inv.id,avail);
-        row.appendChild(btn); body.appendChild(row);
+        if(variableQty){
+          row.innerHTML='<div class="qtypick"><div class="qnote"><b>Choose quantity</b>'+avail+' available</div><div class="stepper"><button type="button" data-qminus="'+esc(inv.id)+'" '+(inCart<=0?'disabled':'')+'>−</button><input value="'+inCart+'" readonly aria-label="'+esc(inv.name)+' quantity"><button type="button" data-qplus="'+esc(inv.id)+'" '+(inCart>=avail?'disabled':'')+'>+</button></div></div>';
+          body.appendChild(row);
+          row.querySelector('[data-qminus]').onclick=()=>setItemQty(inv.id,inCart-1,avail);
+          row.querySelector('[data-qplus]').onclick=()=>setItemQty(inv.id,inCart+1,avail);
+        }else{
+          const btn=document.createElement("button"); btn.type="button"; btn.className="btn sm setpick"+(inCart?" selected":"");
+          btn.textContent=(inCart?"Selected":"Select set")+" · "+avail+" included";
+          btn.onclick=()=>toggleSet(inv.id,avail);
+          row.appendChild(btn); body.appendChild(row);
+        }
       }else if(have&&partialDays.length){
         const body=card.querySelector(".body"); const msg=document.createElement("div"); msg.className="partial-avail";
         msg.textContent="Only available on "+formatDateList(partialDays);
@@ -1409,6 +1432,11 @@
       wrap.appendChild(card);
     });
     if(have&&!wrap.children.length)wrap.innerHTML='<div class="empty">No tablecloths are available for these dates.</div>';
+  }
+  function setItemQty(id,count,max){
+    const n=Math.max(0,Math.min(max||0,parseInt(count,10)||0));
+    if(n>0)cart[id]=n; else delete cart[id];
+    renderCatalog(); renderCart();
   }
   function toggleSet(id,count){ if(cart[id])delete cart[id]; else cart[id]=count; renderCatalog(); renderCart(); }
 
@@ -1425,7 +1453,8 @@
       document.getElementById("checkout").classList.add("hidden"); return; }
     let pieces=0; wrap.innerHTML="";
     items.forEach(it=>{ pieces+=it.qty; const row=document.createElement("div"); row.className="citem";
-      row.innerHTML='<span><b>'+it.name+'</b><small>'+it.qty+' included</small></span><button class="x" data-id="'+it.id+'">remove</button>'; wrap.appendChild(row); });
+      const inv=INVENTORY.find(x=>x.id===it.id), qtyText=it.qty+(hasVariableQuantity(inv)?" chosen":" included");
+      row.innerHTML='<span><b>'+it.name+'</b><small>'+qtyText+'</small></span><button class="x" data-id="'+it.id+'">remove</button>'; wrap.appendChild(row); });
     wrap.querySelectorAll(".x").forEach(b=>b.onclick=()=>{delete cart[b.dataset.id];renderCatalog();renderCart();});
     document.getElementById("cartPieces").textContent=pieces; document.getElementById("cartCount").classList.remove("hidden");
     document.getElementById("toCheckout").disabled=!have;
@@ -1637,8 +1666,16 @@
       const ok=p&&r&&parseISO(r)>=parseISO(p);
       const owned=editableInventory();
       document.getElementById("nbItems").innerHTML=owned.length?owned.map(inv=>{
-        const av=ok?availForWindow(inv.id,p,r):inv.stock, fullSet=inv.stock;
+        const av=ok?availForWindow(inv.id,p,r):inv.stock, fullSet=inv.stock, variableQty=hasVariableQuantity(inv);
         let selected=!!qty[inv.id];
+        if(variableQty){
+          if(!ok&&selected){delete qty[inv.id];selected=false;}
+          else if(qty[inv.id]>av)qty[inv.id]=av;
+          const current=qty[inv.id]||0, disabled=!ok||av<=0;
+          const status=!ok?fullSet+" maximum":disabled?"Unavailable for these dates":av+" available";
+          return '<div class="nbitem"><span>'+esc(inv.name)+'<br><small style="color:var(--ink-soft)">'+status+'</small></span>'
+            +'<div class="stepper"><button type="button" data-nb-minus="'+esc(inv.id)+'" '+(current<=0||disabled?'disabled':'')+'>−</button><input value="'+current+'" readonly aria-label="'+esc(inv.name)+' quantity"><button type="button" data-nb-plus="'+esc(inv.id)+'" '+(current>=av||disabled?'disabled':'')+'>+</button></div></div>';
+        }
         const disabled=!ok||av<fullSet;
         if(disabled&&selected){delete qty[inv.id];selected=false;}
         const status=!ok?fullSet+" included":disabled?"Unavailable for these dates":fullSet+" included";
@@ -1646,6 +1683,8 @@
           +'<button type="button" class="nbselect '+(selected?'on':'')+'" data-toggle-set="'+esc(inv.id)+'" '+(disabled?'disabled':'')+'>'+(selected?'Selected':'Select set')+' &middot; '+fullSet+' included</button></div>';
       }).join(''):'<p class="sub">No tablecloths are assigned to this admin.</p>';
       document.querySelectorAll('#nbItems [data-toggle-set]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.toggleSet, inv=INVENTORY.find(i=>i.id===id); if(!inv)return; if(qty[id])delete qty[id]; else qty[id]=inv.stock; rows();});
+      document.querySelectorAll('#nbItems [data-nb-minus]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.nbMinus, inv=INVENTORY.find(i=>i.id===id); if(!inv)return; qty[id]=Math.max(0,(qty[id]||0)-1); if(!qty[id])delete qty[id]; rows();});
+      document.querySelectorAll('#nbItems [data-nb-plus]').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.nbPlus, inv=INVENTORY.find(i=>i.id===id); if(!inv)return; const av=ok?availForWindow(inv.id,p,r):inv.stock; qty[id]=Math.min(av,(qty[id]||0)+1); rows();});
     }
     document.getElementById("nbPickupBtn").onclick=()=>{nbTarget="pickup";nbMonth=som(parseISO(nbPickup));drawNewBookingFields();drawNewBookingCalendar();};
     document.getElementById("nbReturnBtn").onclick=()=>{nbTarget="return";nbMonth=som(parseISO(nbReturn));drawNewBookingFields();drawNewBookingCalendar();};
@@ -1782,7 +1821,7 @@
         +'<div class="field"><label>Name</label><input data-detail="name" value="'+esc(inv.name)+'"></div>'
         +'<div class="field"><label>Type</label><input data-detail="size" value="'+esc(inv.size||"")+'"></div>'
         +'<div class="field"><label>Dimensions</label><input data-detail="dim" value="'+esc(inv.dim||"")+'"></div>'
-        +'<div class="field"><label>Included</label><input data-detail="stock" type="number" min="1" step="1" value="'+esc(inv.stock)+'"></div>'
+        +'<div class="field"><label>Maximum included</label><input data-detail="stock" type="number" min="1" step="1" value="'+esc(inv.stock)+'"></div>'
         +ownerField
         +'</div>'
         +'<div class="field" style="margin-bottom:12px"><label>Care instructions</label><textarea data-detail="care" placeholder="Specific care instructions">'+esc((careConfig.items||{})[inv.id]||"")+'</textarea></div>'
@@ -2012,6 +2051,7 @@
     loadPhotoOverrides();
     pendingApproveId=requestedApprovalId();
     const preferredView=sessionStorage.getItem("linen_active_view");
+    await loadPublicOwnerConfig();
     await loadBookings();
     await restoreAdminSession();
     updateDateField(); renderCalendar(); renderCatalog(); renderCart();
