@@ -1464,6 +1464,19 @@
   function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);}
   function validPhone(v){return v.replace(/[^\d]/g,"").length>=7;}
   function toggleErr(id,show){document.getElementById(id).classList.toggle("hidden",!show);}
+  async function submitBookingRequest(b){
+    try{
+      await api("create",{booking:b,approveUrl:adminApproveUrl(b.id)});
+      return true;
+    }catch(e){
+      try{
+        const d=await apiGet("availability",false);
+        return Array.isArray(d.bookings)&&d.bookings.some(x=>x&&x.id===b.id);
+      }catch(_){
+        return false;
+      }
+    }
+  }
 
   document.getElementById("placeBtn").onclick=async()=>{
     const name=val("fName"),phone=val("fPhone"),email=val("fEmail"),addr=val("fAddr"),note=val("fNote");
@@ -1477,7 +1490,7 @@
       amount:"",
       items:cartArr(), start:pickDate, pickup:pickDate, ret:ret, status:"pending",
       token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
-    try{ await api("create",{booking:b,approveUrl:adminApproveUrl(b.id)}); }catch(e){ toast("Could not submit — please try again"); return; }
+    if(!(await submitBookingRequest(b))){ toast("Could not submit — please try again"); return; }
     bookings.push(b);
     cart={};
     ["fName","fPhone","fEmail","fAddr","fNote"].forEach(i=>document.getElementById(i).value="");
