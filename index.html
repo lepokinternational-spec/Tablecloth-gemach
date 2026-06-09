@@ -1116,6 +1116,21 @@
     if(days.length<=3)return days.map(fmt).join(", ");
     return days.slice(0,3).map(fmt).join(", ")+" +"+(days.length-3)+" more";
   }
+  function partialAvailabilityText(itemId,s,e){
+    const days=availableDatesInWindow(itemId,s,e);
+    const total=daysInc(s,e);
+    if(!days.length||days.length===total)return "";
+    let contiguous=true;
+    for(let i=1;i<days.length;i++){
+      if(iso(addDays(parseISO(days[i-1]),1))!==days[i]){contiguous=false;break;}
+    }
+    if(!contiguous)return "Only available on "+formatDateList(days);
+    const first=days[0], last=days[days.length-1];
+    if(first===last)return "Only available on "+fmtShort(first);
+    if(first!==s&&last===e)return "Only available from "+fmtShort(first);
+    if(first===s&&last!==e)return "Only available until "+fmtShort(last);
+    return "Only available "+fmtShort(first)+" -> "+fmtShort(last);
+  }
   function dayLevel(dayISO){
     let total=0,used=0; for(const inv of INVENTORY){ total+=inv.stock; used+=reservedOn(inv.id,dayISO);} 
     if(used===0)return "lvl-hi"; const r=(total-used)/total;
@@ -1464,6 +1479,7 @@
       : "Choose your dates above to see live availability.";
     INVENTORY.forEach(inv=>{
       const avail=have?availForWindow(inv.id,pickDate,e):inv.stock;
+      const partialText=have&&avail<=0?partialAvailabilityText(inv.id,pickDate,e):"";
       const variableQty=hasVariableQuantity(inv);
       let inCart=cart[inv.id]||0;
       if(have&&inCart>0){
@@ -1471,7 +1487,7 @@
         else if(variableQty&&inCart>avail){cart[inv.id]=avail; inCart=avail;}
         else if(!variableQty&&inCart!==avail){cart[inv.id]=avail; inCart=avail;}
       }
-      if(have&&avail<=0)return;
+      if(have&&avail<=0&&!partialText)return;
       const card=document.createElement("div"); card.className="card";
       var pics=photosFor(inv);var pic='<div class="pic"><img class="mainpic" loading="lazy" src="'+esc(pics[0])+'" alt="'+esc(inv.name)+'">';if(pics.length>1){pic+='<div class="thumbs">'+pics.map(function(u,i){return '<img class="thumb'+(i===0?' on':'')+'" loading="lazy" src="'+esc(u)+'">';}).join('')+'</div>';}pic+='</div>';card.innerHTML=pic+'<div class="body"><h4>'+esc(inv.name)+'</h4><div class="size">'+esc(inv.size)+'</div>'+(inv.dim?'<div class="dim">'+esc(inv.dim)+'</div>':'')+'</div>';if(pics.length>1){var _m=card.querySelector(".mainpic");card.querySelectorAll(".thumb").forEach(function(t){t.addEventListener("click",function(){_m.src=t.src;card.querySelectorAll(".thumb").forEach(function(x){x.classList.remove("on");});t.classList.add("on");});});}
       if(have&&avail>0){
@@ -1487,6 +1503,12 @@
           btn.onclick=()=>toggleSet(inv.id,avail);
           row.appendChild(btn); body.appendChild(row);
         }
+      }else if(have&&partialText){
+        const body=card.querySelector(".body");
+        const note=document.createElement("div"); note.className="partial-avail"; note.textContent=partialText;
+        const row=document.createElement("div"); row.className="qtyrow";
+        const btn=document.createElement("button"); btn.type="button"; btn.className="btn sm setpick"; btn.disabled=true; btn.textContent="Not available for full range";
+        row.appendChild(btn); body.appendChild(note); body.appendChild(row);
       }
       wrap.appendChild(card);
     });
