@@ -625,10 +625,10 @@ function approvalHtml(b, contactEmails, collectionAddresses) {
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ', your reservation <b>' + esc(b.id) + "</b> is approved.</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
     collectionAddressHtml(collectionAddresses, "Pickup / drop-off address") +
+    arrangeTimeHtml(contactEmails, b.id, "pickup / drop-off") +
     suggestedDonationHtml() +
     tableBlock(b.items) +
-    careHtml(b) +
-    contactButtonsHtml(contactEmails, "Question about booking " + b.id)
+    careHtml(b)
   );
 }
 
@@ -664,11 +664,25 @@ function customerReminderHtml(b, events, dateISO, contactEmails, collectionAddre
     '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ", this is your reminder for today, " + esc(fmtDate(dateISO)) + ".</p>" +
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
     collectionAddressHtml(collectionAddresses, addressTitleForEvents(events)) +
+    arrangeTimeHtml(contactEmails, b.id, arrangeLabelForEvents(events)) +
     (events.includes("return") ? suggestedDonationHtml() : "") +
     tableBlock(b.items) +
-    careHtml(b) +
-    contactButtonsHtml(contactEmails, "Question about booking " + b.id)
+    careHtml(b)
   );
+}
+
+function arrangeTimeHtml(contactEmails, bookingId, actionLabel) {
+  return '<div style="margin:18px 0 20px">' +
+    '<p style="font-size:16px;margin:0 0 8px"><b>Please email to arrange a time for ' + esc(actionLabel) + '.</b></p>' +
+    contactButtonsHtml(contactEmails, "Arrange " + actionLabel + " time for booking " + bookingId) +
+    "</div>";
+}
+
+function arrangeLabelForEvents(events) {
+  const list = events || [];
+  if (list.includes("pickup") && list.includes("return")) return "pickup / drop-off";
+  if (list.includes("return")) return "drop-off";
+  return "pickup";
 }
 
 function addressTitleForEvents(events) {
