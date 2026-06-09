@@ -600,7 +600,7 @@
   const CARE_KEY="gmh_care_instructions";
 
   /* ============ State ============ */
-  let bookings=[], cart={};
+  let bookings=[], cart={}, availabilityLoaded=false;
   let pendingApproveId=null;
   let ADMIN_TOKEN_VALUE="";
   let ADMIN_EMAIL_VALUE="";
@@ -934,7 +934,21 @@
   }
 
   /* ============ Storage ============ */
-  async function loadBookings(){ try{ const r=await apiFetch("availability",{cache:"no-store"}); const d=await r.json(); bookings=d.bookings||[]; }catch(e){ bookings=[]; } }
+  async function loadBookings(){
+    try{
+      const r=await apiFetch("availability",{cache:"no-store"});
+      if(!r.ok)throw new Error("availability "+r.status);
+      const d=await r.json();
+      bookings=Array.isArray(d.bookings)?d.bookings:[];
+      availabilityLoaded=true;
+      return true;
+    }catch(e){
+      availabilityLoaded=false;
+      bookings=[];
+      cart={};
+      return false;
+    }
+  }
   async function saveBookings(){ /* writes now go through api() per action */ }
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   function cleanPhoneForLink(phone){return String(phone||"").replace(/[^\d+]/g,"");}
@@ -1440,6 +1454,11 @@
   function renderCatalog(){
     const wrap=document.getElementById("catalog"); wrap.innerHTML="";
     const have=!!pickDate, e=retDate||pickDate;
+    if(have&&!availabilityLoaded){
+      document.getElementById("catalogSub").textContent="Availability could not be checked. Please try again.";
+      wrap.innerHTML='<div class="empty">Could not check live availability. Please refresh or try again.</div>';
+      return;
+    }
     document.getElementById("catalogSub").textContent=have
       ? "Live availability for "+fmt(pickDate)+(e!==pickDate?" → "+fmt(e):"")+"."
       : "Choose your dates above to see live availability.";
@@ -1566,6 +1585,7 @@
     const bad=!validPhone(phone)||!validEmail(email); toggleErr("eContact",bad); if(bad)ok=false;
     toggleErr("eAddr",addr.length<6); if(addr.length<6)ok=false;
     if(!ok)return;
+    if(!(await loadBookings())){renderCatalog(); renderCart(); toast("Could not check availability — please try again"); return;}
     const ret=retDate||pickDate;
     for(const it of cartArr()){ if(availForWindow(it.id,pickDate,ret)<it.qty){ toast(it.name+" is no longer available"); renderCatalog(); return; } }
     const b={ id:"BK"+Date.now().toString(36).toUpperCase(), name,phone,email,address:addr,note,
@@ -2121,7 +2141,7 @@
     const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } else closePopCal(); };
   document.getElementById("calDone").onclick=async(e)=>{ e.stopPropagation();
     if(!pickDate){ toast("Pick your dates"); return; }
-    await loadBookings();
+    if(!(await loadBookings())){renderCatalog(); renderCart(); toast("Could not check availability — please try again"); return;}
     renderCalendar(); renderCatalog(); renderCart();
     closePopCal(); document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
   };
@@ -2133,7 +2153,7 @@
   },0));
   document.getElementById("searchBtn").onclick=async()=>{
     if(!pickDate){ openPopCal(); toast("Pick your dates"); return; }
-    await loadBookings();
+    if(!(await loadBookings())){renderCatalog(); renderCart(); toast("Could not check availability — please try again"); return;}
     renderCalendar(); renderCatalog(); renderCart();
     closePopCal();
     document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
