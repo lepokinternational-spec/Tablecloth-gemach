@@ -1104,8 +1104,15 @@
       const w=loanWindow(b); if(parseISO(w[0])<=dd && parseISO(w[1])>=dd) n+=it.qty; }
     return n;
   }
+  function reservedOnExcept(itemId,dayISO,excludeId){
+    let n=0; const dd=parseISO(dayISO);
+    for(const b of bookings){ if(b.id===excludeId||b.status==="declined"||b.status==="cancelled")continue; const it=b.items.find(x=>x.id===itemId); if(!it)continue;
+      const w=loanWindow(b); if(parseISO(w[0])<=dd && parseISO(w[1])>=dd) n+=it.qty; }
+    return n;
+  }
   function availForDate(itemId,dateISO){ return INVENTORY.find(i=>i.id===itemId).stock - reservedOn(itemId,dateISO); }
   function availForWindow(itemId,s,e){ let max=0,d=parseISO(s),end=parseISO(e); while(d<=end){ max=Math.max(max,reservedOn(itemId,iso(d))); d=addDays(d,1);} return INVENTORY.find(i=>i.id===itemId).stock - max; }
+  function availForWindowExcept(itemId,s,e,excludeId){ let max=0,d=parseISO(s),end=parseISO(e); while(d<=end){ max=Math.max(max,reservedOnExcept(itemId,iso(d),excludeId)); d=addDays(d,1);} return INVENTORY.find(i=>i.id===itemId).stock - max; }
   function availableDatesInWindow(itemId,s,e){
     const days=[]; let d=parseISO(s),end=parseISO(e);
     while(d<=end){ const ds=iso(d); if(availForDate(itemId,ds)>0)days.push(ds); d=addDays(d,1); }
@@ -1306,11 +1313,11 @@
     bks.forEach(b=>{
       const acts=document.querySelector('.acts[data-id="'+b.id+'"]'); if(!acts)return;
       if(b.status==="pending"){
-        acts.append(mkbtn("✓ Approve & set dates","btn sm",()=>showApproveModal(b,dISO)));
+        acts.append(mkbtn("Approve & edit booking","btn sm",()=>showApproveModal(b,dISO)));
         acts.append(mkbtn("View request email","btn ghost sm",()=>showEmailModal(b)));
         acts.append(mkbtn("Cancel","btn ghost sm",()=>cancelBooking(b.id)));
       } else if(b.status==="approved") {
-        acts.append(mkbtn("Edit pickup / return","btn ghost sm",()=>showApproveModal(b,dISO)));
+        acts.append(mkbtn("Edit booking","btn ghost sm",()=>showApproveModal(b,dISO)));
         acts.append(mkbtn("Cancel reservation","btn ghost sm",()=>cancelBooking(b.id)));
       } else {
         acts.append(mkbtn("Re-approve","btn ghost sm",()=>showApproveModal(b,dISO)));
@@ -1331,20 +1338,27 @@
     const defPickup=b.pickup||iso(addDays(parseISO(b.start),-1));
     const defRet=b.ret||iso(addDays(parseISO(b.start),1));
     let apPickup=defPickup, apReturn=defRet, apTarget="pickup", apMonth=som(parseISO(defPickup));
+    const apQty={};
+    ownedBookingItems(b).forEach(it=>{
+      const inv=inventoryForBookingItem(it);
+      if(inv) apQty[inv.id]=(apQty[inv.id]||0)+(parseInt(it.qty,10)||0);
+    });
+    const ownedChoices=editableInventory();
     const lines=b.items.map(it=>'<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>').join('');
     const carePreview=careEmailHtml(b);
     document.getElementById("modalBody").innerHTML=
-      '<div class="email"><div class="head"><div class="from">Arrange &amp; approve · '+b.id+'</div><h3>Set pickup &amp; return</h3></div>'
+      '<div class="email"><div class="head"><div class="from">Arrange &amp; approve · '+b.id+'</div><h3>Edit booking</h3></div>'
       +'<div class="meta">For <span>'+b.name+'</span> · Requested: <span>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</span>'+(HFMT?' · <span class="he" dir="rtl">'+hebFull(parseISO(b.pickup||b.start))+'</span>':'')+'</div>'
       +'<div class="bd"><div class="recap">'+lines+'</div>'
       +carePreview
       +'<div class="form"><div class="admin-date-row">'
       +'<div class="field"><label>Pickup date</label><button type="button" class="datefield ap-date on" id="apPickupBtn"><span id="apPickupText"></span><span class="he" id="apPickupHe" dir="rtl"></span></button></div>'
       +'<div class="field"><label>Return by</label><button type="button" class="datefield ap-date" id="apReturnBtn"><span id="apReturnText"></span><span class="he" id="apReturnHe" dir="rtl"></span></button></div></div>'
+      +'<div class="field"><label>Tablecloths for this admin</label><div id="apItems"></div></div>'
       +'<div class="admin-mini-cal"><div class="cal-head"><button type="button" id="apCalPrev">‹</button><div class="lbls"><h3 id="apCalLabel"></h3><div class="he" id="apCalLabelHe" dir="rtl"></div></div><button type="button" id="apCalNext">›</button></div><div class="cal-grid" id="apCalGrid"></div></div>'
       +'<div class="field"><label>Note to customer</label><textarea id="apCustomerNote" placeholder="Optional message to include in the approval email">'+esc(b.customerNote||"")+'</textarea></div>'
       +'<div class="err hidden" id="apErr">Return must be on or after pickup.</div>'
-      +'<button class="btn" id="apConfirm" style="width:100%">✓ Approve booking</button>'
+      +'<button class="btn" id="apConfirm" style="width:100%">Save booking &amp; email customer</button>'
       +'</div></div></div>';
     function drawApproveFields(){
       document.getElementById("apPickupText").textContent=fmt(apPickup);
@@ -1383,20 +1397,86 @@
             if(parseISO(dISO)<parseISO(apPickup)){apPickup=dISO; apTarget="return";}
             else apReturn=dISO;
           }
-          document.getElementById("apErr").classList.add("hidden");
-          drawApproveFields(); drawApproveCalendar();
+          clearApproveError();
+          drawApproveFields(); drawApproveCalendar(); drawApproveItems();
         });
         g.appendChild(cell);
       }
+    }
+    function setApproveError(msg){
+      const el=document.getElementById("apErr");
+      if(!el)return;
+      el.textContent=msg;
+      el.classList.remove("hidden");
+    }
+    function clearApproveError(){
+      const el=document.getElementById("apErr");
+      if(el)el.classList.add("hidden");
+    }
+    function drawApproveItems(){
+      const holder=document.getElementById("apItems"); if(!holder)return;
+      const ok=apPickup&&apReturn&&parseISO(apReturn)>=parseISO(apPickup);
+      holder.innerHTML=ownedChoices.length?ownedChoices.map(inv=>{
+        const av=ok?Math.max(0,availForWindowExcept(inv.id,apPickup,apReturn,b.id)):inv.stock;
+        const fullSet=inv.stock, variableQty=hasVariableQuantity(inv), current=apQty[inv.id]||0;
+        if(variableQty){
+          const status=!ok?fullSet+" maximum":current>av?"Only "+av+" available for these dates":av+" available";
+          return '<div class="nbitem"><span>'+esc(inv.name)+'<br><small style="color:var(--ink-soft)">'+status+'</small></span>'
+            +'<div class="stepper"><button type="button" data-ap-minus="'+esc(inv.id)+'" '+(current<=0?'disabled':'')+'>-</button><input value="'+current+'" readonly aria-label="'+esc(inv.name)+' quantity"><button type="button" data-ap-plus="'+esc(inv.id)+'" '+(!ok||current>=av?'disabled':'')+'>+</button></div></div>';
+        }
+        const selected=!!current, unavailable=ok&&av<fullSet, disabled=!ok||(!selected&&unavailable);
+        const status=!ok?fullSet+" included":unavailable?"Unavailable for these dates":fullSet+" included";
+        return '<div class="nbitem"><span>'+esc(inv.name)+'<br><small style="color:var(--ink-soft)">'+status+'</small></span>'
+          +'<button type="button" class="nbselect '+(selected?'on':'')+'" data-ap-toggle="'+esc(inv.id)+'" '+(disabled?'disabled':'')+'>'+(selected?'Selected':'Select set')+' - '+fullSet+' included</button></div>';
+      }).join(''):'<p class="sub">No tablecloths are assigned to this admin.</p>';
+      document.querySelectorAll('#apItems [data-ap-toggle]').forEach(btn=>btn.onclick=()=>{
+        const id=btn.dataset.apToggle, inv=INVENTORY.find(i=>i.id===id); if(!inv)return;
+        if(apQty[id])delete apQty[id]; else apQty[id]=inv.stock;
+        clearApproveError(); drawApproveItems();
+      });
+      document.querySelectorAll('#apItems [data-ap-minus]').forEach(btn=>btn.onclick=()=>{
+        const id=btn.dataset.apMinus; apQty[id]=Math.max(0,(apQty[id]||0)-1); if(!apQty[id])delete apQty[id];
+        clearApproveError(); drawApproveItems();
+      });
+      document.querySelectorAll('#apItems [data-ap-plus]').forEach(btn=>btn.onclick=()=>{
+        const id=btn.dataset.apPlus, inv=INVENTORY.find(i=>i.id===id); if(!inv)return;
+        const av=Math.max(0,availForWindowExcept(inv.id,apPickup,apReturn,b.id));
+        apQty[id]=Math.min(av,(apQty[id]||0)+1);
+        clearApproveError(); drawApproveItems();
+      });
+    }
+    function approveItemsFromSelection(){
+      const items=[];
+      Object.keys(apQty).forEach(id=>{
+        const inv=INVENTORY.find(i=>i.id===id), qty=parseInt(apQty[id],10)||0;
+        if(inv&&qty>0)items.push({id:inv.id,name:inv.name,qty});
+      });
+      return items;
+    }
+    function validateApproveItems(){
+      const items=approveItemsFromSelection();
+      if(!items.length){setApproveError("Choose at least one tablecloth for this admin.");return null;}
+      for(const it of items){
+        const inv=INVENTORY.find(i=>i.id===it.id);
+        const av=Math.max(0,availForWindowExcept(it.id,apPickup,apReturn,b.id));
+        if(hasVariableQuantity(inv)){
+          if(it.qty>av){setApproveError(it.name+" only has "+av+" available for those dates.");return null;}
+        }else if(it.qty!==inv.stock||av<inv.stock){
+          setApproveError(it.name+" is not available for the full selected dates.");return null;
+        }
+      }
+      return items;
     }
     document.getElementById("apPickupBtn").onclick=()=>{apTarget="pickup";apMonth=som(parseISO(apPickup));drawApproveFields();drawApproveCalendar();};
     document.getElementById("apReturnBtn").onclick=()=>{apTarget="return";apMonth=som(parseISO(apReturn));drawApproveFields();drawApproveCalendar();};
     document.getElementById("apCalPrev").onclick=()=>{apMonth=new Date(apMonth.getFullYear(),apMonth.getMonth()-1,1);drawApproveCalendar();};
     document.getElementById("apCalNext").onclick=()=>{apMonth=new Date(apMonth.getFullYear(),apMonth.getMonth()+1,1);drawApproveCalendar();};
-    drawApproveFields(); drawApproveCalendar();
+    drawApproveFields(); drawApproveCalendar(); drawApproveItems();
     document.getElementById("apConfirm").onclick=async()=>{
       const p=apPickup, r=apReturn;
-      if(!p||!r||parseISO(r)<parseISO(p)){ document.getElementById("apErr").classList.remove("hidden"); return; }
+      if(!p||!r||parseISO(r)<parseISO(p)){ setApproveError("Return must be on or after pickup."); return; }
+      const ownedItems=validateApproveItems(); if(!ownedItems)return;
+      b.items=(b.items||[]).filter(it=>!itemOwnedByCurrentAdmin(it)).concat(ownedItems);
       b.pickup=p; b.ret=r; b.status="approved"; b.customerNote=document.getElementById("apCustomerNote").value.trim(); attachCareInstructions(b);
       await api("update",{booking:b,sendApproval:true,careInstructions:b.careInstructions,careInstructionsList:b.careInstructionsList},true);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
@@ -1713,11 +1793,11 @@
         +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
       const acts=el.querySelector(".acts");
       if(b.status==="pending"){
-        acts.append(mkbtn("✓ Approve & set dates","btn sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
+        acts.append(mkbtn("Approve & edit booking","btn sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
         acts.append(mkbtn("View request email","btn ghost sm",()=>showEmailModal(b)));
         acts.append(mkbtn("Cancel reservation","btn ghost sm",()=>cancelBooking(b.id)));
       } else if(b.status==="approved"){
-        acts.append(mkbtn("Edit pickup / return","btn ghost sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
+        acts.append(mkbtn("Edit booking","btn ghost sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
         acts.append(mkbtn("Resend customer email","btn ghost sm",()=>showCustomerEmail(b)));
         acts.append(mkbtn("Cancel reservation","btn ghost sm",()=>cancelBooking(b.id)));
       } else {
