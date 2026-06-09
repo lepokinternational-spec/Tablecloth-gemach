@@ -908,7 +908,7 @@
   }
 
   /* ============ Storage ============ */
-  async function loadBookings(){ try{ const r=await fetch(API+"?action=availability"); const d=await r.json(); bookings=d.bookings||[]; }catch(e){ bookings=[]; } }
+  async function loadBookings(){ try{ const r=await fetch(API+"?action=availability",{cache:"no-store"}); const d=await r.json(); bookings=d.bookings||[]; }catch(e){ bookings=[]; } }
   async function saveBookings(){ /* writes now go through api() per action */ }
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   function cleanPhoneForLink(phone){return String(phone||"").replace(/[^\d+]/g,"");}
@@ -1426,8 +1426,7 @@
         else if(variableQty&&inCart>avail){cart[inv.id]=avail; inCart=avail;}
         else if(!variableQty&&inCart!==avail){cart[inv.id]=avail; inCart=avail;}
       }
-      const partialDays=(have&&avail<=0)?availableDatesInWindow(inv.id,pickDate,e):[];
-      if(have&&avail<=0&&!partialDays.length)return;
+      if(have&&avail<=0)return;
       const card=document.createElement("div"); card.className="card";
       var pics=photosFor(inv);var pic='<div class="pic"><img class="mainpic" loading="lazy" src="'+esc(pics[0])+'" alt="'+esc(inv.name)+'">';if(pics.length>1){pic+='<div class="thumbs">'+pics.map(function(u,i){return '<img class="thumb'+(i===0?' on':'')+'" loading="lazy" src="'+esc(u)+'">';}).join('')+'</div>';}pic+='</div>';card.innerHTML=pic+'<div class="body"><h4>'+esc(inv.name)+'</h4><div class="size">'+esc(inv.size)+'</div>'+(inv.dim?'<div class="dim">'+esc(inv.dim)+'</div>':'')+'</div>';if(pics.length>1){var _m=card.querySelector(".mainpic");card.querySelectorAll(".thumb").forEach(function(t){t.addEventListener("click",function(){_m.src=t.src;card.querySelectorAll(".thumb").forEach(function(x){x.classList.remove("on");});t.classList.add("on");});});}
       if(have&&avail>0){
@@ -1443,10 +1442,6 @@
           btn.onclick=()=>toggleSet(inv.id,avail);
           row.appendChild(btn); body.appendChild(row);
         }
-      }else if(have&&partialDays.length){
-        const body=card.querySelector(".body"); const msg=document.createElement("div"); msg.className="partial-avail";
-        msg.textContent="Only available on "+formatDateList(partialDays);
-        body.appendChild(msg);
       }
       wrap.appendChild(card);
     });
@@ -2098,8 +2093,10 @@
   });
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
     const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } else closePopCal(); };
-  document.getElementById("calDone").onclick=(e)=>{ e.stopPropagation();
+  document.getElementById("calDone").onclick=async(e)=>{ e.stopPropagation();
     if(!pickDate){ toast("Pick your dates"); return; }
+    await loadBookings();
+    renderCalendar(); renderCatalog(); renderCart();
     closePopCal(); document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
   };
   document.addEventListener("click",e=>setTimeout(()=>{
@@ -2108,8 +2105,10 @@
     if(pc.contains(e.target)||df.contains(e.target))return;
     closePopCal();
   },0));
-  document.getElementById("searchBtn").onclick=()=>{
+  document.getElementById("searchBtn").onclick=async()=>{
     if(!pickDate){ openPopCal(); toast("Pick your dates"); return; }
+    await loadBookings();
+    renderCalendar(); renderCatalog(); renderCart();
     closePopCal();
     document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
   };
