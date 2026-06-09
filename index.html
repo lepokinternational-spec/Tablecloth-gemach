@@ -618,7 +618,33 @@
   };
   let adminMe=null, adminUsers=[], tableclothOwners={};
   let careConfig={all:"",items:{}};
-  const API="https://linen-email.linencollection29.workers.dev";
+  const WORKER_API="https://linen-email.linencollection29.workers.dev";
+  function apiBases(){
+    const bases=[];
+    if(/^https?:\/\/(www\.)?tcgemach\.co\.uk$/i.test(location.origin)){
+      bases.push("https://tcgemach.co.uk/api");
+    }
+    bases.push(WORKER_API);
+    return bases.filter((base,i,arr)=>base&&arr.indexOf(base)===i);
+  }
+  function primaryApiBase(){return apiBases()[0]||WORKER_API;}
+  async function apiFetch(action,options){
+    const qs="?action="+encodeURIComponent(action);
+    let lastError=null;
+    for(const base of apiBases()){
+      try{
+        const res=await fetch(base+qs,options||{});
+        if(res.status===404&&/\/api$/.test(base)){
+          lastError=new Error("same-domain api route not connected");
+          continue;
+        }
+        return res;
+      }catch(e){
+        lastError=e;
+      }
+    }
+    throw lastError||new Error("api unavailable");
+  }
   function normalizeAdminEmail(s){
     const email=String(s||"").trim().toLowerCase();
     return ADMIN_EMAIL_ALIASES[email]||email;
@@ -637,7 +663,7 @@
   }
   async function api(action,payload,admin){
     const headers=admin?adminHeaders(true):{"Content-Type":"application/json"};
-    const res=await fetch(API+"?action="+action,{method:"POST",headers,cache:"no-store",body:JSON.stringify(payload||{})});
+    const res=await apiFetch(action,{method:"POST",headers,cache:"no-store",body:JSON.stringify(payload||{})});
     if(!res.ok){
       let msg="api "+action+" "+res.status;
       try{
@@ -651,7 +677,7 @@
     return res.json();
   }
   async function apiGet(action,admin){
-    const r=await fetch(API+"?action="+action,{headers:admin?adminHeaders(false):{},cache:"no-store"});
+    const r=await apiFetch(action,{headers:admin?adminHeaders(false):{},cache:"no-store"});
     if(!r.ok) throw new Error("api "+action+" "+r.status);
     return r.json();
   }
@@ -664,7 +690,7 @@
     }
   }
   async function apiList(){
-    const r=await fetch(API+"?action=list",{headers:adminHeaders(false),cache:"no-store"});
+    const r=await apiFetch("list",{headers:adminHeaders(false),cache:"no-store"});
     if(!r.ok) throw new Error("unauthorized");
     return r.json();
   }
@@ -908,7 +934,7 @@
   }
 
   /* ============ Storage ============ */
-  async function loadBookings(){ try{ const r=await fetch(API+"?action=availability",{cache:"no-store"}); const d=await r.json(); bookings=d.bookings||[]; }catch(e){ bookings=[]; } }
+  async function loadBookings(){ try{ const r=await apiFetch("availability",{cache:"no-store"}); const d=await r.json(); bookings=d.bookings||[]; }catch(e){ bookings=[]; } }
   async function saveBookings(){ /* writes now go through api() per action */ }
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   function cleanPhoneForLink(phone){return String(phone||"").replace(/[^\d+]/g,"");}
@@ -1513,7 +1539,7 @@
       frame.name=name;
       frame.style.display="none";
       form.method="POST";
-      form.action=API+"?action=create";
+      form.action=primaryApiBase()+"?action=create";
       form.target=name;
       form.style.display="none";
       input.type="hidden";
