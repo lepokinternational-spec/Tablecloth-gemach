@@ -513,6 +513,7 @@
   <div class="actions" style="margin-top:18px">
     <button class="btn ghost sm" id="adminLockBtn">Log out</button>
     <button class="btn ghost sm" id="resetPasswordBtn">Reset password</button>
+    <button class="btn ghost sm" id="testEmailBtn">Send test email</button>
     <button class="btn ghost sm" id="resetBtn">Delete all bookings</button>
   </div>
 
@@ -636,7 +637,7 @@
   }
   async function api(action,payload,admin){
     const headers=admin?adminHeaders(true):{"Content-Type":"application/json"};
-    const res=await fetch(API+"?action="+action,{method:"POST",headers,body:JSON.stringify(payload||{})});
+    const res=await fetch(API+"?action="+action,{method:"POST",headers,cache:"no-store",body:JSON.stringify(payload||{})});
     if(!res.ok){
       let msg="api "+action+" "+res.status;
       try{
@@ -650,7 +651,7 @@
     return res.json();
   }
   async function apiGet(action,admin){
-    const r=await fetch(API+"?action="+action,{headers:admin?adminHeaders(false):{}});
+    const r=await fetch(API+"?action="+action,{headers:admin?adminHeaders(false):{},cache:"no-store"});
     if(!r.ok) throw new Error("api "+action+" "+r.status);
     return r.json();
   }
@@ -663,7 +664,7 @@
     }
   }
   async function apiList(){
-    const r=await fetch(API+"?action=list",{headers:adminHeaders(false)});
+    const r=await fetch(API+"?action=list",{headers:adminHeaders(false),cache:"no-store"});
     if(!r.ok) throw new Error("unauthorized");
     return r.json();
   }
@@ -1486,17 +1487,23 @@
   async function submitBookingRequest(b){
     const payload={booking:b,approveUrl:adminApproveUrl(b.id)};
     try{
-      await api("create",payload);
+      const result=await api("create",payload);
+      if(result&&Array.isArray(result.emailErrors)&&result.emailErrors.length){
+        throw new Error(result.emailErrors.join("; "));
+      }
       return {ok:true};
     }catch(e){
-      try{
-        const d=await apiGet("availability",false);
-        if(Array.isArray(d.bookings)&&d.bookings.some(x=>x&&x.id===b.id))return {ok:true};
-      }catch(_){
-      }
       if(e&&/failed to fetch/i.test(e.message||"")){
         const fallbackOk=await formPostBookingRequest(payload);
-        if(fallbackOk)return {ok:true};
+        if(fallbackOk){
+          try{
+            await new Promise(r=>setTimeout(r,900));
+            const d=await apiGet("availability",false);
+            if(Array.isArray(d.bookings)&&d.bookings.some(x=>x&&x.id===b.id))return {ok:true};
+          }catch(_){
+          }
+          return {ok:false,error:"could not confirm the emails were sent"};
+        }
       }
       return {ok:false,error:e&&e.message?e.message:String(e||"unknown error")};
     }
@@ -2076,6 +2083,14 @@
   document.getElementById("adminLockBtn").onclick=()=>{clearAdminSession();updateAdminGate();toast("Logged out");};
   document.getElementById("loginResetPasswordBtn").onclick=showResetPasswordModal;
   document.getElementById("resetPasswordBtn").onclick=showResetPasswordModal;
+  document.getElementById("testEmailBtn").onclick=async()=>{
+    try{
+      const d=await api("testEmail",{to:currentAdminEmail()||ADMIN_EMAIL},true);
+      toast("Test email sent to "+(d.sentTo||currentAdminEmail()||ADMIN_EMAIL));
+    }catch(e){
+      toast("Test email failed — "+(e&&e.message?e.message:"check Worker variables"));
+    }
+  };
   document.getElementById("photoEditToggle").onclick=togglePhotoEditor;
   document.getElementById("newClothBtn").onclick=addNewTablecloth;
   ["newClothName","newClothSize","newClothDim","newClothStock"].forEach(id=>{

@@ -1,4 +1,6 @@
 const ALLOWED_ORIGINS = new Set([
+  "http://tcgemach.co.uk",
+  "http://www.tcgemach.co.uk",
   "https://tcgemach.co.uk",
   "https://www.tcgemach.co.uk",
 ]);
@@ -43,6 +45,18 @@ export default {
         return json({ owners: await getOwners(env) }, 200, cors);
       }
 
+      if (request.method === "GET" && action === "ping") {
+        return json({
+          ok: true,
+          version: "2026-06-09-cors-email-diagnostics",
+          origin: request.headers.get("Origin") || "",
+          hasSettings: !!env.SETTINGS,
+          hasFromEmail: !!env.FROM_EMAIL,
+          hasResendApiKey: !!env.RESEND_API_KEY,
+          time: new Date().toISOString(),
+        }, 200, cors);
+      }
+
       if (request.method === "GET" && action === "list") {
         const admin = await requireAdmin(request, env);
         if (!admin) return json({ error: "unauthorized" }, 401, cors);
@@ -68,13 +82,29 @@ export default {
       if (request.method !== "POST") return json({ error: "method" }, 405, cors);
       const body = await readRequestBody(request);
 
+      if (action === "testEmail") {
+        const admin = await requireAdmin(request, env);
+        if (!admin) return json({ error: "unauthorized" }, 401, cors);
+
+        const to = String(body.to || admin.email || MAIN_ADMIN_EMAIL).trim();
+        await sendEmail(
+          env,
+          to,
+          "The Linen Collection email test",
+          emailShell(
+            "Email test",
+            "Email test",
+            '<p style="font-size:16px;margin:0">This is a test email from The Linen Collection Worker.</p>'
+          )
+        );
+        return json({ ok: true, sentTo: to, from: env.FROM_EMAIL || "" }, 200, cors);
+      }
+
       if (action === "create") {
         if (body.website) return json({ ok: true }, 200, cors);
 
         const b = normalizeBooking(body.booking);
         if (!b || !b.id || !b.email) return json({ error: "bad booking" }, 400, cors);
-
-        await upsertBooking(env, b);
 
         const owners = await getOwners(env);
         const emailErrors = await sendNewRequestEmails(env, b, body.approveUrl);
@@ -84,6 +114,12 @@ export default {
           emailErrors.push("customer confirmation: " + errorMessage(e));
           console.error("customer confirmation email failed", e);
         }
+
+        if (emailErrors.length) {
+          return json({ error: "email failed", emailErrors }, 500, cors);
+        }
+
+        await upsertBooking(env, b);
 
         return json({ ok: true, emailErrors }, 200, cors);
       }
@@ -407,17 +443,18 @@ async function requireAdmin(request, env) {
   const admin = admins.find(a => normalizeEmail(a.email) === requestedEmail) || admins.find(a => normalizeEmail(a.email) === MAIN_ADMIN_EMAIL);
   if (!admin) return null;
 
-  const password = await getAdminPassword(env, admin);
-  if (!password || token !== password) return null;
+  const passwords = await getAdminPasswords(env, admin);
+  if (!passwords.some(password => password && token === password)) return null;
   return { ...admin, email: normalizeEmail(admin.email) };
 }
 
-async function getAdminPassword(env, admin) {
+async function getAdminPasswords(env, admin) {
+  const passwords = [];
   const saved = await env.SETTINGS.get(passwordKey(admin.email));
-  if (saved) return saved;
-  if (admin.envPassword && env[admin.envPassword]) return env[admin.envPassword];
-  if (normalizeEmail(admin.email) === normalizeEmail(MAIN_ADMIN_EMAIL)) return env.ADMIN_TOKEN;
-  return "";
+  if (saved) passwords.push(saved);
+  if (admin.envPassword && env[admin.envPassword]) passwords.push(env[admin.envPassword]);
+  if (normalizeEmail(admin.email) === normalizeEmail(MAIN_ADMIN_EMAIL) && env.ADMIN_TOKEN) passwords.push(env.ADMIN_TOKEN);
+  return [...new Set(passwords.map(p => String(p || "").trim()).filter(Boolean))];
 }
 
 function passwordKey(email) {
@@ -425,7 +462,9 @@ function passwordKey(email) {
 }
 
 async function sendEmail(env, to, subject, html) {
-  if (!to || !env.RESEND_API_KEY || !env.FROM_EMAIL) return;
+  if (!to) throw new Error("Missing email recipient");
+  if (!env.RESEND_API_KEY) throw new Error("Missing RESEND_API_KEY");
+  if (!env.FROM_EMAIL) throw new Error("Missing FROM_EMAIL");
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -706,9 +745,9 @@ function json(o, s, c) {
 
 function corsHeaders(request) {
   const origin = request.headers.get("Origin") || "";
-  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : "https://tcgemach.co.uk";
   return {
-    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Origin": origin || "*",
+    "Vary": "Origin",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token, X-Admin-Email",
     "Access-Control-Max-Age": "86400",
