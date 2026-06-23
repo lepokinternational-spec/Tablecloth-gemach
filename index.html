@@ -312,11 +312,13 @@
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-size:.9rem;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transition:.3s;z-index:200;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .footnote{text-align:center;color:var(--ink-soft);font-size:.78rem;padding:0 0 40px;max-width:680px;margin:0 auto}
+  #adminView{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
   .site-credit{display:flex;justify-content:flex-start;align-items:center;padding:14px 4px 4px}
   .site-credit a{display:inline-flex;flex-direction:column;align-items:flex-start;gap:4px;color:var(--ink-soft);text-decoration:none}
   .site-credit a:hover img{opacity:.86}
   .site-credit .credit-label,.site-credit .credit-copy{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;line-height:1;opacity:.72}
   .site-credit img{width:132px;max-width:34vw;height:auto}
+  .admin-credit{margin:22px 0 8px}
   .fade-in{animation:rise .5s both} @keyframes rise{from{opacity:0;transform:translateY(12px)}}
   .stagger>*{animation:rise .5s both}
   .stagger>*:nth-child(2){animation-delay:.05s}.stagger>*:nth-child(3){animation-delay:.1s}.stagger>*:nth-child(4){animation-delay:.15s}
@@ -552,6 +554,13 @@
     </div>
   </section>
   </div>
+  <footer class="site-credit admin-credit" aria-label="Website credit">
+    <a href="https://pixelworkdesign.com" target="_blank" rel="noopener">
+      <span class="credit-label">Designed by</span>
+      <img src="images/pixelworks-logo-dark.png" alt="PixelWorks Design">
+      <span class="credit-copy">&copy; 2026</span>
+    </a>
+  </footer>
 </div></main>
 
 <div class="overlay" id="overlay"><div class="modal"><button class="close" id="modalClose">✕</button><div id="modalBody"></div></div></div>
