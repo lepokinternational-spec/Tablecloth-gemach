@@ -635,13 +635,29 @@ function approvalHtml(b, contactEmails, collectionAddresses) {
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
     collectionAddressHtml(collectionAddresses, "Pickup / drop-off address") +
     arrangeTimeHtml(contactEmails, b.id, "pickup / drop-off") +
-    suggestedDonationHtml() +
+    suggestedDonationHtml(contactEmails, b.id) +
     tableBlock(b.items) +
     careHtml(b)
   );
 }
 
-function suggestedDonationHtml() {
+function hasMiriContact(contactEmails) {
+  return (contactEmails || []).some(email => normalizeEmail(email) === normalizeEmail(MIRI_ADMIN_EMAIL));
+}
+
+function suggestedDonationHtml(contactEmails, bookingId) {
+  if (hasMiriContact(contactEmails)) {
+    return infoBox(
+      "<b>Suggested donation</b><br>" +
+      "Any amount is appreciated.<br><br>" +
+      "<b>Bank details</b><br>" +
+      "MR GEDALYA DAVID GROSSNASS<br>" +
+      "Sort code: 04-00-75<br>" +
+      "Account number: 42313333<br><br>" +
+      "Please email once it has been paid."
+    ) + contactButtonsHtml(contactEmails, "Donation paid for booking " + (bookingId || ""));
+  }
+
   return infoBox(
     "<b>Suggested donation</b><br>&pound;5<br><br>" +
     "<b>Bank details</b><br>" +
@@ -674,7 +690,7 @@ function customerReminderHtml(b, events, dateISO, contactEmails, collectionAddre
     infoBox("<b>Pickup</b><br>" + esc(fmtDate(b.pickup)) + "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret))) +
     collectionAddressHtml(collectionAddresses, addressTitleForEvents(events)) +
     arrangeTimeHtml(contactEmails, b.id, arrangeLabelForEvents(events)) +
-    (events.includes("return") ? suggestedDonationHtml() : "") +
+    (hasMiriContact(contactEmails) || events.includes("return") ? suggestedDonationHtml(contactEmails, b.id) : "") +
     tableBlock(b.items) +
     careHtml(b)
   );
