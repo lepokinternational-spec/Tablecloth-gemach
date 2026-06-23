@@ -197,13 +197,19 @@
   .pending-under-calendar{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
   .pending-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
   .pending-head h3{font-size:1.1rem;margin-bottom:2px}.pending-head .sub{font-size:.84rem}
-  .pending-list{display:grid;gap:10px}
-  .pending-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;background:#FFFCF6;border:1px solid #E8D3A6;border-radius:11px;padding:13px}
-  .pending-title{font-weight:800;font-size:1rem}.pending-title span{font-size:.78rem;color:var(--ink-soft);font-weight:700}
-  .pending-meta{font-size:.84rem;color:var(--ink-soft);line-height:1.45;margin-top:5px}.pending-meta b{color:var(--ink)}
-  .pending-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .pending-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:12px}
+  .pending-card{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid #E8D3A6;border-left:4px solid var(--orange);border-radius:12px;padding:15px;box-shadow:0 10px 26px -22px rgba(35,33,27,.45)}
+  .pending-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .pending-title{font-weight:850;font-size:1.02rem;line-height:1.2}.pending-id{font-size:.74rem;color:var(--ink-soft);font-weight:700;margin-top:3px}
+  .pending-date{flex:none;background:#FBF0DA;color:#8A6516;border:1px solid #E8D3A6;border-radius:999px;padding:5px 9px;font-size:.76rem;font-weight:800;white-space:nowrap}
+  .pending-meta{display:grid;gap:7px;font-size:.84rem;color:var(--ink-soft);line-height:1.35}.pending-meta b,.pending-meta strong{color:var(--ink)}
+  .pending-meta-row{display:flex;align-items:center;gap:8px;min-width:0}.pending-label{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--gold);min-width:58px}
+  .pending-note{background:#FFFCF6;border:1px solid var(--line);border-radius:9px;padding:9px 10px;color:var(--ink);font-size:.86rem}
+  .pending-items{margin-top:0;display:flex;flex-wrap:wrap;gap:6px}
+  .pending-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:2px}
+  .pending-actions .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;white-space:normal;text-align:center;padding:10px 12px}
   .pending-empty{background:var(--linen-2);border:1px dashed var(--line);border-radius:10px;color:var(--ink-soft);padding:12px 14px;font-size:.9rem}
-  @media(max-width:760px){.pending-card{grid-template-columns:1fr}.pending-actions{justify-content:flex-start}}
+  @media(max-width:760px){.pending-head{flex-direction:column}.pending-card-top{display:grid;gap:8px}.pending-date{justify-self:start}.pending-actions{grid-template-columns:1fr}.pending-meta-row{align-items:flex-start;flex-direction:column;gap:3px}.pending-label{min-width:0}.pending-actions .btn{width:100%}}
   .day .holi.cal-big-dot{top:8px;right:8px}
   .adminlegend{display:flex;gap:18px;flex-wrap:wrap;font-size:.83rem;font-weight:600;color:var(--ink);margin-bottom:14px;align-items:center}
   @media(max-width:640px){.cal-grid.big .day{min-height:86px;padding:5px}.cal-grid.big .day .g{font-size:.95rem}.bkbadge{font-size:.6rem;padding:2px 4px}.bkbadge .cloth{font-size:.56rem}}
@@ -1817,13 +1823,16 @@
     html+='<div class="pending-list">'+list.map(b=>{
       const start=b.pickup||b.start, ret=b.ret||b.start;
       const dateText=start&&ret ? fmt(start)+' → '+fmt(ret) : 'Dates not set';
+      const contact=contactLinksHtml(b);
+      const itemsHtml=ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+esc(i.name)+'</span>').join("");
       return '<div class="pending-card">'
-        +'<div><div class="pending-title">'+esc(b.name||"Booking")+' <span>· '+esc(b.id||"")+'</span></div>'
-        +'<div class="pending-meta"><b>'+dateText+'</b>'
-        +'<br>'+contactLinksHtml(b)
-        +(b.address?'<br>'+esc(b.address):'')
-        +(b.note?'<br>'+esc(b.note):'')+'</div>'
-        +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+esc(i.name)+'</span>').join("")+'</div></div>'
+        +'<div class="pending-card-top"><div><div class="pending-title">'+esc(b.name||"Booking")+'</div><div class="pending-id">'+esc(b.id||"")+'</div></div><div class="pending-date">'+dateText+'</div></div>'
+        +'<div class="pending-meta">'
+        +(contact?'<div class="pending-meta-row"><span class="pending-label">Contact</span>'+contact+'</div>':'')
+        +(b.address?'<div class="pending-meta-row"><span class="pending-label">Address</span><strong>'+esc(b.address)+'</strong></div>':'')
+        +(b.note?'<div class="pending-note">'+esc(b.note)+'</div>':'')
+        +'</div>'
+        +(itemsHtml?'<div class="pending-items">'+itemsHtml+'</div>':'')
         +'<div class="pending-actions">'
         +'<button class="btn sm" data-pending-approve="'+esc(b.id||"")+'">Approve & edit</button>'
         +'<button class="btn ghost sm" data-pending-email="'+esc(b.id||"")+'">View request</button>'
