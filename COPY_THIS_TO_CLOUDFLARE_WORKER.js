@@ -242,6 +242,7 @@ async function sendDailyReminders(env, dateISO) {
   const owners = await getOwners(env);
   const adminDigest = new Map();
   let customerEmails = 0;
+  const emailErrors = [];
 
   for (const b of bookings) {
     const events = [];
@@ -249,18 +250,22 @@ async function sendDailyReminders(env, dateISO) {
     if (b.ret === dateISO) events.push("return");
     if (!events.length) continue;
 
-    const customerKey = "REMINDER_SENT:" + dateISO + ":customer:" + b.id + ":" + events.join("-");
-    if (!(await env.SETTINGS.get(customerKey))) {
-      await sendEmail(env, b.email, customerReminderSubject(events), customerReminderHtml(b, events, dateISO, contactEmailsForBooking(b, owners), collectionAddressesForBooking(b, owners)));
-      await env.SETTINGS.put(customerKey, "1", { expirationTtl: 60 * 60 * 24 * 45 });
-      customerEmails++;
-    }
-
+    const grouped = groupItemsByOwner(b.items || [], owners);
     for (const eventName of events) {
-      const grouped = groupItemsByOwner(b.items || [], owners);
       for (const [adminEmail, items] of grouped.entries()) {
         if (!adminDigest.has(adminEmail)) adminDigest.set(adminEmail, []);
         adminDigest.get(adminEmail).push({ eventName, booking: b, items });
+      }
+    }
+
+    const customerKey = "REMINDER_SENT:" + dateISO + ":customer:" + b.id + ":" + events.join("-");
+    if (!(await env.SETTINGS.get(customerKey))) {
+      try {
+        await sendEmail(env, b.email, customerReminderSubject(events), customerReminderHtml(b, events, dateISO, contactEmailsForBooking(b, owners), collectionAddressesForBooking(b, owners)));
+        await env.SETTINGS.put(customerKey, "1", { expirationTtl: 60 * 60 * 24 * 45 });
+        customerEmails++;
+      } catch (e) {
+        emailErrors.push("Customer reminder " + b.id + " to " + (b.email || "missing email") + ": " + errorMessage(e));
       }
     }
   }
@@ -269,12 +274,16 @@ async function sendDailyReminders(env, dateISO) {
   for (const [adminEmail, entries] of adminDigest.entries()) {
     const key = "REMINDER_SENT:" + dateISO + ":admin:" + adminEmail;
     if (await env.SETTINGS.get(key)) continue;
-    await sendEmail(env, adminEmail, "Today's Linen Collection pickups and returns", adminDigestHtml(entries, dateISO));
-    await env.SETTINGS.put(key, "1", { expirationTtl: 60 * 60 * 24 * 45 });
-    adminEmails++;
+    try {
+      await sendEmail(env, adminEmail, "Today's Linen Collection pickups and returns", adminDigestHtml(entries, dateISO));
+      await env.SETTINGS.put(key, "1", { expirationTtl: 60 * 60 * 24 * 45 });
+      adminEmails++;
+    } catch (e) {
+      emailErrors.push("Admin reminder to " + adminEmail + ": " + errorMessage(e));
+    }
   }
 
-  return { date: dateISO, customerEmails, adminEmails };
+  return { date: dateISO, customerEmails, adminEmails, emailErrors };
 }
 
 async function readRequestBody(request) {
