@@ -106,6 +106,8 @@ export default {
         const b = normalizeBooking(body.booking);
         if (!b || !b.id || !b.email) return json({ error: "bad booking" }, 400, cors);
 
+        await upsertBooking(env, b);
+
         const owners = await getOwners(env);
         const emailErrors = await sendNewRequestEmails(env, b, body.approveUrl);
         try {
@@ -115,13 +117,7 @@ export default {
           console.error("customer confirmation email failed", e);
         }
 
-        if (emailErrors.length) {
-          return json({ error: "email failed", emailErrors }, 500, cors);
-        }
-
-        await upsertBooking(env, b);
-
-        return json({ ok: true, emailErrors }, 200, cors);
+        return json({ ok: true, saved: true, emailErrors }, 200, cors);
       }
 
       if (action === "update") {
