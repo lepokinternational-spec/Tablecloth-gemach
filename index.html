@@ -186,7 +186,7 @@
   .bkbadge{font-size:.72rem;font-weight:700;color:#fff;border-radius:6px;padding:3px 7px;line-height:1.22;overflow:hidden;display:block}
   .bkbadge .who,.bkbadge .cloth{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bkbadge .cloth{font-size:.68rem;opacity:.92;font-weight:800}
-  .bkbadge.p{background:var(--orange)} .bkbadge.a{background:var(--ok)}
+  .bkbadge.p{background:var(--orange)} .bkbadge.a{background:var(--ok)} .bkbadge.c{background:#7B8074}
   .bkmore{font-size:.7rem;color:var(--ink-soft);font-weight:700}
   .caholi{font-size:.66rem;font-weight:700;color:var(--gold);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
   .daycard{border:1px solid var(--line);border-radius:11px;padding:13px;margin-bottom:12px;background:#fff}
@@ -224,7 +224,7 @@
   .bk .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
   .bk h4{font-size:1.12rem}
   .pill{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
-  .pill.pending{background:#FBF0DA;color:#8A6516} .pill.approved{background:#E1F0E5;color:#2A6B3E} .pill.declined{background:#F6E0DA;color:#9A3520} .pill.cancelled{background:#E9E7E2;color:#7A756B}
+  .pill.pending{background:#FBF0DA;color:#8A6516} .pill.approved{background:#E1F0E5;color:#2A6B3E} .pill.completed{background:#E6E8E0;color:#5F665A} .pill.declined{background:#F6E0DA;color:#9A3520} .pill.cancelled{background:#E9E7E2;color:#7A756B}
   .nbitem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:.9rem}
   .nbitem small{font-size:.76rem}
   .nbselect{min-width:170px;border-radius:10px;padding:10px 14px;font-weight:800;background:var(--teal);color:#fff}
@@ -1239,6 +1239,9 @@
 
   function bookingsOnDay(dISO){ const dd=parseISO(dISO);
     return adminBookings().filter(b=>{ if(b.status==="declined"||b.status==="cancelled")return false; const w=loanWindow(b); return parseISO(w[0])<=dd && parseISO(w[1])>=dd; }); }
+  function bookingIsCompleted(b){ return b&&b.status==="approved"&&b.ret&&parseISO(b.ret)<today(); }
+  function bookingVisualStatus(b){ return bookingIsCompleted(b)?"completed":(b.status||"pending"); }
+  function bookingBadgeClass(b){ const s=bookingVisualStatus(b); return s==="completed"?"c":(s==="approved"?"a":"p"); }
   function bookingItemNames(b){ return ownedBookingItems(b).map(i=>i.name).filter(Boolean); }
   function bookingBadgeText(b){
     const names=bookingItemNames(b);
@@ -1282,7 +1285,7 @@
       if(bks.length){
         cell.classList.add("hasbk");
         const wrap=document.createElement("div"); wrap.className="bkbadges";
-        bks.slice(0,2).forEach(b=>{ const bd=document.createElement("div"); bd.className="bkbadge "+(b.status==="approved"?"a":"p"); bd.innerHTML=bookingBadgeHtml(b); bd.title=bookingBadgeTitle(b); wrap.appendChild(bd); });
+        bks.slice(0,2).forEach(b=>{ const bd=document.createElement("div"); bd.className="bkbadge "+bookingBadgeClass(b); bd.innerHTML=bookingBadgeHtml(b); bd.title=bookingBadgeTitle(b); wrap.appendChild(bd); });
         if(bks.length>2){ const m=document.createElement("div"); m.className="bkmore"; m.textContent="+"+(bks.length-2)+" more"; wrap.appendChild(m); }
         cell.appendChild(wrap);
         cell.addEventListener("click",()=>showDayModal(dISO));
@@ -1302,7 +1305,8 @@
     body+='<div class="bd">';
     if(!bks.length) body+='<p style="color:var(--ink-soft)">No active bookings on this day.</p>';
     else bks.forEach(b=>{
-      body+='<div class="daycard"><div class="dctop"><b>'+b.name+'</b> <span style="color:var(--ink-soft);font-size:.8rem">'+b.id+'</span><span class="pill '+b.status+'" style="margin-left:auto">'+b.status+'</span></div>'
+      const visualStatus=bookingVisualStatus(b);
+      body+='<div class="daycard"><div class="dctop"><b>'+b.name+'</b> <span style="color:var(--ink-soft);font-size:.8rem">'+b.id+'</span><span class="pill '+visualStatus+'" style="margin-left:auto">'+visualStatus+'</span></div>'
         +'<div class="dcmeta">📦 Loan: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'
         +'<br>'+contactLinksHtml(b)+'<br>📍 '+b.address+(b.amount?'<br>🔢 Quantity: '+b.amount:'')+(b.note?'<br>📝 '+b.note:'')+'</div>'
         +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join('')+'</div>'
@@ -1785,11 +1789,12 @@
       const heR=HFMT?(' · <span class="he" dir="rtl">'+hebFull(parseISO(b.pickup||b.start))+'</span>'):"";
       const win='';
       const el=document.createElement("div"); el.className="bk";
+      const visualStatus=bookingVisualStatus(b);
       el.innerHTML='<div class="top"><div><h4>'+b.name+' <span style="font-family:\'Hanken Grotesk\';font-size:.8rem;color:var(--ink-soft);font-weight:600">· '+b.id+'</span></h4>'
         +'<div class="meta"><div>📦 Loan <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'+heR+'</div>'+win
         +'<div>'+contactLinksHtml(b)+'</div><div>📍 <b>'+b.address+'</b></div>'
         +(b.amount?'<div>🔢 Quantity: '+b.amount+'</div>':'')
-        +(b.note?'<div>📝 '+b.note+'</div>':'')+'</div></div><span class="pill '+b.status+'">'+b.status+'</span></div>'
+        +(b.note?'<div>📝 '+b.note+'</div>':'')+'</div></div><span class="pill '+visualStatus+'">'+visualStatus+'</span></div>'
         +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
       const acts=el.querySelector(".acts");
       if(b.status==="pending"){
