@@ -21,6 +21,7 @@ const EMAIL_ALIASES = {
   "mirikoppel10@gmail.com": MIRI_ADMIN_EMAIL,
   "linencollection11@gmail.com": MIRI_ADMIN_EMAIL,
 };
+const EMAIL_RETRY_QUEUE_KEY = "EMAIL_RETRY_QUEUE";
 
 export default {
   async fetch(request, env) {
@@ -114,6 +115,14 @@ export default {
           await sendEmail(env, b.email, "We received your tablecloth request", ackHtml(b, contactEmailsForBooking(b, owners)));
         } catch (e) {
           emailErrors.push("customer confirmation: " + errorMessage(e));
+          await queueEmailRetry(
+            env,
+            "customer-confirmation:" + b.id + ":" + normalizeEmail(b.email),
+            b.email,
+            "We received your tablecloth request",
+            ackHtml(b, contactEmailsForBooking(b, owners)),
+            errorMessage(e)
+          );
           console.error("customer confirmation email failed", e);
         }
 
@@ -215,6 +224,13 @@ export default {
         return json({ ok: true, ...result }, 200, cors);
       }
 
+      if (action === "runEmailRetries") {
+        const admin = await requireAdmin(request, env);
+        if (!admin || admin.role !== "super") return json({ error: "unauthorized" }, 401, cors);
+        const result = await retryQueuedEmails(env);
+        return json({ ok: true, ...result }, 200, cors);
+      }
+
       if (!action && body.email && body.id) {
         await sendEmail(env, body.email, "Your tablecloth booking is approved", approvalHtml(body, [MAIN_ADMIN_EMAIL], collectionAddressesForBooking(body, {}, MAIN_ADMIN_EMAIL)));
         return json({ ok: true }, 200, cors);
@@ -227,7 +243,10 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(sendDailyReminders(env, todayISO(env)));
+    ctx.waitUntil(Promise.all([
+      sendDailyReminders(env, todayISO(env)),
+      retryQueuedEmails(env),
+    ]));
   },
 };
 
@@ -312,11 +331,82 @@ async function sendNewRequestEmails(env, b, approveUrl) {
       await sendEmail(env, adminEmail, "New tablecloth request - " + b.id, adminRequestHtml(copy, approveUrl));
     } catch (e) {
       errors.push(adminEmail + ": " + errorMessage(e));
+      await queueEmailRetry(
+        env,
+        "new-request:" + b.id + ":" + adminEmail,
+        adminEmail,
+        "New tablecloth request - " + b.id,
+        adminRequestHtml(copy, approveUrl),
+        errorMessage(e)
+      );
       console.error("admin request email failed", adminEmail, e);
     }
   }
 
   return errors;
+}
+
+async function getEmailRetryQueue(env) {
+  const raw = await env.SETTINGS.get(EMAIL_RETRY_QUEUE_KEY);
+  if (!raw) return [];
+  try {
+    const queue = JSON.parse(raw);
+    return Array.isArray(queue) ? queue : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveEmailRetryQueue(env, queue) {
+  await env.SETTINGS.put(EMAIL_RETRY_QUEUE_KEY, JSON.stringify(queue.slice(-100)));
+}
+
+async function queueEmailRetry(env, key, to, subject, html, reason) {
+  const queue = await getEmailRetryQueue(env);
+  const now = new Date().toISOString();
+  const existing = queue.find(item => item.key === key);
+  if (existing) {
+    existing.to = to;
+    existing.subject = subject;
+    existing.html = html;
+    existing.lastError = reason;
+    existing.updated = now;
+  } else {
+    queue.push({
+      key,
+      to,
+      subject,
+      html,
+      attempts: 0,
+      created: now,
+      updated: now,
+      lastError: reason,
+    });
+  }
+  await saveEmailRetryQueue(env, queue);
+}
+
+async function retryQueuedEmails(env) {
+  const queue = await getEmailRetryQueue(env);
+  const remaining = [];
+  let sent = 0;
+  let failed = 0;
+
+  for (const item of queue) {
+    try {
+      await sendEmail(env, item.to, item.subject, item.html);
+      sent++;
+    } catch (e) {
+      failed++;
+      item.attempts = Number(item.attempts || 0) + 1;
+      item.updated = new Date().toISOString();
+      item.lastError = errorMessage(e);
+      if (item.attempts < 10) remaining.push(item);
+    }
+  }
+
+  await saveEmailRetryQueue(env, remaining);
+  return { retrySent: sent, retryFailed: failed, retryRemaining: remaining.length };
 }
 
 function groupItemsByOwner(items, owners) {
