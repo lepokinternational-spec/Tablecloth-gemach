@@ -194,6 +194,16 @@
   .daycard .dctop b{font-size:1.02rem}
   .daycard .dcmeta{font-size:.85rem;color:var(--ink-soft);margin-top:7px;line-height:1.5} .daycard .dcmeta b{color:var(--ink)}
   .daycard .items{margin-top:9px} .daycard .acts{margin-top:11px;display:flex;gap:8px;flex-wrap:wrap}
+  .pending-under-calendar{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .pending-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .pending-head h3{font-size:1.1rem;margin-bottom:2px}.pending-head .sub{font-size:.84rem}
+  .pending-list{display:grid;gap:10px}
+  .pending-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;background:#FFFCF6;border:1px solid #E8D3A6;border-radius:11px;padding:13px}
+  .pending-title{font-weight:800;font-size:1rem}.pending-title span{font-size:.78rem;color:var(--ink-soft);font-weight:700}
+  .pending-meta{font-size:.84rem;color:var(--ink-soft);line-height:1.45;margin-top:5px}.pending-meta b{color:var(--ink)}
+  .pending-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .pending-empty{background:var(--linen-2);border:1px dashed var(--line);border-radius:10px;color:var(--ink-soft);padding:12px 14px;font-size:.9rem}
+  @media(max-width:760px){.pending-card{grid-template-columns:1fr}.pending-actions{justify-content:flex-start}}
   .day .holi.cal-big-dot{top:8px;right:8px}
   .adminlegend{display:flex;gap:18px;flex-wrap:wrap;font-size:.83rem;font-weight:600;color:var(--ink);margin-bottom:14px;align-items:center}
   @media(max-width:640px){.cal-grid.big .day{min-height:86px;padding:5px}.cal-grid.big .day .g{font-size:.95rem}.bkbadge{font-size:.6rem;padding:2px 4px}.bkbadge .cloth{font-size:.56rem}}
@@ -508,6 +518,7 @@
       <span><span class="dot" style="background:var(--gold)"></span>Holiday</span>
     </div>
     <div class="cal-grid big" id="pCalGrid"></div>
+    <div class="pending-under-calendar" id="pendingUnderCalendar"></div>
   </section>
 
   <div class="actions" style="margin-top:18px">
@@ -1785,6 +1796,41 @@
       +'<div class="stat"><div class="n">'+pieces+'</div><div class="l">Linens out today</div></div>'
       +'<div class="stat"><div class="n">'+fam+'</div><div class="l">Families served</div></div>';
   }
+  function renderPendingCalendarList(){
+    const wrap=document.getElementById("pendingUnderCalendar"); if(!wrap)return;
+    const list=[...adminBookings()].filter(b=>b.status==="pending").sort((a,b)=>{
+      const ad=parseISO(a.pickup||a.start||iso(today())), bd=parseISO(b.pickup||b.start||iso(today()));
+      return ad-bd || new Date(a.created||0)-new Date(b.created||0);
+    });
+    let html='<div class="pending-head"><div><h3>Pending requests</h3><div class="sub">Requests waiting for this admin to approve.</div></div><span class="pill pending">'+list.length+' pending</span></div>';
+    if(!list.length){ wrap.innerHTML=html+'<div class="pending-empty">No pending requests right now.</div>'; return; }
+    html+='<div class="pending-list">'+list.map(b=>{
+      const start=b.pickup||b.start, ret=b.ret||b.start;
+      const dateText=start&&ret ? fmt(start)+' → '+fmt(ret) : 'Dates not set';
+      return '<div class="pending-card">'
+        +'<div><div class="pending-title">'+esc(b.name||"Booking")+' <span>· '+esc(b.id||"")+'</span></div>'
+        +'<div class="pending-meta"><b>'+dateText+'</b>'
+        +'<br>'+contactLinksHtml(b)
+        +(b.address?'<br>'+esc(b.address):'')
+        +(b.note?'<br>'+esc(b.note):'')+'</div>'
+        +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+esc(i.name)+'</span>').join("")+'</div></div>'
+        +'<div class="pending-actions">'
+        +'<button class="btn sm" data-pending-approve="'+esc(b.id||"")+'">Approve & edit</button>'
+        +'<button class="btn ghost sm" data-pending-email="'+esc(b.id||"")+'">View request</button>'
+        +'<button class="btn ghost sm" data-pending-cancel="'+esc(b.id||"")+'">Cancel</button>'
+        +'</div></div>';
+    }).join("")+'</div>';
+    wrap.innerHTML=html;
+    wrap.querySelectorAll("[data-pending-approve]").forEach(btn=>btn.onclick=()=>{
+      const b=bookings.find(x=>x.id===btn.dataset.pendingApprove); if(b)showApproveModal(b,iso(parseISO(b.start||b.pickup||iso(today()))));
+    });
+    wrap.querySelectorAll("[data-pending-email]").forEach(btn=>btn.onclick=()=>{
+      const b=bookings.find(x=>x.id===btn.dataset.pendingEmail); if(b)showEmailModal(b);
+    });
+    wrap.querySelectorAll("[data-pending-cancel]").forEach(btn=>btn.onclick=()=>{
+      if(btn.dataset.pendingCancel)cancelBooking(btn.dataset.pendingCancel);
+    });
+  }
   function renderBookingList(){
     const wrap=document.getElementById("bookingList");
     const list=[...adminBookings()].sort((a,b)=>new Date(b.created)-new Date(a.created));
@@ -2149,7 +2195,7 @@
     btn.textContent=open?"Edit":"Close";
     if(!open){renderCareManager();renderPhotoManager();}
   }
-  function renderAdmin(){ renderStats(); renderAdminCalendar(); renderCareManager(); renderPhotoManager(); }
+  function renderAdmin(){ renderStats(); renderAdminCalendar(); renderPendingCalendarList(); renderCareManager(); renderPhotoManager(); }
   function adminUnlocked(){ return sessionStorage.getItem("linen_admin_unlocked")==="1"; }
   function clearAdminSession(){
     ADMIN_TOKEN_VALUE="";
