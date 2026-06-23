@@ -1772,12 +1772,17 @@
   function renderStats(){
     const mine=adminBookings();
     const pend=mine.filter(b=>b.status==="pending").length, appr=mine.filter(b=>b.status==="approved").length;
-    let pieces=0; mine.filter(b=>b.status==="approved").forEach(b=>ownedBookingItems(b).forEach(i=>pieces+=i.qty));
+    const todayISO=iso(today());
+    let pieces=0; mine.filter(b=>{
+      if(b.status!=="approved")return false;
+      const w=loanWindow(b);
+      return w[0]&&w[1]&&parseISO(w[0])<=parseISO(todayISO)&&parseISO(w[1])>=parseISO(todayISO);
+    }).forEach(b=>ownedBookingItems(b).forEach(i=>pieces+=i.qty));
     let fam=new Set(mine.filter(b=>b.status==="approved").map(b=>b.name)).size;
     document.getElementById("stats").innerHTML=
       '<div class="stat acc"><div class="n">'+pend+'</div><div class="l">Awaiting approval</div></div>'
       +'<div class="stat"><div class="n">'+appr+'</div><div class="l">Confirmed</div></div>'
-      +'<div class="stat"><div class="n">'+pieces+'</div><div class="l">Linens out (confirmed)</div></div>'
+      +'<div class="stat"><div class="n">'+pieces+'</div><div class="l">Linens out today</div></div>'
       +'<div class="stat"><div class="n">'+fam+'</div><div class="l">Families served</div></div>';
   }
   function renderBookingList(){
