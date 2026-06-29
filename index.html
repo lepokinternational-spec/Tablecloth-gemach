@@ -708,6 +708,9 @@
     if(!r.ok) throw new Error("api "+action+" "+r.status);
     return r.json();
   }
+  function kickDailyReminders(){
+    apiFetch("runTodayReminders",{cache:"no-store"}).catch(e=>console.warn("daily reminder check failed",e));
+  }
   async function loadPublicOwnerConfig(){
     try{
       const cfg=await apiGet("ownerConfig",false);
@@ -2356,6 +2359,7 @@
     pendingApproveId=requestedApprovalId();
     const preferredView=sessionStorage.getItem("linen_active_view");
     await loadPublicOwnerConfig();
+    kickDailyReminders();
     await loadBookings();
     await restoreAdminSession();
     updateDateField(); renderCalendar(); renderCatalog(); renderCart();

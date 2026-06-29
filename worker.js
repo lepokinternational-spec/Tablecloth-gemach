@@ -49,12 +49,27 @@ export default {
       if (request.method === "GET" && action === "ping") {
         return json({
           ok: true,
-          version: "2026-06-09-cors-email-diagnostics",
+          version: "2026-06-29-reminder-fallback",
           origin: request.headers.get("Origin") || "",
           hasSettings: !!env.SETTINGS,
           hasFromEmail: !!env.FROM_EMAIL,
           hasResendApiKey: !!env.RESEND_API_KEY,
           time: new Date().toISOString(),
+        }, 200, cors);
+      }
+
+      if (request.method === "GET" && action === "runTodayReminders") {
+        const result = await sendDailyReminders(env, todayISO(env));
+        const retry = await retryQueuedEmails(env);
+        return json({
+          ok: true,
+          date: result.date,
+          customerEmails: result.customerEmails,
+          adminEmails: result.adminEmails,
+          emailErrorCount: result.emailErrors.length,
+          retrySent: retry.retrySent,
+          retryFailed: retry.retryFailed,
+          retryRemaining: retry.retryRemaining,
         }, 200, cors);
       }
 
@@ -281,6 +296,15 @@ async function sendDailyReminders(env, dateISO) {
         customerEmails++;
       } catch (e) {
         emailErrors.push("Customer reminder " + b.id + " to " + (b.email || "missing email") + ": " + errorMessage(e));
+        await queueEmailRetry(
+          env,
+          "customer-reminder:" + customerKey,
+          b.email,
+          customerReminderSubject(events),
+          customerReminderHtml(b, events, dateISO, contactEmailsForBooking(b, owners), collectionAddressesForBooking(b, owners)),
+          errorMessage(e)
+        );
+        await env.SETTINGS.put(customerKey, "queued", { expirationTtl: 60 * 60 * 24 * 45 });
       }
     }
   }
@@ -295,6 +319,15 @@ async function sendDailyReminders(env, dateISO) {
       adminEmails++;
     } catch (e) {
       emailErrors.push("Admin reminder to " + adminEmail + ": " + errorMessage(e));
+      await queueEmailRetry(
+        env,
+        "admin-reminder:" + key,
+        adminEmail,
+        "Today's Linen Collection pickups and returns",
+        adminDigestHtml(entries, dateISO),
+        errorMessage(e)
+      );
+      await env.SETTINGS.put(key, "queued", { expirationTtl: 60 * 60 * 24 * 45 });
     }
   }
 
