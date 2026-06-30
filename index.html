@@ -132,6 +132,7 @@
   .thumbs .thumb.on{border-color:var(--teal);opacity:1} .thumbs .thumb:hover{opacity:1}
   .dim{font-size:.74rem;color:var(--ink-soft);margin-top:2px;letter-spacing:.02em}
   .partial-avail{margin-top:12px;color:var(--terra);font-size:.82rem;font-weight:800;line-height:1.35}
+  .browse-available{width:100%;background:#EEF4EF;border:1px solid #D5E3D7;color:var(--teal);border-radius:10px;padding:10px 12px;font-size:.82rem;font-weight:800;text-align:center}
   .lightbox{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(18,18,18,.9);display:none;align-items:center;justify-content:center;z-index:99999;padding:18px;cursor:zoom-out}
   .lightbox.open{display:flex}
   .lightbox img{max-width:95vw;max-height:92vh;border-radius:12px;box-shadow:0 12px 50px rgba(0,0,0,.55)}
@@ -1582,7 +1583,7 @@
   /* ============ Catalogue ============ */
   function renderCatalog(){
     const wrap=document.getElementById("catalog"); wrap.innerHTML="";
-    const have=!!pickDate, e=retDate||pickDate;
+    const have=!!(pickDate&&retDate), e=retDate;
     if(have&&!availabilityLoaded){
       document.getElementById("catalogSub").textContent="Availability could not be checked. Please try again.";
       wrap.innerHTML='<div class="empty">Could not check live availability. Please refresh or try again.</div>';
@@ -1590,7 +1591,7 @@
     }
     document.getElementById("catalogSub").textContent=have
       ? "Live availability for "+fmt(pickDate)+(e!==pickDate?" → "+fmt(e):"")+"."
-      : "Choose your dates above to see live availability.";
+      : "Choose your dates above to check live availability. Until then, every item is shown as available.";
     INVENTORY.forEach(inv=>{
       const avail=have?availForWindow(inv.id,pickDate,e):inv.stock;
       const partialText=have&&avail<=0?partialAvailabilityText(inv.id,pickDate,e):"";
@@ -1604,7 +1605,11 @@
       if(have&&avail<=0&&!partialText)return;
       const card=document.createElement("div"); card.className="card";
       var pics=photosFor(inv);var pic='<div class="pic"><img class="mainpic" loading="lazy" src="'+esc(pics[0])+'" alt="'+esc(inv.name)+'">';if(pics.length>1){pic+='<div class="thumbs">'+pics.map(function(u,i){return '<img class="thumb'+(i===0?' on':'')+'" loading="lazy" src="'+esc(u)+'">';}).join('')+'</div>';}pic+='</div>';card.innerHTML=pic+'<div class="body"><h4>'+esc(inv.name)+'</h4><div class="size">'+esc(inv.size)+'</div>'+(inv.dim?'<div class="dim">'+esc(inv.dim)+'</div>':'')+'</div>';if(pics.length>1){var _m=card.querySelector(".mainpic");card.querySelectorAll(".thumb").forEach(function(t){t.addEventListener("click",function(){_m.src=t.src;card.querySelectorAll(".thumb").forEach(function(x){x.classList.remove("on");});t.classList.add("on");});});}
-      if(have&&avail>0){
+      if(!have){
+        const body=card.querySelector(".body"); const row=document.createElement("div"); row.className="qtyrow";
+        row.innerHTML='<div class="browse-available">Available &middot; '+(variableQty?("up to "+inv.stock+" available"):(inv.stock+" included"))+'</div>';
+        body.appendChild(row);
+      }else if(avail>0){
         const body=card.querySelector(".body"); const row=document.createElement("div"); row.className="qtyrow";
         if(variableQty){
           row.innerHTML='<div class="qtypick"><div class="qnote">'+avail+' available</div><div class="stepper"><button type="button" data-qminus="'+esc(inv.id)+'" '+(inCart<=0?'disabled':'')+'>−</button><input value="'+inCart+'" readonly aria-label="'+esc(inv.name)+' quantity"><button type="button" data-qplus="'+esc(inv.id)+'" '+(inCart>=avail?'disabled':'')+'>+</button></div></div>';
@@ -1638,8 +1643,8 @@
   /* ============ Request panel ============ */
   function cartArr(){ return Object.keys(cart).map(id=>{const inv=INVENTORY.find(i=>i.id===id);return{id,name:inv.name,qty:cart[id],ownerEmail:clothOwnerEmail(id)};}); }
   function renderCart(){
-    const items=cartArr(), wrap=document.getElementById("cartItems"), dpill=document.getElementById("cartDates"), have=!!pickDate;
-    const e=retDate||pickDate, days=have?daysInc(pickDate,e):0;
+    const items=cartArr(), wrap=document.getElementById("cartItems"), dpill=document.getElementById("cartDates"), have=!!(pickDate&&retDate);
+    const e=retDate, days=have?daysInc(pickDate,e):0;
     dpill.innerHTML=have
       ? ('📦 <b>'+fmt(pickDate)+'</b> → <b>'+fmt(e)+'</b> · '+days+(days===1?' day':' days')+(HFMT?'<br><span class="he" dir="rtl">'+hebFull(parseISO(pickDate))+' – '+hebFull(parseISO(e))+'</span>':''))
       : "No dates selected yet";
@@ -1654,7 +1659,7 @@
     document.getElementById("cartPieces").textContent=pieces; document.getElementById("cartCount").classList.remove("hidden");
     document.getElementById("toCheckout").disabled=!have;
   }
-  document.getElementById("toCheckout").onclick=()=>{ if(!pickDate){toast("Pick your dates first");return;}
+  document.getElementById("toCheckout").onclick=()=>{ if(!pickDate||!retDate){toast("Pick pickup and return dates first");return;}
     document.getElementById("checkout").classList.remove("hidden"); document.getElementById("checkout").scrollIntoView({behavior:"smooth",block:"nearest"}); };
 
   function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);}
@@ -2320,7 +2325,7 @@
   document.getElementById("dateField").onclick=(e)=>{ e.stopPropagation();
     const pc=document.getElementById("popCal"); if(pc.hidden){ openPopCal(); setHint(); } else closePopCal(); };
   document.getElementById("calDone").onclick=async(e)=>{ e.stopPropagation();
-    if(!pickDate){ toast("Pick your dates"); return; }
+    if(!pickDate||!retDate){ toast("Pick pickup and return dates"); return; }
     if(!(await loadBookings())){renderCatalog(); renderCart(); toast("Could not check availability — please try again"); return;}
     renderCalendar(); renderCatalog(); renderCart();
     closePopCal(); document.getElementById("catalog").scrollIntoView({behavior:"smooth",block:"start"});
@@ -2332,7 +2337,7 @@
     closePopCal();
   },0));
   document.getElementById("searchBtn").onclick=async()=>{
-    if(!pickDate){ openPopCal(); toast("Pick your dates"); return; }
+    if(!pickDate||!retDate){ openPopCal(); toast("Pick pickup and return dates"); return; }
     if(!(await loadBookings())){renderCatalog(); renderCart(); toast("Could not check availability — please try again"); return;}
     renderCalendar(); renderCatalog(); renderCart();
     closePopCal();
@@ -2349,7 +2354,7 @@
   document.getElementById("newBookingBtn").onclick=()=>showNewBookingModal();
   const adminEmailEl=document.getElementById("adminEmail"); if(adminEmailEl) adminEmailEl.textContent=ADMIN_EMAIL;
 
-  (function defaults(){ pickDate=iso(addDays(today(),14)); retDate=iso(addDays(today(),15)); calMonth=som(parseISO(pickDate)); })();
+  (function defaults(){ pickDate=null; retDate=null; calMonth=som(today()); })();
 
   (async function init(){
     loadCustomInventory();
