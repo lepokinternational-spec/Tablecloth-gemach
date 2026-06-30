@@ -1483,7 +1483,7 @@
       const items=[];
       Object.keys(apQty).forEach(id=>{
         const inv=INVENTORY.find(i=>i.id===id), qty=parseInt(apQty[id],10)||0;
-        if(inv&&qty>0)items.push({id:inv.id,name:inv.name,qty});
+        if(inv&&qty>0)items.push({id:inv.id,name:inv.name,qty,ownerEmail:clothOwnerEmail(inv.id)});
       });
       return items;
     }
@@ -1636,7 +1636,7 @@
   function toggleSet(id,count){ if(cart[id])delete cart[id]; else cart[id]=count; renderCatalog(); renderCart(); }
 
   /* ============ Request panel ============ */
-  function cartArr(){ return Object.keys(cart).map(id=>{const inv=INVENTORY.find(i=>i.id===id);return{id,name:inv.name,qty:cart[id]};}); }
+  function cartArr(){ return Object.keys(cart).map(id=>{const inv=INVENTORY.find(i=>i.id===id);return{id,name:inv.name,qty:cart[id],ownerEmail:clothOwnerEmail(id)};}); }
   function renderCart(){
     const items=cartArr(), wrap=document.getElementById("cartItems"), dpill=document.getElementById("cartDates"), have=!!pickDate;
     const e=retDate||pickDate, days=have?daysInc(pickDate,e):0;
@@ -1990,7 +1990,7 @@
     document.getElementById("nbCreate").onclick=async()=>{
       const name=document.getElementById("nbName").value.trim();
       const p=nbPickup, r=nbReturn;
-      const items=editableInventory().filter(i=>qty[i.id]>0).map(i=>({id:i.id,name:i.name,qty:qty[i.id]}));
+      const items=editableInventory().filter(i=>qty[i.id]>0).map(i=>({id:i.id,name:i.name,qty:qty[i.id],ownerEmail:clothOwnerEmail(i.id)}));
       if(!name||!p||!r||parseISO(r)<parseISO(p)||!items.length){ document.getElementById("nbErr").classList.remove("hidden"); return; }
       const b={ id:"BK"+Date.now().toString(36).toUpperCase(), name,
         phone:document.getElementById("nbPhone").value.trim(), email:document.getElementById("nbEmail").value.trim(),

@@ -159,7 +159,8 @@ export default {
         await upsertBooking(env, b);
 
         if (body.sendApproval && b.email) {
-          await sendEmail(env, b.email, "Your tablecloth booking is approved", approvalHtml(b, [admin.email], collectionAddressesForBooking(b, owners, admin.email)));
+          const contactEmails = contactEmailsForBooking(b, owners, admin.email);
+          await sendEmail(env, b.email, "Your tablecloth booking is approved", approvalHtml(b, contactEmails, collectionAddressesForBooking(b, owners, admin.email)));
         }
 
         return json({ ok: true }, 200, cors);
@@ -442,18 +443,25 @@ async function retryQueuedEmails(env) {
   return { retrySent: sent, retryFailed: failed, retryRemaining: remaining.length };
 }
 
-function groupItemsByOwner(items, owners) {
+function ownerEmailForItem(item, owners, fallbackEmail) {
+  const id = String(item && item.id || "").trim();
+  const directOwner = id && owners && owners[id];
+  const itemOwner = normalizeEmail((item && (item.ownerEmail || item.owner || item.adminEmail)) || "");
+  return normalizeEmail(directOwner || itemOwner || fallbackEmail || MAIN_ADMIN_EMAIL);
+}
+
+function groupItemsByOwner(items, owners, fallbackEmail) {
   const grouped = new Map();
   for (const item of items || []) {
-    const ownerEmail = normalizeEmail(owners[item.id] || MAIN_ADMIN_EMAIL);
+    const ownerEmail = ownerEmailForItem(item, owners, fallbackEmail);
     if (!grouped.has(ownerEmail)) grouped.set(ownerEmail, []);
     grouped.get(ownerEmail).push(item);
   }
   return grouped;
 }
 
-function contactEmailsForBooking(b, owners) {
-  return [...groupItemsByOwner(b.items || [], owners).keys()];
+function contactEmailsForBooking(b, owners, fallbackEmail) {
+  return [...groupItemsByOwner(b.items || [], owners, fallbackEmail).keys()];
 }
 
 function collectionAddressForEmail(email) {
@@ -463,7 +471,7 @@ function collectionAddressForEmail(email) {
 function collectionAddressesForBooking(b, owners, fallbackEmail) {
   const grouped = new Map();
   for (const item of b.items || []) {
-    const ownerEmail = normalizeEmail((item.id && owners && owners[item.id]) || fallbackEmail || MAIN_ADMIN_EMAIL);
+    const ownerEmail = ownerEmailForItem(item, owners, fallbackEmail);
     if (!grouped.has(ownerEmail)) grouped.set(ownerEmail, []);
     grouped.get(ownerEmail).push(item);
   }
@@ -488,7 +496,7 @@ function collectionAddressesForBooking(b, owners, fallbackEmail) {
 
 function bookingBelongsToAdmin(b, adminEmail, owners) {
   const email = normalizeEmail(adminEmail);
-  return (b.items || []).some(item => normalizeEmail(owners[item.id] || MAIN_ADMIN_EMAIL) === email);
+  return (b.items || []).some(item => ownerEmailForItem(item, owners) === email);
 }
 
 async function getBookings(env) {
@@ -635,6 +643,7 @@ function normalizeBooking(b) {
       id: String(it.id || "").trim(),
       name: String(it.name || "").trim(),
       qty: Number(it.qty || 0),
+      ownerEmail: normalizeEmail(it.ownerEmail || it.owner || it.adminEmail || ""),
     })).filter(it => it.id || it.name) : [],
     start: String(b.start || b.pickup || "").trim(),
     pickup: String(b.pickup || b.start || "").trim(),
