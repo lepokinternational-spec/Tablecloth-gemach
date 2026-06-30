@@ -715,7 +715,7 @@
   async function loadPublicOwnerConfig(){
     try{
       const cfg=await apiGet("ownerConfig",false);
-      tableclothOwners=Object.assign({},DEFAULT_OWNERS,normalizedOwnerMap((cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{}));
+      tableclothOwners=Object.assign({},DEFAULT_OWNERS,tableclothOwners||{},normalizedOwnerMap((cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{}));
     }catch(e){
       tableclothOwners=Object.assign({},DEFAULT_OWNERS,tableclothOwners||{});
     }
@@ -730,7 +730,7 @@
       const cfg=await apiGet("adminConfig",true);
       adminMe=cfg.me||adminMe;
       adminUsers=Array.isArray(cfg.admins)?cfg.admins.map(a=>Object.assign({},a,{email:normalizeAdminEmail(a.email)})):[];
-      tableclothOwners=Object.assign({},DEFAULT_OWNERS,normalizedOwnerMap((cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{}));
+      tableclothOwners=Object.assign({},DEFAULT_OWNERS,tableclothOwners||{},normalizedOwnerMap((cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{}));
       INVENTORY.forEach(inv=>{
         if(inv.custom&&inv.owner&&!tableclothOwners[inv.id])tableclothOwners[inv.id]=normalizeAdminEmail(inv.owner);
         if(inv.custom&&!tableclothOwners[inv.id]&&sameEmail(currentAdminEmail(),MIRI_ADMIN_EMAIL))tableclothOwners[inv.id]=MIRI_ADMIN_EMAIL;
@@ -755,7 +755,10 @@
   function currentAdminEmail(){return normalizeAdminEmail((adminMe&&adminMe.email)||ADMIN_EMAIL_VALUE||"");}
   function isSuperAdmin(){return !!adminMe&&adminMe.role==="super";}
   function canChooseOwners(){return isSuperAdmin()&&ownerUsers().length>1;}
-  function clothOwnerEmail(id){return normalizeAdminEmail(tableclothOwners[id]||DEFAULT_OWNERS[id]||ADMIN_EMAIL);}
+  function clothOwnerEmail(id){
+    const inv=INVENTORY.find(i=>i.id===id);
+    return normalizeAdminEmail(tableclothOwners[id]||DEFAULT_OWNERS[id]||(inv&&inv.owner)||ADMIN_EMAIL);
+  }
   function collectionAddressForOwner(email){
     return sameEmail(email,MIRI_ADMIN_EMAIL)?"11 francklyn gardens":"29 Broadfields avenue";
   }
@@ -1103,16 +1106,18 @@
         const d=data&&data[inv.id]; if(!d)return;
         const name=String(d.name||"").trim(), size=String(d.size||"").trim(), dim=String(d.dim||"").trim();
         const stock=Math.max(1,parseInt(d.stock,10)||inv.stock||1);
+        const owner=normalizeAdminEmail(d.owner||"");
         if(name)inv.name=name;
         if(size)inv.size=size;
         inv.dim=dim;
         inv.stock=stock;
+        if(owner)tableclothOwners[inv.id]=owner;
       });
     }catch(e){console.error(e);}
   }
   function saveDetailOverrides(){
     const data={};
-    INVENTORY.forEach(inv=>{data[inv.id]={name:inv.name,size:inv.size,dim:inv.dim||"",stock:inv.stock};});
+    INVENTORY.forEach(inv=>{data[inv.id]={name:inv.name,size:inv.size,dim:inv.dim||"",stock:inv.stock,owner:clothOwnerEmail(inv.id)};});
     localStorage.setItem(DETAIL_KEY,JSON.stringify(data));
   }
   function loadPhotoOverrides(){
@@ -2158,6 +2163,8 @@
       if(owner){
         if(owner.value)tableclothOwners[inv.id]=owner.value;
         else delete tableclothOwners[inv.id];
+      }else if(clothOwnedByCurrentAdmin(inv)){
+        tableclothOwners[inv.id]=currentAdminEmail();
       }
       if(!careConfig.items)careConfig.items={};
       if(care)careConfig.items[inv.id]=care; else delete careConfig.items[inv.id];
