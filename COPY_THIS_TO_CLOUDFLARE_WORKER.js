@@ -22,6 +22,7 @@ const EMAIL_ALIASES = {
   "linencollection11@gmail.com": MIRI_ADMIN_EMAIL,
 };
 const EMAIL_RETRY_QUEUE_KEY = "EMAIL_RETRY_QUEUE";
+const CATALOG_CONFIG_KEY = "CATALOG_CONFIG";
 
 export default {
   async fetch(request, env) {
@@ -44,6 +45,10 @@ export default {
 
       if (request.method === "GET" && action === "ownerConfig") {
         return json({ owners: await getOwners(env) }, 200, cors);
+      }
+
+      if (request.method === "GET" && action === "catalogConfig") {
+        return json({ catalog: await getCatalogConfig(env) }, 200, cors);
       }
 
       if (request.method === "GET" && action === "ping") {
@@ -92,6 +97,7 @@ export default {
           me: publicAdmin(admin),
           admins: (await getAdmins(env)).map(publicAdmin),
           owners: await getOwners(env),
+          catalog: await getCatalogConfig(env),
         }, 200, cors);
       }
 
@@ -215,6 +221,23 @@ export default {
           if (clothId && email) clean[clothId] = normalizeEmail(email);
         }
         await env.SETTINGS.put("TABLECLOTH_OWNERS", JSON.stringify(clean));
+        return json({ ok: true }, 200, cors);
+      }
+
+      if (action === "saveCatalogConfig") {
+        const admin = await requireAdmin(request, env);
+        if (!admin) return json({ error: "unauthorized" }, 401, cors);
+
+        const catalog = cleanCatalogConfig(body.catalog || {});
+        await env.SETTINGS.put(CATALOG_CONFIG_KEY, JSON.stringify(catalog));
+        const owners = await getOwners(env);
+        for (const item of catalog.customInventory || []) {
+          if (item.id && item.owner) owners[item.id] = item.owner;
+        }
+        for (const [id, item] of Object.entries(catalog.details || {})) {
+          if (id && item.owner) owners[id] = item.owner;
+        }
+        await env.SETTINGS.put("TABLECLOTH_OWNERS", JSON.stringify(normalizeOwnerMap(owners)));
         return json({ ok: true }, 200, cors);
       }
 
@@ -520,6 +543,90 @@ async function upsertBooking(env, booking) {
   if (idx >= 0) bookings[idx] = booking;
   else bookings.push(booking);
   await saveBookings(env, bookings);
+}
+
+async function getCatalogConfig(env) {
+  const raw = await env.SETTINGS.get(CATALOG_CONFIG_KEY);
+  if (!raw) return {};
+  try {
+    return cleanCatalogConfig(JSON.parse(raw));
+  } catch {
+    return {};
+  }
+}
+
+function emptyCatalogConfig() {
+  return {
+    customInventory: [],
+    details: {},
+    photos: {},
+    care: { all: "", items: {} },
+  };
+}
+
+function cleanCatalogConfig(config) {
+  config = config && typeof config === "object" ? config : {};
+  return {
+    customInventory: cleanCustomInventory(config.customInventory),
+    details: cleanDetails(config.details),
+    photos: cleanPhotos(config.photos),
+    care: cleanCare(config.care),
+  };
+}
+
+function cleanCustomInventory(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map(item => {
+    const id = String(item && item.id || "").trim();
+    const name = String(item && item.name || "").trim();
+    const size = String(item && item.size || "Tablecloth").trim() || "Tablecloth";
+    const dim = String(item && item.dim || "").trim();
+    const stock = Math.max(1, parseInt(item && item.stock, 10) || 1);
+    const imgs = Array.isArray(item && item.imgs)
+      ? item.imgs.map(x => String(x || "").trim()).filter(Boolean)
+      : [];
+    const owner = normalizeEmail(item && item.owner || "");
+    if (!id || !name || !imgs.length) return null;
+    return { id, name, size, dim, stock, imgs, custom: true, owner };
+  }).filter(Boolean);
+}
+
+function cleanDetails(details) {
+  const clean = {};
+  if (!details || typeof details !== "object") return clean;
+  for (const [id, item] of Object.entries(details)) {
+    if (!id || !item || typeof item !== "object") continue;
+    clean[id] = {
+      name: String(item.name || "").trim(),
+      size: String(item.size || "").trim(),
+      dim: String(item.dim || "").trim(),
+      stock: Math.max(1, parseInt(item.stock, 10) || 1),
+      owner: normalizeEmail(item.owner || ""),
+    };
+  }
+  return clean;
+}
+
+function cleanPhotos(photos) {
+  const clean = {};
+  if (!photos || typeof photos !== "object") return clean;
+  for (const [id, list] of Object.entries(photos)) {
+    if (!id || !Array.isArray(list)) continue;
+    const imgs = list.map(x => String(x || "").trim()).filter(Boolean);
+    if (imgs.length) clean[id] = imgs;
+  }
+  return clean;
+}
+
+function cleanCare(care) {
+  const items = {};
+  if (care && care.items && typeof care.items === "object") {
+    for (const [id, text] of Object.entries(care.items)) {
+      const cleanText = String(text || "").trim();
+      if (id && cleanText) items[id] = cleanText;
+    }
+  }
+  return { all: String(care && care.all || "").trim(), items };
 }
 
 async function getOwners(env) {

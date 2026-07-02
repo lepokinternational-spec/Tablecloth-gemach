@@ -731,6 +731,7 @@
       adminMe=cfg.me||adminMe;
       adminUsers=Array.isArray(cfg.admins)?cfg.admins.map(a=>Object.assign({},a,{email:normalizeAdminEmail(a.email)})):[];
       tableclothOwners=Object.assign({},DEFAULT_OWNERS,tableclothOwners||{},normalizedOwnerMap((cfg.owners&&typeof cfg.owners==="object")?cfg.owners:{}));
+      if(cfg.catalog)applyCatalogConfig(cfg.catalog);
       INVENTORY.forEach(inv=>{
         if(inv.custom&&inv.owner&&!tableclothOwners[inv.id])tableclothOwners[inv.id]=normalizeAdminEmail(inv.owner);
         if(inv.custom&&!tableclothOwners[inv.id]&&sameEmail(currentAdminEmail(),MIRI_ADMIN_EMAIL))tableclothOwners[inv.id]=MIRI_ADMIN_EMAIL;
@@ -1129,6 +1130,87 @@
   function savePhotoOverrides(){
     const data={}; INVENTORY.forEach(inv=>{data[inv.id]=photosFor(inv);});
     localStorage.setItem(PHOTO_KEY,JSON.stringify(data));
+  }
+  function currentCustomInventoryData(){
+    return INVENTORY.filter(inv=>inv.custom).map(inv=>({id:inv.id,name:inv.name,size:inv.size,dim:inv.dim,stock:inv.stock,imgs:photosFor(inv),custom:true,owner:normalizeAdminEmail(tableclothOwners[inv.id]||inv.owner||currentAdminEmail())}));
+  }
+  function currentDetailData(){
+    const data={};
+    INVENTORY.forEach(inv=>{data[inv.id]={name:inv.name,size:inv.size,dim:inv.dim||"",stock:inv.stock,owner:clothOwnerEmail(inv.id)};});
+    return data;
+  }
+  function currentPhotoData(){
+    const data={}; INVENTORY.forEach(inv=>{data[inv.id]=photosFor(inv);});
+    return data;
+  }
+  function currentCatalogConfig(){
+    return {customInventory:currentCustomInventoryData(),details:currentDetailData(),photos:currentPhotoData(),care:normalizeCare(careConfig)};
+  }
+  function applyCatalogConfig(catalog){
+    catalog=catalog&&typeof catalog==="object"?catalog:{};
+    if(Array.isArray(catalog.customInventory)){
+      const seen={};
+      catalog.customInventory.forEach(item=>{
+        const inv=cleanInventoryItem(item); if(!inv)return;
+        seen[inv.id]=1;
+        const existing=INVENTORY.find(x=>x.id===inv.id);
+        if(existing)Object.assign(existing,{name:inv.name,size:inv.size,dim:inv.dim,stock:inv.stock,imgs:inv.imgs,custom:true,owner:inv.owner});
+        else INVENTORY.push(inv);
+        if(inv.owner)tableclothOwners[inv.id]=inv.owner;
+      });
+      for(let i=INVENTORY.length-1;i>=0;i--){
+        if(INVENTORY[i].custom&&!seen[INVENTORY[i].id])INVENTORY.splice(i,1);
+      }
+    }
+    const details=catalog.details&&typeof catalog.details==="object"?catalog.details:{};
+    INVENTORY.forEach(inv=>{
+      const d=details[inv.id]; if(!d)return;
+      const name=String(d.name||"").trim(), size=String(d.size||"").trim(), dim=String(d.dim||"").trim();
+      const stock=Math.max(1,parseInt(d.stock,10)||inv.stock||1);
+      const owner=normalizeAdminEmail(d.owner||"");
+      if(name)inv.name=name;
+      if(size)inv.size=size;
+      inv.dim=dim;
+      inv.stock=stock;
+      if(owner)tableclothOwners[inv.id]=owner;
+    });
+    const photos=catalog.photos&&typeof catalog.photos==="object"?catalog.photos:{};
+    INVENTORY.forEach(inv=>{
+      if(Array.isArray(photos[inv.id])){
+        const pics=photos[inv.id].map(cleanPhotoUrl).filter(Boolean);
+        if(pics.length)inv.imgs=pics;
+      }
+    });
+    if(catalog.care)careConfig=normalizeCare(catalog.care);
+  }
+  async function loadSharedCatalogConfig(){
+    try{
+      const cfg=await apiGet("catalogConfig",false);
+      if(cfg&&cfg.catalog)applyCatalogConfig(cfg.catalog);
+      return true;
+    }catch(e){
+      console.warn("shared catalogue load failed",e);
+      return false;
+    }
+  }
+  function saveCatalogConfigLocal(){
+    localStorage.setItem(CUSTOM_INVENTORY_KEY,JSON.stringify(currentCustomInventoryData()));
+    localStorage.setItem(DETAIL_KEY,JSON.stringify(currentDetailData()));
+    localStorage.setItem(PHOTO_KEY,JSON.stringify(currentPhotoData()));
+    localStorage.setItem(CARE_KEY,JSON.stringify(normalizeCare(careConfig)));
+  }
+  async function saveSharedCatalogConfig(){
+    await api("saveCatalogConfig",{catalog:currentCatalogConfig()},true);
+  }
+  async function persistCatalogConfig(){
+    saveCatalogConfigLocal();
+    try{
+      await saveSharedCatalogConfig();
+      return true;
+    }catch(e){
+      console.error("shared catalogue save failed",e);
+      return false;
+    }
   }
 
   /* ============ Availability ============ */
@@ -2047,9 +2129,10 @@
     openModal();
   }
   let photoDrag=null;
-  function photosChanged(msg){
-    savePhotoOverrides(); saveCustomInventory(); renderPhotoManager(); renderCatalog(); renderCart();
-    toast(msg||"Photos updated");
+  async function photosChanged(msg){
+    const saved=await persistCatalogConfig();
+    renderPhotoManager(); renderCatalog(); renderCart();
+    toast(saved?(msg||"Photos updated"):((msg||"Photos updated")+" on this device, but not saved online"));
   }
   function renderCareManager(){
     const wrap=document.getElementById("careManager"); if(!wrap)return;
@@ -2060,15 +2143,15 @@
         '<div class="care-item"><div class="field"><label>'+esc(inv.name)+'</label><textarea data-care-id="'+esc(inv.id)+'" placeholder="Specific care instructions">'+esc((careConfig.items||{})[inv.id]||"")+'</textarea></div></div>'
       ).join('')+'</div>'
       +'<button class="btn sm" id="saveCareBtn" type="button" style="margin-top:12px">Save care instructions</button>';
-    document.getElementById("saveCareBtn").onclick=()=>{
+    document.getElementById("saveCareBtn").onclick=async()=>{
       const items={};
       wrap.querySelectorAll("[data-care-id]").forEach(t=>{
         const val=t.value.trim();
         if(val)items[t.dataset.careId]=val;
       });
       careConfig={all:isSuperAdmin()?document.getElementById("careAll").value.trim():(careConfig.all||""),items:Object.assign({},careConfig.items||{},items)};
-      saveCareInstructions();
-      toast("Care instructions saved");
+      const saved=await persistCatalogConfig();
+      toast(saved?"Care instructions saved":"Care instructions saved on this device, but not online");
     };
   }
   function renderNewClothOwnerSelect(){
@@ -2093,14 +2176,14 @@
     else if(currentAdminEmail())tableclothOwners[id]=currentAdminEmail();
     ["newClothName","newClothSize","newClothDim","newClothPhoto"].forEach(i=>document.getElementById(i).value="");
     document.getElementById("newClothStock").value="1";
-    saveCustomInventory(); saveDetailOverrides(); savePhotoOverrides();
+    let catalogSaved=await persistCatalogConfig();
     let ownerSaved=true;
     if(canChooseOwners()&&tableclothOwners[id]){
       try{await saveOwnerConfig();}
       catch(e){ownerSaved=false;}
     }
     renderPhotoManager(); renderCareManager(); renderCatalog(); renderCart(); renderAdminCalendar();
-    toast(ownerSaved?"Tablecloth added":"Tablecloth added, but admin owner was not saved");
+    toast(ownerSaved&&catalogSaved?"Tablecloth added":"Tablecloth added on this device, but not all online settings were saved");
   }
   function renderPhotoManager(){
     const wrap=document.getElementById("photoManager"); if(!wrap)return;
@@ -2143,10 +2226,10 @@
         +'</div></div>';
     }).join('');
     const globalCareBtn=document.getElementById("saveGlobalCareBtn");
-    if(globalCareBtn)globalCareBtn.onclick=()=>{
+    if(globalCareBtn)globalCareBtn.onclick=async()=>{
       careConfig.all=document.getElementById("careAll").value.trim();
-      saveCareInstructions();
-      toast("Care instructions saved");
+      const saved=await persistCatalogConfig();
+      toast(saved?"Care instructions saved":"Care instructions saved on this device, but not online");
     };
     wrap.querySelectorAll("[data-save-details]").forEach(btn=>btn.onclick=async()=>{
       const inv=INVENTORY.find(i=>i.id===btn.dataset.saveDetails), card=btn.closest(".photo-editor");
@@ -2168,14 +2251,14 @@
       }
       if(!careConfig.items)careConfig.items={};
       if(care)careConfig.items[inv.id]=care; else delete careConfig.items[inv.id];
-      saveDetailOverrides(); saveCustomInventory(); saveCareInstructions();
+      const catalogSaved=await persistCatalogConfig();
       let ownerSaved=true;
       if(owner){
         try{await saveOwnerConfig();}
         catch(e){ownerSaved=false;}
       }
       renderPhotoManager(); renderCatalog(); renderCart(); renderAdminCalendar();
-      toast(ownerSaved?"Tablecloth details saved":"Details saved, but admin owner was not saved");
+      toast(ownerSaved&&catalogSaved?"Tablecloth details saved":"Details saved on this device, but not all online settings were saved");
     });
     wrap.querySelectorAll("[data-toggle-cloth]").forEach(btn=>btn.onclick=()=>{
       const card=btn.closest(".photo-editor"), willOpen=!card.classList.contains("open");
@@ -2207,9 +2290,9 @@
       const photo=await photoFromFileInput(input);
       if(!inv||!photo){toast("Choose a photo to upload");return;}
       const pics=photosFor(inv).slice(); pics.push(photo); inv.imgs=pics; if(input)input.value="";
-      photosChanged("Photo added");
+      await photosChanged("Photo added");
     });
-    wrap.querySelectorAll("[data-delete-cloth]").forEach(btn=>btn.onclick=()=>{
+    wrap.querySelectorAll("[data-delete-cloth]").forEach(btn=>btn.onclick=async()=>{
       const inv=INVENTORY.find(i=>i.id===btn.dataset.deleteCloth);
       if(!inv||!inv.custom)return;
       if(!confirm("Delete "+inv.name+" from the catalogue?"))return;
@@ -2217,10 +2300,9 @@
       const idx=INVENTORY.findIndex(i=>i.id===inv.id);
       if(idx>=0)INVENTORY.splice(idx,1);
       if(careConfig.items)delete careConfig.items[inv.id];
-      saveCareInstructions();
-      saveCustomInventory(); saveDetailOverrides(); savePhotoOverrides();
+      const catalogSaved=await persistCatalogConfig();
       renderPhotoManager(); renderCareManager(); renderCatalog(); renderCart(); renderAdminCalendar();
-      toast("Tablecloth deleted");
+      toast(catalogSaved?"Tablecloth deleted":"Tablecloth deleted on this device, but not online");
     });
   }
   function togglePhotoEditor(){
@@ -2371,6 +2453,7 @@
     pendingApproveId=requestedApprovalId();
     const preferredView=sessionStorage.getItem("linen_active_view");
     await loadPublicOwnerConfig();
+    await loadSharedCatalogConfig();
     kickDailyReminders();
     await loadBookings();
     await restoreAdminSession();
