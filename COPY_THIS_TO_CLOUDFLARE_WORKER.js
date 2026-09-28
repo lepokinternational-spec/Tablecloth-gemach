@@ -833,8 +833,15 @@ function normalizeCareName(s) {
 }
 
 function adminRequestHtml(b, approveUrl) {
-  const button = approveUrl
-    ? '<p style="margin:24px 0 6px"><a href="' + esc(approveUrl) + '" style="' + buttonStyle() + '">Approve</a></p>'
+  const customerEmail = String(b.email || "").trim();
+  const contactButton = customerEmail
+    ? '<a href="mailto:' + esc(customerEmail) + '?subject=' + encodeURIComponent("Your tablecloth request " + (b.id || "")) + '" style="' + secondaryButtonStyle() + '">Contact customer</a>'
+    : "";
+  const approveButton = approveUrl
+    ? '<a href="' + esc(approveUrl) + '" style="' + buttonStyle() + ';margin:0 8px 8px 0">Approve</a>'
+    : "";
+  const button = approveButton || contactButton
+    ? '<p style="margin:24px 0 6px">' + approveButton + contactButton + "</p>"
     : "";
 
   return emailShell(
