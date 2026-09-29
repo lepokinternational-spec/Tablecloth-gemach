@@ -74,6 +74,7 @@
   .btn{background:var(--teal);color:#fff;border-radius:11px;padding:13px 22px;font-weight:700;font-size:.95rem;transition:transform .12s,background .2s;white-space:nowrap}
   .btn:hover{background:var(--teal-2);transform:translateY(-1px)} .btn:active{transform:translateY(0)}
   .btn.ghost{background:transparent;color:var(--teal);border:1px solid var(--teal)}
+  a.mailbtn{display:inline-block;text-decoration:none}
   .btn.terra{background:var(--terra)} .btn.terra:hover{background:var(--terra-soft)}
   .btn.gold{background:var(--gold)} .btn.gold:hover{background:#9c781f}
   .btn.sm{padding:9px 14px;font-size:.84rem;border-radius:9px}
@@ -1442,6 +1443,7 @@
     document.getElementById("modalBody").innerHTML=body;
     bks.forEach(b=>{
       const acts=document.querySelector('.acts[data-id="'+b.id+'"]'); if(!acts)return;
+      appendEmailBtn(acts,b);
       if(b.status==="pending"){
         acts.append(mkbtn("Approve & edit booking","btn sm",()=>showApproveModal(b,dISO)));
         acts.append(mkbtn("View request email","btn ghost sm",()=>showEmailModal(b)));
@@ -1940,6 +1942,7 @@
         +'<div class="pending-actions">'
         +'<button class="btn sm" data-pending-approve="'+esc(b.id||"")+'">Approve & edit</button>'
         +'<button class="btn ghost sm" data-pending-email="'+esc(b.id||"")+'">View request</button>'
+        +(customerMailto(b)?'<a class="btn ghost sm mailbtn" href="'+esc(customerMailto(b))+'">✉️ Email customer</a>':'')
         +'<button class="btn ghost sm" data-pending-cancel="'+esc(b.id||"")+'">Cancel</button>'
         +'</div></div>';
     }).join("")+'</div>';
@@ -1971,6 +1974,7 @@
         +(b.note?'<div>📝 '+b.note+'</div>':'')+bookingDatesHtml(b)+'</div></div><span class="pill '+visualStatus+'">'+visualStatus+'</span></div>'
         +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
       const acts=el.querySelector(".acts");
+      appendEmailBtn(acts,b);
       if(b.status==="pending"){
         acts.append(mkbtn("Approve & edit booking","btn sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
         acts.append(mkbtn("View request email","btn ghost sm",()=>showEmailModal(b)));
@@ -1986,6 +1990,8 @@
     });
   }
   function mkbtn(t,c,fn){const b=document.createElement("button");b.className=c;b.textContent=t;b.onclick=fn;return b;}
+  function customerMailto(b){const email=String((b&&b.email)||"").trim(); return email?"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your tablecloth booking "+((b&&b.id)||"")):"";}
+  function appendEmailBtn(acts,b){const href=customerMailto(b); if(!href)return; const a=document.createElement("a");a.className="btn ghost sm mailbtn";a.href=href;a.textContent="✉️ Email customer";acts.append(a);}
   async function cancelBooking(id){
     const b=bookings.find(x=>x.id===id); if(!b)return;
     if(!bookingOwnedByCurrentAdmin(b)){toast("You can only cancel your own tablecloths");return;}
