@@ -1942,7 +1942,7 @@
         +'<div class="pending-actions">'
         +'<button class="btn sm" data-pending-approve="'+esc(b.id||"")+'">Approve & edit</button>'
         +'<button class="btn ghost sm" data-pending-email="'+esc(b.id||"")+'">View request</button>'
-        +(customerMailto(b)?'<a class="btn ghost sm mailbtn" href="'+esc(customerMailto(b))+'">✉️ Email customer</a>':'')
+        +(customerMailto(b)?'<button class="btn ghost sm" data-pending-contact="'+esc(b.id||"")+'">✉️ Email customer</button>':'')
         +'<button class="btn ghost sm" data-pending-cancel="'+esc(b.id||"")+'">Cancel</button>'
         +'</div></div>';
     }).join("")+'</div>';
@@ -1952,6 +1952,9 @@
     });
     wrap.querySelectorAll("[data-pending-email]").forEach(btn=>btn.onclick=()=>{
       const b=bookings.find(x=>x.id===btn.dataset.pendingEmail); if(b)showEmailModal(b);
+    });
+    wrap.querySelectorAll("[data-pending-contact]").forEach(btn=>btn.onclick=()=>{
+      const b=bookings.find(x=>x.id===btn.dataset.pendingContact); if(b)showContactModal(b);
     });
     wrap.querySelectorAll("[data-pending-cancel]").forEach(btn=>btn.onclick=()=>{
       if(btn.dataset.pendingCancel)cancelBooking(btn.dataset.pendingCancel);
@@ -1991,7 +1994,36 @@
   }
   function mkbtn(t,c,fn){const b=document.createElement("button");b.className=c;b.textContent=t;b.onclick=fn;return b;}
   function customerMailto(b){const email=String((b&&b.email)||"").trim(); return email?"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your tablecloth booking "+((b&&b.id)||"")):"";}
-  function appendEmailBtn(acts,b){const href=customerMailto(b); if(!href)return; const a=document.createElement("a");a.className="btn ghost sm mailbtn";a.href=href;a.textContent="✉️ Email customer";acts.append(a);}
+  function appendEmailBtn(acts,b){if(!customerMailto(b))return; acts.append(mkbtn("✉️ Email customer","btn ghost sm",()=>showContactModal(b)));}
+  function showContactModal(b){
+    document.getElementById("modalBody").innerHTML=
+      '<div class="email"><div class="head"><div class="from">Email customer</div><h3>'+esc(b.name||"Customer")+'</h3></div>'
+      +'<div class="bd"><div class="form">'
+      +'<div class="field"><label>To</label><input value="'+esc(b.email)+'" disabled></div>'
+      +'<div class="field"><label>Subject</label><input id="ccSubject" value="'+esc("About your tablecloth booking "+(b.id||""))+'"></div>'
+      +'<div class="field"><label>Message</label><textarea id="ccMessage" style="min-height:150px" placeholder="Write your message…"></textarea></div>'
+      +'<div class="sub" style="font-size:.85rem">Their booking details are added below your message. Replies come to your own email.</div>'
+      +'<div class="sub" id="ccError" style="color:#9A3520;font-size:.9rem"></div>'
+      +'<div class="cta"><button class="btn" style="flex:1" id="ccSend">Send email</button>'
+      +'<a class="btn ghost mailbtn" href="'+esc(customerMailto(b))+'">Open in my email app</a></div>'
+      +'</div></div></div>';
+    const send=document.getElementById("ccSend");
+    send.onclick=async()=>{
+      const message=document.getElementById("ccMessage").value.trim();
+      const err=document.getElementById("ccError");
+      if(!message){err.textContent="Please write a message first.";return;}
+      send.disabled=true; send.textContent="Sending…"; err.textContent="";
+      try{
+        await api("contactCustomer",{id:b.id,subject:document.getElementById("ccSubject").value.trim(),message},true);
+        closeModal(); toast("Email sent to "+b.email);
+      }catch(e){
+        send.disabled=false; send.textContent="Send email";
+        err.textContent="Could not send: "+(e&&e.message?e.message:e)+". You can use “Open in my email app” instead.";
+      }
+    };
+    openModal();
+    document.getElementById("ccMessage").focus();
+  }
   async function cancelBooking(id){
     const b=bookings.find(x=>x.id===id); if(!b)return;
     if(!bookingOwnedByCurrentAdmin(b)){toast("You can only cancel your own tablecloths");return;}
