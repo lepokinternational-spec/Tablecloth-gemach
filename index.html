@@ -241,6 +241,7 @@
   .bk .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
   .bk h4{font-size:1.12rem}
   .pill{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+  .bk-stamps{margin-top:6px;font-size:.8rem;color:var(--ink-soft)}
   .pill.pending{background:#FBF0DA;color:#8A6516} .pill.approved{background:#E1F0E5;color:#2A6B3E} .pill.completed{background:#E6E8E0;color:#5F665A} .pill.declined{background:#F6E0DA;color:#9A3520} .pill.cancelled{background:#E9E7E2;color:#7A756B}
   .nbitem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:.9rem}
   .nbitem small{font-size:.76rem}
@@ -830,6 +831,13 @@
   function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
   function daysInc(a,b){return Math.round((parseISO(b)-parseISO(a))/864e5)+1;}
   function fmt(s){return parseISO(s).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});}
+  function fmtStamp(s){const d=new Date(s);return isNaN(d)?"":d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})+", "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});}
+  function markApproved(b){ if(b.status!=="approved") b.approvedAt=new Date().toISOString(); b.status="approved"; }
+  function bookingDatesHtml(b){
+    const req=b.created?fmtStamp(b.created):"", appr=b.approvedAt?fmtStamp(b.approvedAt):"";
+    if(!req&&!appr)return "";
+    return '<div class="bk-stamps">'+(req?'🕒 Requested <b>'+req+'</b>':'')+(req&&appr?' · ':'')+(appr?'✅ Approved <b>'+appr+'</b>':'')+'</div>';
+  }
   function fmtShort(s){return parseISO(s).toLocaleDateString("en-GB",{day:"numeric",month:"short"});}
 
   /* ============ Hebrew calendar ============ */
@@ -1426,7 +1434,7 @@
       const visualStatus=bookingVisualStatus(b);
       body+='<div class="daycard"><div class="dctop"><b>'+b.name+'</b> <span style="color:var(--ink-soft);font-size:.8rem">'+b.id+'</span><span class="pill '+visualStatus+'" style="margin-left:auto">'+visualStatus+'</span></div>'
         +'<div class="dcmeta">📦 Loan: <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'
-        +'<br>'+contactLinksHtml(b)+'<br>📍 '+b.address+(b.amount?'<br>🔢 Quantity: '+b.amount:'')+(b.note?'<br>📝 '+b.note:'')+'</div>'
+        +'<br>'+contactLinksHtml(b)+'<br>📍 '+b.address+(b.amount?'<br>🔢 Quantity: '+b.amount:'')+(b.note?'<br>📝 '+b.note:'')+bookingDatesHtml(b)+'</div>'
         +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join('')+'</div>'
         +'<div class="acts" data-id="'+b.id+'"></div></div>';
     });
@@ -1448,7 +1456,7 @@
     openModal();
   }
   async function decideDay(id,status,dISO){
-    const b=bookings.find(x=>x.id===id); if(!b)return; if(!bookingOwnedByCurrentAdmin(b)){toast("You can only update your own tablecloths");return;} b.status=status; await api("update",{booking:b},true);
+    const b=bookings.find(x=>x.id===id); if(!b)return; if(!bookingOwnedByCurrentAdmin(b)){toast("You can only update your own tablecloths");return;} if(status==="approved")markApproved(b); else b.status=status; await api("update",{booking:b},true);
     renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
     toast(status==="approved"?"Reservation "+id+" approved":"Reservation "+id+" "+status);
     showDayModal(dISO);
@@ -1599,7 +1607,7 @@
       if(!p||!r||parseISO(r)<parseISO(p)){ setApproveError("Return must be on or after pickup."); return; }
       const ownedItems=validateApproveItems(); if(!ownedItems)return;
       b.items=(b.items||[]).filter(it=>!itemOwnedByCurrentAdmin(it)).concat(ownedItems);
-      b.pickup=p; b.ret=r; b.status="approved"; b.customerNote=document.getElementById("apCustomerNote").value.trim(); attachCareInstructions(b);
+      b.pickup=p; b.ret=r; markApproved(b); b.customerNote=document.getElementById("apCustomerNote").value.trim(); attachCareInstructions(b);
       await api("update",{booking:b,sendApproval:true,careInstructions:b.careInstructions,careInstructionsList:b.careInstructionsList},true);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
       closeModal();
@@ -1886,7 +1894,7 @@
   function closeModal(){document.getElementById("overlay").classList.remove("show");}
   document.getElementById("modalClose").onclick=closeModal;
   document.getElementById("overlay").onclick=e=>{if(e.target.id==="overlay")closeModal();};
-  async function decide(id,status){ const b=bookings.find(x=>x.id===id); if(!b)return; if(!bookingOwnedByCurrentAdmin(b)){toast("You can only update your own tablecloths");return;} b.status=status; await api("update",{booking:b},true);
+  async function decide(id,status){ const b=bookings.find(x=>x.id===id); if(!b)return; if(!bookingOwnedByCurrentAdmin(b)){toast("You can only update your own tablecloths");return;} if(status==="approved")markApproved(b); else b.status=status; await api("update",{booking:b},true);
     renderAdmin(); renderCalendar(); renderCatalog(); renderCart();
     toast(status==="approved"?"Reservation "+id+" approved — calendar updated":"Reservation "+id+" declined"); }
 
@@ -1926,6 +1934,7 @@
         +(contact?'<div class="pending-meta-row"><span class="pending-label">Contact</span>'+contact+'</div>':'')
         +(b.address?'<div class="pending-meta-row"><span class="pending-label">Address</span><strong>'+esc(b.address)+'</strong></div>':'')
         +(b.note?'<div class="pending-note">'+esc(b.note)+'</div>':'')
+        +bookingDatesHtml(b)
         +'</div>'
         +(itemsHtml?'<div class="pending-items">'+itemsHtml+'</div>':'')
         +'<div class="pending-actions">'
@@ -1959,7 +1968,7 @@
         +'<div class="meta"><div>📦 Loan <b>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</b> ('+daysInc(b.pickup||b.start,b.ret||b.start)+' days)'+heR+'</div>'+win
         +'<div>'+contactLinksHtml(b)+'</div><div>📍 <b>'+b.address+'</b></div>'
         +(b.amount?'<div>🔢 Quantity: '+b.amount+'</div>':'')
-        +(b.note?'<div>📝 '+b.note+'</div>':'')+'</div></div><span class="pill '+visualStatus+'">'+visualStatus+'</span></div>'
+        +(b.note?'<div>📝 '+b.note+'</div>':'')+bookingDatesHtml(b)+'</div></div><span class="pill '+visualStatus+'">'+visualStatus+'</span></div>'
         +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
       const acts=el.querySelector(".acts");
       if(b.status==="pending"){
@@ -2088,7 +2097,7 @@
         phone:document.getElementById("nbPhone").value.trim(), email:document.getElementById("nbEmail").value.trim(),
         address:document.getElementById("nbAddr").value.trim()||"—", note:"Booked by admin", amount:"",
         items, start:p, pickup:p, ret:r, status:"approved",
-        token:Math.random().toString(36).slice(2,10), created:new Date().toISOString() };
+        token:Math.random().toString(36).slice(2,10), created:new Date().toISOString(), approvedAt:new Date().toISOString() };
       attachCareInstructions(b);
       try{ await api("update",{booking:b,adminCreate:true},true); }catch(e){ document.getElementById("nbErr").classList.remove("hidden"); return; } bookings.push(b);
       renderAdmin(); renderCalendar(); renderCatalog(); renderCart(); closeModal();
