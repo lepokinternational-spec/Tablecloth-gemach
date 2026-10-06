@@ -54,7 +54,7 @@ export default {
       if (request.method === "GET" && action === "ping") {
         return json({
           ok: true,
-          version: "2026-06-29-reminder-fallback",
+          version: "2026-09-29-contact-customer",
           origin: request.headers.get("Origin") || "",
           hasSettings: !!env.SETTINGS,
           hasFromEmail: !!env.FROM_EMAIL,
@@ -170,6 +170,28 @@ export default {
         }
 
         return json({ ok: true }, 200, cors);
+      }
+
+      if (action === "contactCustomer") {
+        const admin = await requireAdmin(request, env);
+        if (!admin) return json({ error: "unauthorized" }, 401, cors);
+
+        const bookings = await getBookings(env);
+        const b = bookings.find(x => x.id === body.id);
+        if (!b) return json({ error: "not found" }, 404, cors);
+        if (!b.email) return json({ error: "this booking has no customer email" }, 400, cors);
+
+        const owners = await getOwners(env);
+        if (!bookingBelongsToAdmin(b, admin.email, owners)) {
+          return json({ error: "not your tablecloths" }, 403, cors);
+        }
+
+        const message = String(body.message || "").trim();
+        if (!message) return json({ error: "message is empty" }, 400, cors);
+        const subject = String(body.subject || "").trim() || "About your tablecloth booking " + b.id;
+
+        await sendEmail(env, b.email, subject, customerMessageHtml(b, message), admin.email);
+        return json({ ok: true, sentTo: b.email }, 200, cors);
       }
 
       if (action === "cancel") {
@@ -704,7 +726,7 @@ function passwordKey(email) {
   return "ADMIN_PASSWORD:" + normalizeEmail(email);
 }
 
-async function sendEmail(env, to, subject, html) {
+async function sendEmail(env, to, subject, html, replyTo) {
   if (!to) throw new Error("Missing email recipient");
   if (!env.RESEND_API_KEY) throw new Error("Missing RESEND_API_KEY");
   if (!env.FROM_EMAIL) throw new Error("Missing FROM_EMAIL");
@@ -720,6 +742,7 @@ async function sendEmail(env, to, subject, html) {
       to: [to],
       subject,
       html,
+      ...(replyTo ? { reply_to: replyTo } : {}),
     }),
   });
 
@@ -856,6 +879,22 @@ function adminRequestHtml(b, approveUrl) {
     ) +
     tableBlock(b.items) +
     button
+  );
+}
+
+function customerMessageHtml(b, message) {
+  return emailShell(
+    "A message about your booking",
+    "A message about your booking",
+    '<p style="font-size:16px;margin:0 0 18px">Hi ' + esc(b.name) + ",</p>" +
+    '<p style="font-size:16px;margin:0 0 18px;line-height:1.5">' + nl2br(esc(message)) + "</p>" +
+    infoBox(
+      "<b>Booking</b><br>" + esc(b.id) +
+      "<br><br><b>Pickup</b><br>" + esc(fmtDate(b.pickup || b.start)) +
+      "<br><br><b>Return by</b><br>" + esc(fmtDate(b.ret || b.start))
+    ) +
+    tableBlock(b.items) +
+    '<p style="font-size:14px;color:#6B665B;margin:16px 0 0">You can reply directly to this email.</p>'
   );
 }
 

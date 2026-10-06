@@ -74,6 +74,7 @@
   .btn{background:var(--teal);color:#fff;border-radius:11px;padding:13px 22px;font-weight:700;font-size:.95rem;transition:transform .12s,background .2s;white-space:nowrap}
   .btn:hover{background:var(--teal-2);transform:translateY(-1px)} .btn:active{transform:translateY(0)}
   .btn.ghost{background:transparent;color:var(--teal);border:1px solid var(--teal)}
+  a.mailbtn{display:inline-block;text-decoration:none}
   .btn.terra{background:var(--terra)} .btn.terra:hover{background:var(--terra-soft)}
   .btn.gold{background:var(--gold)} .btn.gold:hover{background:#9c781f}
   .btn.sm{padding:9px 14px;font-size:.84rem;border-radius:9px}
@@ -1442,6 +1443,7 @@
     document.getElementById("modalBody").innerHTML=body;
     bks.forEach(b=>{
       const acts=document.querySelector('.acts[data-id="'+b.id+'"]'); if(!acts)return;
+      appendEmailBtn(acts,b);
       if(b.status==="pending"){
         acts.append(mkbtn("Approve & edit booking","btn sm",()=>showApproveModal(b,dISO)));
         acts.append(mkbtn("View request email","btn ghost sm",()=>showEmailModal(b)));
@@ -1940,6 +1942,7 @@
         +'<div class="pending-actions">'
         +'<button class="btn sm" data-pending-approve="'+esc(b.id||"")+'">Approve & edit</button>'
         +'<button class="btn ghost sm" data-pending-email="'+esc(b.id||"")+'">View request</button>'
+        +(customerMailto(b)?'<button class="btn ghost sm" data-pending-contact="'+esc(b.id||"")+'">✉️ Email customer</button>':'')
         +'<button class="btn ghost sm" data-pending-cancel="'+esc(b.id||"")+'">Cancel</button>'
         +'</div></div>';
     }).join("")+'</div>';
@@ -1949,6 +1952,9 @@
     });
     wrap.querySelectorAll("[data-pending-email]").forEach(btn=>btn.onclick=()=>{
       const b=bookings.find(x=>x.id===btn.dataset.pendingEmail); if(b)showEmailModal(b);
+    });
+    wrap.querySelectorAll("[data-pending-contact]").forEach(btn=>btn.onclick=()=>{
+      const b=bookings.find(x=>x.id===btn.dataset.pendingContact); if(b)showContactModal(b);
     });
     wrap.querySelectorAll("[data-pending-cancel]").forEach(btn=>btn.onclick=()=>{
       if(btn.dataset.pendingCancel)cancelBooking(btn.dataset.pendingCancel);
@@ -1971,6 +1977,7 @@
         +(b.note?'<div>📝 '+b.note+'</div>':'')+bookingDatesHtml(b)+'</div></div><span class="pill '+visualStatus+'">'+visualStatus+'</span></div>'
         +'<div class="items">'+ownedBookingItems(b).map(i=>'<span class="tag">'+i.qty+'× '+i.name+'</span>').join("")+'</div><div class="acts"></div>';
       const acts=el.querySelector(".acts");
+      appendEmailBtn(acts,b);
       if(b.status==="pending"){
         acts.append(mkbtn("Approve & edit booking","btn sm",()=>showApproveModal(b,iso(parseISO(b.start)))));
         acts.append(mkbtn("View request email","btn ghost sm",()=>showEmailModal(b)));
@@ -1986,6 +1993,37 @@
     });
   }
   function mkbtn(t,c,fn){const b=document.createElement("button");b.className=c;b.textContent=t;b.onclick=fn;return b;}
+  function customerMailto(b){const email=String((b&&b.email)||"").trim(); return email?"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your tablecloth booking "+((b&&b.id)||"")):"";}
+  function appendEmailBtn(acts,b){if(!customerMailto(b))return; acts.append(mkbtn("✉️ Email customer","btn ghost sm",()=>showContactModal(b)));}
+  function showContactModal(b){
+    document.getElementById("modalBody").innerHTML=
+      '<div class="email"><div class="head"><div class="from">Email customer</div><h3>'+esc(b.name||"Customer")+'</h3></div>'
+      +'<div class="bd"><div class="form">'
+      +'<div class="field"><label>To</label><input value="'+esc(b.email)+'" disabled></div>'
+      +'<div class="field"><label>Subject</label><input id="ccSubject" value="'+esc("About your tablecloth booking "+(b.id||""))+'"></div>'
+      +'<div class="field"><label>Message</label><textarea id="ccMessage" style="min-height:150px" placeholder="Write your message…"></textarea></div>'
+      +'<div class="sub" style="font-size:.85rem">Their booking details are added below your message. Replies come to your own email.</div>'
+      +'<div class="sub" id="ccError" style="color:#9A3520;font-size:.9rem"></div>'
+      +'<div class="cta"><button class="btn" style="flex:1" id="ccSend">Send email</button>'
+      +'<a class="btn ghost mailbtn" href="'+esc(customerMailto(b))+'">Open in my email app</a></div>'
+      +'</div></div></div>';
+    const send=document.getElementById("ccSend");
+    send.onclick=async()=>{
+      const message=document.getElementById("ccMessage").value.trim();
+      const err=document.getElementById("ccError");
+      if(!message){err.textContent="Please write a message first.";return;}
+      send.disabled=true; send.textContent="Sending…"; err.textContent="";
+      try{
+        await api("contactCustomer",{id:b.id,subject:document.getElementById("ccSubject").value.trim(),message},true);
+        closeModal(); toast("Email sent to "+b.email);
+      }catch(e){
+        send.disabled=false; send.textContent="Send email";
+        err.textContent="Could not send: "+(e&&e.message?e.message:e)+". You can use “Open in my email app” instead.";
+      }
+    };
+    openModal();
+    document.getElementById("ccMessage").focus();
+  }
   async function cancelBooking(id){
     const b=bookings.find(x=>x.id===id); if(!b)return;
     if(!bookingOwnedByCurrentAdmin(b)){toast("You can only cancel your own tablecloths");return;}
