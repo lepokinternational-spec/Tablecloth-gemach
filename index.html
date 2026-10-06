@@ -75,6 +75,20 @@
   .btn:hover{background:var(--teal-2);transform:translateY(-1px)} .btn:active{transform:translateY(0)}
   .btn.ghost{background:transparent;color:var(--teal);border:1px solid var(--teal)}
   a.mailbtn{display:inline-block;text-decoration:none}
+  .ap-care-note{font-size:.85rem;margin:4px 0 12px}
+  .ap-row-ctl{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .ap-set{font-size:.85rem;font-weight:600;color:var(--ink-soft);white-space:nowrap}
+  .ap-remove{border:1px solid var(--line);background:#fff;color:var(--ink-soft);border-radius:8px;width:32px;height:32px;font-size:.9rem;cursor:pointer}
+  .ap-remove:hover{color:#9A3520;border-color:#9A3520}
+  .ap-warn{color:#9A3520}
+  .ap-add{margin-top:10px}
+  .ap-picker{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;display:flex;flex-direction:column;gap:8px}
+  .ap-picker input{font-family:inherit;font-size:1rem;border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
+  #apPickList{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:4px}
+  .ap-pick{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;border:1px solid transparent;background:transparent;border-radius:8px;padding:9px 10px;font:inherit;color:var(--ink);cursor:pointer}
+  .ap-pick:hover:not(:disabled){background:#F6F0E3;border-color:var(--line)}
+  .ap-pick small{color:var(--ink-soft);white-space:nowrap}
+  .ap-pick:disabled{opacity:.5;cursor:not-allowed}
   .btn.terra{background:var(--terra)} .btn.terra:hover{background:var(--terra-soft)}
   .btn.gold{background:var(--gold)} .btn.gold:hover{background:#9c781f}
   .btn.sm{padding:9px 14px;font-size:.84rem;border-radius:9px}
@@ -811,7 +825,8 @@
     if(!email)return false;
     return (b.items||[]).some(item=>sameEmail(bookingItemOwnerEmail(item),email));
   }
-  function adminBookings(){return bookings.filter(bookingOwnedByCurrentAdmin);}
+  function requestDatePassed(b){ const start=b&&(b.pickup||b.start); return !!b&&b.status==="pending"&&!!start&&parseISO(start)<today(); }
+  function adminBookings(){return bookings.filter(b=>bookingOwnedByCurrentAdmin(b)&&!requestDatePassed(b));}
   function ownerLabel(email){
     const user=ownerUsers().find(a=>sameEmail(a.email,email));
     return user?(user.name||user.email):email;
@@ -1477,7 +1492,7 @@
     });
     const ownedChoices=editableInventory();
     const lines=b.items.map(it=>'<div class="ln"><span>'+it.qty+'× '+it.name+'</span></div>').join('');
-    const carePreview=careEmailHtml(b);
+    const carePreview=careEmailHtml(b)?'<div class="sub ap-care-note">✓ Care instructions will be included in the customer\'s email.</div>':'';
     document.getElementById("modalBody").innerHTML=
       '<div class="email"><div class="head"><div class="from">Arrange &amp; approve · '+b.id+'</div><h3>Edit booking</h3></div>'
       +'<div class="meta">For <span>'+b.name+'</span> · Requested: <span>'+fmt(b.pickup||b.start)+' → '+fmt(b.ret||b.start)+'</span>'+(HFMT?' · <span class="he" dir="rtl">'+hebFull(parseISO(b.pickup||b.start))+'</span>':'')+'</div>'
@@ -1486,7 +1501,7 @@
       +'<div class="form"><div class="admin-date-row">'
       +'<div class="field"><label>Pickup date</label><button type="button" class="datefield ap-date on" id="apPickupBtn"><span id="apPickupText"></span><span class="he" id="apPickupHe" dir="rtl"></span></button></div>'
       +'<div class="field"><label>Return by</label><button type="button" class="datefield ap-date" id="apReturnBtn"><span id="apReturnText"></span><span class="he" id="apReturnHe" dir="rtl"></span></button></div></div>'
-      +'<div class="field"><label>Tablecloths for this admin</label><div id="apItems"></div></div>'
+      +'<div class="field"><label>Tablecloths in this booking</label><div id="apItems"></div></div>'
       +'<div class="admin-mini-cal"><div class="cal-head"><button type="button" id="apCalPrev">‹</button><div class="lbls"><h3 id="apCalLabel"></h3><div class="he" id="apCalLabelHe" dir="rtl"></div></div><button type="button" id="apCalNext">›</button></div><div class="cal-grid" id="apCalGrid"></div></div>'
       +'<div class="field"><label>Note to customer</label><textarea id="apCustomerNote" placeholder="Optional message to include in the approval email">'+esc(b.customerNote||"")+'</textarea></div>'
       +'<div class="err hidden" id="apErr">Return must be on or after pickup.</div>'
@@ -1545,36 +1560,66 @@
       const el=document.getElementById("apErr");
       if(el)el.classList.add("hidden");
     }
+    let apAdding=false, apSearch="";
+    function apDatesOk(){return apPickup&&apReturn&&parseISO(apReturn)>=parseISO(apPickup);}
+    function apAvail(inv){return apDatesOk()?Math.max(0,availForWindowExcept(inv.id,apPickup,apReturn,b.id)):inv.stock;}
     function drawApproveItems(){
       const holder=document.getElementById("apItems"); if(!holder)return;
-      const ok=apPickup&&apReturn&&parseISO(apReturn)>=parseISO(apPickup);
-      holder.innerHTML=ownedChoices.length?ownedChoices.map(inv=>{
-        const av=ok?Math.max(0,availForWindowExcept(inv.id,apPickup,apReturn,b.id)):inv.stock;
-        const fullSet=inv.stock, variableQty=hasVariableQuantity(inv), current=apQty[inv.id]||0;
-        if(variableQty){
-          const status=!ok?fullSet+" maximum":current>av?"Only "+av+" available for these dates":av+" available";
-          return '<div class="nbitem"><span>'+esc(inv.name)+'<br><small style="color:var(--ink-soft)">'+status+'</small></span>'
-            +'<div class="stepper"><button type="button" data-ap-minus="'+esc(inv.id)+'" '+(current<=0?'disabled':'')+'>-</button><input value="'+current+'" readonly aria-label="'+esc(inv.name)+' quantity"><button type="button" data-ap-plus="'+esc(inv.id)+'" '+(!ok||current>=av?'disabled':'')+'>+</button></div></div>';
+      if(!ownedChoices.length){holder.innerHTML='<p class="sub">No tablecloths are assigned to this admin.</p>';return;}
+      const ok=apDatesOk();
+      const chosen=ownedChoices.filter(inv=>apQty[inv.id]);
+      const rows=chosen.map(inv=>{
+        const av=apAvail(inv), current=apQty[inv.id]||0;
+        const remove='<button type="button" class="ap-remove" data-ap-remove="'+esc(inv.id)+'" title="Remove '+esc(inv.name)+'" aria-label="Remove '+esc(inv.name)+'">✕</button>';
+        if(hasVariableQuantity(inv)){
+          const warn=ok&&current>av?'<br><small class="ap-warn">Only '+av+' available for these dates</small>':'';
+          return '<div class="nbitem"><span>'+esc(inv.name)+warn+'</span>'
+            +'<div class="ap-row-ctl"><div class="stepper"><button type="button" data-ap-minus="'+esc(inv.id)+'" '+(current<=1?'disabled':'')+'>-</button><input value="'+current+'" readonly aria-label="'+esc(inv.name)+' quantity"><button type="button" data-ap-plus="'+esc(inv.id)+'" '+(!ok||current>=av?'disabled':'')+'>+</button></div>'+remove+'</div></div>';
         }
-        const selected=!!current, unavailable=ok&&av<fullSet, disabled=!ok||(!selected&&unavailable);
-        const status=!ok?fullSet+" included":unavailable?"Unavailable for these dates":fullSet+" included";
-        return '<div class="nbitem"><span>'+esc(inv.name)+'<br><small style="color:var(--ink-soft)">'+status+'</small></span>'
-          +'<button type="button" class="nbselect '+(selected?'on':'')+'" data-ap-toggle="'+esc(inv.id)+'" '+(disabled?'disabled':'')+'>'+(selected?'Selected':'Select set')+' - '+fullSet+' included</button></div>';
-      }).join(''):'<p class="sub">No tablecloths are assigned to this admin.</p>';
-      document.querySelectorAll('#apItems [data-ap-toggle]').forEach(btn=>btn.onclick=()=>{
-        const id=btn.dataset.apToggle, inv=INVENTORY.find(i=>i.id===id); if(!inv)return;
-        if(apQty[id])delete apQty[id]; else apQty[id]=inv.stock;
+        const warn=ok&&av<inv.stock?'<br><small class="ap-warn">Not available for these dates</small>':'';
+        return '<div class="nbitem"><span>'+esc(inv.name)+warn+'</span>'
+          +'<div class="ap-row-ctl"><span class="ap-set">Set · '+inv.stock+' included</span>'+remove+'</div></div>';
+      }).join('');
+      const remaining=ownedChoices.filter(inv=>!apQty[inv.id]);
+      holder.innerHTML=(rows||'<p class="sub">No tablecloths selected yet.</p>')
+        +(remaining.length?(apAdding
+          ?'<div class="ap-picker"><input id="apSearch" placeholder="Search tablecloths…" value="'+esc(apSearch)+'" autocomplete="off"><div id="apPickList"></div>'
+            +'<button type="button" class="btn ghost sm" id="apAddCancel">Cancel</button></div>'
+          :'<button type="button" class="btn ghost sm ap-add" id="apAddBtn">+ Add another tablecloth</button>'):'');
+      holder.querySelectorAll('[data-ap-remove]').forEach(btn=>btn.onclick=()=>{
+        delete apQty[btn.dataset.apRemove]; clearApproveError(); drawApproveItems();
+      });
+      holder.querySelectorAll('[data-ap-minus]').forEach(btn=>btn.onclick=()=>{
+        const id=btn.dataset.apMinus; apQty[id]=Math.max(1,(apQty[id]||1)-1);
         clearApproveError(); drawApproveItems();
       });
-      document.querySelectorAll('#apItems [data-ap-minus]').forEach(btn=>btn.onclick=()=>{
-        const id=btn.dataset.apMinus; apQty[id]=Math.max(0,(apQty[id]||0)-1); if(!apQty[id])delete apQty[id];
-        clearApproveError(); drawApproveItems();
-      });
-      document.querySelectorAll('#apItems [data-ap-plus]').forEach(btn=>btn.onclick=()=>{
+      holder.querySelectorAll('[data-ap-plus]').forEach(btn=>btn.onclick=()=>{
         const id=btn.dataset.apPlus, inv=INVENTORY.find(i=>i.id===id); if(!inv)return;
-        const av=Math.max(0,availForWindowExcept(inv.id,apPickup,apReturn,b.id));
-        apQty[id]=Math.min(av,(apQty[id]||0)+1);
+        apQty[id]=Math.min(apAvail(inv),(apQty[id]||0)+1);
         clearApproveError(); drawApproveItems();
+      });
+      const addBtn=document.getElementById("apAddBtn");
+      if(addBtn)addBtn.onclick=()=>{apAdding=true;apSearch="";drawApproveItems();const el=document.getElementById("apSearch");if(el)el.focus();};
+      const cancel=document.getElementById("apAddCancel");
+      if(cancel)cancel.onclick=()=>{apAdding=false;drawApproveItems();};
+      const search=document.getElementById("apSearch");
+      if(search){search.oninput=()=>{apSearch=search.value;drawApprovePicker();}; drawApprovePicker();}
+    }
+    function drawApprovePicker(){
+      const list=document.getElementById("apPickList"); if(!list)return;
+      const ok=apDatesOk(), q=apSearch.trim().toLowerCase();
+      const matches=ownedChoices.filter(inv=>!apQty[inv.id]&&(!q||String(inv.name||"").toLowerCase().includes(q)));
+      list.innerHTML=matches.length?matches.map(inv=>{
+        const av=apAvail(inv), variable=hasVariableQuantity(inv);
+        const free=variable?av>0:av>=inv.stock;
+        const status=!ok?(variable?inv.stock+" in stock":"Set · "+inv.stock+" included")
+          :variable?av+" of "+inv.stock+" free":(free?"Set · "+inv.stock+" included":"Not available for these dates");
+        return '<button type="button" class="ap-pick" data-ap-pick="'+esc(inv.id)+'" '+(ok&&!free?'disabled':'')+'><span>'+esc(inv.name)+'</span><small>'+status+'</small></button>';
+      }).join(''):'<p class="sub">No matching tablecloths.</p>';
+      list.querySelectorAll('[data-ap-pick]').forEach(btn=>btn.onclick=()=>{
+        const inv=INVENTORY.find(i=>i.id===btn.dataset.apPick); if(!inv)return;
+        apQty[inv.id]=hasVariableQuantity(inv)?1:inv.stock;
+        apAdding=false; clearApproveError(); drawApproveItems();
       });
     }
     function approveItemsFromSelection(){
